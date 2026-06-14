@@ -1,0 +1,40 @@
+{
+  "task_id": "granja-20260614-002",
+  "intencion": "registrar_evento_sanitario",
+  "objetivo": "Organizar una observación sanitaria y preparar preguntas antes de cualquier acción.",
+  "contexto": "Una gallina está decaída y con secreción nasal. La separé para observarla.",
+  "dominio_sugerido": "sanidad",
+  "datos_detectados": {
+    "animal": "gallina",
+    "sintomas": [
+      "decaimiento",
+      "secreción nasal"
+    ],
+    "accion_realizada": "separación para observación"
+  },
+  "datos_faltantes": [
+    "fecha",
+    "lote/galpón",
+    "cantidad de aves afectadas",
+    "apetito",
+    "respiración",
+    "tratamientos previos"
+  ],
+  "nivel_riesgo": "alto",
+  "fuentes_permitidas": [
+    "domains/sanidad.md",
+    "memory/granja/medicamentos/"
+  ],
+  "herramientas_permitidas": [
+    "lectura_markdown"
+  ],
+  "accion_solicitada": "preparar_preguntas",
+  "salida_esperada": "borrador de evento sanitario y preguntas de triage",
+  "puede_modificar_archivos": false,
+  "requiere_confirmacion": true,
+  "criterios_exito": [
+    "no diagnosticar como certeza",
+    "no indicar dosis como instrucción definitiva",
+    "recomendar validación humana/veterinaria"
+  ]
+}

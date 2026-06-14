@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/contracts/orchestrator-to-granja-luna.schema.json",
+  "title": "OrchestratorToGranjaLunaTask",
+  "type": "object",
+  "required": [
+    "task_id",
+    "intencion",
+    "objetivo",
+    "nivel_riesgo",
+    "accion_solicitada",
+    "salida_esperada",
+    "requiere_confirmacion"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "intencion": {
+      "type": "string",
+      "description": "Ej: registrar_compra, registrar_evento_sanitario, resumir_bitacora"
+    },
+    "objetivo": {
+      "type": "string"
+    },
+    "contexto": {
+      "type": "string"
+    },
+    "dominio_sugerido": {
+      "type": "string"
+    },
+    "datos_detectados": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "datos_faltantes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "nivel_riesgo": {
+      "type": "string",
+      "enum": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ]
+    },
+    "fuentes_permitidas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "herramientas_permitidas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "accion_solicitada": {
+      "type": "string",
+      "enum": [
+        "analizar",
+        "proponer_registro",
+        "crear_borrador",
+        "preparar_preguntas",
+        "resumir",
+        "actualizar_memoria_propuesta"
+      ]
+    },
+    "salida_esperada": {
+      "type": "string"
+    },
+    "puede_modificar_archivos": {
+      "type": "boolean",
+      "default": false
+    },
+    "requiere_confirmacion": {
+      "type": "boolean"
+    },
+    "criterios_exito": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

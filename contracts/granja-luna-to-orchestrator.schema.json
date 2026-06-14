@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/contracts/granja-luna-to-orchestrator.schema.json",
+  "title": "GranjaLunaToOrchestratorResponse",
+  "type": "object",
+  "required": [
+    "task_id",
+    "resumen",
+    "interpretacion",
+    "confirmacion_requerida"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "resumen": {
+      "type": "string"
+    },
+    "interpretacion": {
+      "type": "string"
+    },
+    "dominio": {
+      "type": "string"
+    },
+    "datos_usados": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "datos_detectados": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "datos_faltantes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "propuesta_accion": {
+      "type": "string"
+    },
+    "registros_sugeridos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "archivos_afectados_propuestos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "bd_afectada_propuesta": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "riesgos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "preguntas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confirmacion_requerida": {
+      "type": "boolean"
+    },
+    "proximos_pasos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

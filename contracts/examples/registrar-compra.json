@@ -1,0 +1,45 @@
+{
+  "task_id": "granja-20260614-001",
+  "intencion": "registrar_compra",
+  "objetivo": "Preparar un borrador de compra de insumos detectado desde mensaje natural.",
+  "contexto": "Compré 4 bolsas de balanceado iniciador y una bolsa de maíz. Me falta cargar proveedor y precio final.",
+  "dominio_sugerido": "compras",
+  "datos_detectados": {
+    "items": [
+      {
+        "producto": "balanceado iniciador",
+        "cantidad": 4,
+        "unidad": "bolsa"
+      },
+      {
+        "producto": "maíz",
+        "cantidad": 1,
+        "unidad": "bolsa"
+      }
+    ]
+  },
+  "datos_faltantes": [
+    "fecha",
+    "proveedor",
+    "precio_unitario",
+    "comprobante"
+  ],
+  "nivel_riesgo": "medio",
+  "fuentes_permitidas": [
+    "memory/granja/contexto.md",
+    "domains/compras.md",
+    "domains/stock-insumos.md"
+  ],
+  "herramientas_permitidas": [
+    "lectura_markdown"
+  ],
+  "accion_solicitada": "proponer_registro",
+  "salida_esperada": "borrador de compra con preguntas pendientes",
+  "puede_modificar_archivos": false,
+  "requiere_confirmacion": true,
+  "criterios_exito": [
+    "no confirmar compra",
+    "pedir datos faltantes",
+    "indicar posible impacto en stock"
+  ]
+}

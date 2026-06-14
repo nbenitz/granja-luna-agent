@@ -1,0 +1,33 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+.secrets/
+credentials/
+client_secret*.json
+token.json
+*.pem
+*.key
+
+# Generated / temporary
+exports/
+tmp/
+.cache/
+__pycache__/
+*.pyc
+node_modules/
+dist/
+build/
+.venv/
+venv/
+
+# Local agent scratch
+.agent-scratch/
+.codex-scratch/
