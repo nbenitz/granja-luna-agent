@@ -2,6 +2,10 @@
 
 Estado: `draft`
 
+Nombre operativo definitivo: `Granja Luna`
+Estado del nombre: `confirmed_by_user`
+Fuente: confirmado por Néstor el 2026-06-14.
+
 ## Descripción
 
 Granja Luna es una operación avícola y agropecuaria en evolución. El objetivo del subagente es aprender progresivamente cómo se gestiona la granja y ayudar a registrar, ordenar y automatizar actividades.
@@ -32,7 +36,6 @@ Cada actividad real puede convertirse en:
 
 ## Pendiente de completar
 
-- Nombre operativo definitivo: Granja Luna / Granja Paraíso / Avícola Mboré.
 - Lista de áreas físicas.
 - Lista actual de galpones/corrales.
 - Categorías reales de stock.

@@ -14,15 +14,34 @@ Alimentos, vitaminas, cama, materiales, herramientas, desinfectantes y movimient
 - Consultar memoria relacionada.
 - Marcar riesgos y necesidad de confirmación.
 
-## Datos típicos
+## Campos mínimos para borrador
 
-- Fecha
-- Lugar/galpón/lote si aplica
-- Cantidad/unidad si aplica
-- Producto/ave/tarea/evento relacionado
-- Responsable si aplica
-- Observaciones
-- Evidencia o fuente
+- Estado: `draft` o `pending_review`.
+- Fecha informada o fecha pendiente.
+- Producto/insumo.
+- Categoría tentativa: alimento, medicamento, vitamina, cama, material, herramienta, desinfectante, otro.
+- Movimiento propuesto: entrada, salida, consumo, ajuste, traslado o inventario observado.
+- Cantidad y unidad, si fueron mencionadas.
+- Origen/destino, si aplica.
+- Motivo: compra, consumo, uso sanitario, mantenimiento, conteo, corrección, otro.
+- Fuente de la información: conversación, factura, foto, conteo, nota, otro.
+- Datos faltantes.
+
+## Campos mínimos antes de confirmar
+
+- Producto/insumo identificado sin ambigüedad.
+- Cantidad y unidad confirmadas.
+- Tipo de movimiento confirmado.
+- Fecha real del movimiento.
+- Origen/destino o área relacionada cuando aplique.
+- Confirmación humana de Néstor.
+
+## Registros sugeridos
+
+- Borrador de movimiento de stock.
+- Observación de inventario.
+- Preguntas de datos faltantes.
+- Tarea para conteo físico o revisión de depósito.
 
 ## Acciones permitidas sin confirmación
 
@@ -33,14 +52,15 @@ Alimentos, vitaminas, cama, materiales, herramientas, desinfectantes y movimient
 
 ## Acciones que requieren confirmación
 
-- Registrar hecho definitivo.
-- Cambiar stock real.
-- Confirmar venta o compra.
-- Confirmar tratamiento o procedimiento crítico.
-- Cerrar evento productivo importante.
+- Registrar movimiento de stock como hecho definitivo.
+- Ajustar inventario real.
+- Confirmar consumo, merma, baja o traslado.
+- Vincular stock a compras, ventas o tratamientos confirmados.
 
 ## Pendiente de validar
 
-- Campos mínimos definitivos.
-- Plantillas específicas.
+- Categorías reales de stock.
+- Unidades usadas en la operación.
+- Lugares físicos de almacenamiento.
+- Criterio para stock mínimo/reposición.
 - Futuras herramientas/API/MCP.

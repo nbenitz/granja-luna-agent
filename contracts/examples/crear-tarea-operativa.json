@@ -1,0 +1,39 @@
+{
+  "task_id": "granja-ejemplo-tarea-operativa",
+  "intencion": "crear_tarea_operativa",
+  "objetivo": "Preparar una tarea operativa desde una entrada natural, manteniéndola como borrador hasta validar responsable, fecha o impacto.",
+  "contexto": "Ejemplo no operativo: se detecta una tarea pendiente de mantenimiento o seguimiento.",
+  "dominio_sugerido": "tareas-mantenimiento",
+  "datos_detectados": {
+    "titulo": "pendiente",
+    "area": "pendiente",
+    "responsable": "pendiente",
+    "fecha_objetivo": "pendiente",
+    "proximo_paso": "pendiente"
+  },
+  "datos_faltantes": [
+    "responsable si aplica",
+    "fecha objetivo si aplica",
+    "prioridad",
+    "riesgo",
+    "confirmación si implica stock, compra, sanidad o infraestructura"
+  ],
+  "nivel_riesgo": "medio",
+  "fuentes_permitidas": [
+    "domains/tareas-mantenimiento.md",
+    "tasks/inbox.md",
+    "workflows/task-routing.md"
+  ],
+  "herramientas_permitidas": [
+    "lectura_markdown"
+  ],
+  "accion_solicitada": "crear_borrador",
+  "salida_esperada": "tarea sugerida con estado draft o pending_review",
+  "puede_modificar_archivos": false,
+  "requiere_confirmacion": true,
+  "criterios_exito": [
+    "no cerrar la tarea como hecha",
+    "no asignar compromiso definitivo sin confirmación",
+    "marcar dominios secundarios si corresponde"
+  ]
+}

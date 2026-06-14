@@ -1,0 +1,42 @@
+{
+  "task_id": "granja-ejemplo-stock-draft",
+  "intencion": "registrar_movimiento_stock",
+  "objetivo": "Preparar un borrador de movimiento de stock detectado desde una entrada natural, sin modificar inventario real.",
+  "contexto": "Ejemplo no operativo: se menciona un posible consumo o ingreso de insumos, pero faltan datos para confirmar.",
+  "dominio_sugerido": "stock-insumos",
+  "datos_detectados": {
+    "movimiento": "pendiente_de_clasificar",
+    "producto": "pendiente",
+    "cantidad": null,
+    "unidad": "pendiente",
+    "origen": "pendiente",
+    "destino": "pendiente"
+  },
+  "datos_faltantes": [
+    "fecha real",
+    "producto/insumo exacto",
+    "cantidad",
+    "unidad",
+    "tipo de movimiento",
+    "origen o destino si aplica",
+    "confirmación de Néstor"
+  ],
+  "nivel_riesgo": "alto",
+  "fuentes_permitidas": [
+    "domains/stock-insumos.md",
+    "memory/granja/bitacora/",
+    "tasks/inbox.md"
+  ],
+  "herramientas_permitidas": [
+    "lectura_markdown"
+  ],
+  "accion_solicitada": "proponer_registro",
+  "salida_esperada": "borrador de movimiento de stock con preguntas pendientes",
+  "puede_modificar_archivos": false,
+  "requiere_confirmacion": true,
+  "criterios_exito": [
+    "no modificar inventario real",
+    "separar datos detectados de datos faltantes",
+    "pedir confirmación explícita antes de registrar el movimiento"
+  ]
+}
