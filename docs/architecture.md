@@ -77,6 +77,14 @@ MCP puede exponer herramientas como:
 
 El LLM decide, interpreta y propone. El código valida, persiste y audita.
 
+## Regla de frameworks
+
+El core inicial debe ser framework-agnostic.
+
+Frameworks como Microsoft Agent Framework, LangGraph, OpenAI Agents SDK u otros pueden evaluarse mas adelante, pero no deben definir la arquitectura hasta demostrar valor real frente a necesidades de Granja Luna.
+
+La estrategia detallada vive en `docs/framework-strategy.md`.
+
 ## Regla de extraccion
 
 No crear abstracciones genericas hasta que existan flujos reales repetidos.
