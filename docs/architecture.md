@@ -15,7 +15,7 @@ personal-agent-orchestrator/
   Coordina dominios, decide a qué subagente llamar y mantiene contratos globales.
 
 granja-luna-agent/
-  Este repo. Caso piloto, memoria, reglas, workflows y futuro runtime de Granja Luna.
+  Este repo. Caso piloto, memoria, reglas, workflows y runtime de Granja Luna.
 
 career-agent/
   Subagente profesional/carrera, basado en el actual repo de carrera.
@@ -72,6 +72,21 @@ MCP puede exponer herramientas como:
 - listar tareas;
 - consultar sensores;
 - crear borradores.
+
+### 7. Runtime y UI response
+
+El runtime de Granja Luna vive en `runtime/`.
+
+Su salida debe poder ser usada por:
+
+- la app propia de Granja Luna;
+- la app del Asistente Personal;
+- un CLI;
+- futuras integraciones MCP/A2A.
+
+Para eso, el runtime emite una `ui_response` estructurada. El runtime define la semantica de la interaccion: datos, riesgo, acciones y confirmacion. El host define como se renderiza.
+
+La app de Granja Luna puede ofrecer una UI mas rica de dominio. La app del Asistente Personal puede renderizar componentes genericos o delegar/embeber una vista de Granja Luna cuando corresponda.
 
 ## Regla de diseño
 

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/granja-luna-agent/runtime/contracts/ui-response.schema.json",
+  "title": "GranjaRuntimeUiResponse",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "response_type",
+    "title",
+    "summary",
+    "risk_level",
+    "requires_confirmation",
+    "rendering_mode",
+    "components",
+    "information_status"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.1"
+    },
+    "response_type": {
+      "type": "string",
+      "enum": ["message", "review", "confirmation", "form", "report"]
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["bajo", "medio", "alto", "critico"]
+    },
+    "requires_confirmation": {
+      "type": "boolean"
+    },
+    "rendering_mode": {
+      "type": "string",
+      "enum": ["host_native", "domain_component", "external_view"]
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["component", "props"],
+        "properties": {
+          "component": {
+            "type": "string",
+            "enum": [
+              "summary_card",
+              "data_table",
+              "checklist",
+              "field_group",
+              "action_group"
+            ]
+          },
+          "props": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "information_status": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["confirmado", "inferido", "pendiente_validar", "borrador", "legacy"]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["risk_level"],
+        "properties": {
+          "risk_level": {
+            "enum": ["medio", "alto", "critico"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "requires_confirmation": {
+            "const": true
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

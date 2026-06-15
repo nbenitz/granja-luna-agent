@@ -12,6 +12,8 @@ Usar contratos JSON versionados. Esto permite trabajar hoy con ChatGPT/Codex de 
 - `granja-luna-to-orchestrator.schema.json`: respuesta estructurada del subagente.
 - `examples/`: ejemplos de mensajes.
 
+Los contratos internos del runtime viven en `runtime/contracts/`.
+
 ## Regla
 
 Toda tarea debe declarar:

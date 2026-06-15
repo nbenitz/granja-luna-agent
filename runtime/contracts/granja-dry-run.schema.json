@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/granja-luna-agent/contracts/granja-dry-run.schema.json",
+  "title": "GranjaDryRun",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "mode",
+    "side_effects",
+    "input",
+    "classification",
+    "detected_data",
+    "missing_data",
+    "drafts",
+    "suggested_tasks",
+    "confirmation",
+    "ui_response",
+    "next_actions"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.1"
+    },
+    "mode": {
+      "type": "string",
+      "const": "dry_run"
+    },
+    "side_effects": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "input": {
+      "type": "object",
+      "required": ["text", "source"],
+      "properties": {
+        "text": {"type": "string"},
+        "source": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "classification": {
+      "type": "object",
+      "required": [
+        "intent",
+        "primary_domain",
+        "secondary_domains",
+        "risk_level",
+        "information_status",
+        "requires_confirmation"
+      ],
+      "properties": {
+        "intent": {"type": "string"},
+        "primary_domain": {"type": "string"},
+        "secondary_domains": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": ["bajo", "medio", "alto", "critico"]
+        },
+        "information_status": {
+          "type": "string",
+          "enum": ["draft", "pending_review", "confirmed", "confirmed_by_user", "legacy_reference", "archived"]
+        },
+        "requires_confirmation": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "detected_data": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "missing_data": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "drafts": {
+      "type": "object",
+      "properties": {
+        "purchase": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
+        "stock_movements": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "log_entry": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "suggested_tasks": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "confirmation": {
+      "type": "object",
+      "required": ["required", "question"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "question": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "ui_response": {
+      "$ref": "ui-response.schema.json"
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "classification": {
+            "properties": {
+              "risk_level": {
+                "enum": ["medio", "alto", "critico"]
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "classification": {
+            "properties": {
+              "requires_confirmation": {
+                "const": true
+              }
+            }
+          },
+          "confirmation": {
+            "properties": {
+              "required": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}
