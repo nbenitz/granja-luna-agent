@@ -6,7 +6,13 @@ Este documento explica el flujo del CLI `dry_run` de Granja Luna.
 
 No es una especificacion completa del runtime. Es una ayuda visual para entender como el script transforma un mensaje natural en una respuesta JSON estructurada, sin usar LLM, sin framework agentico y sin modificar archivos.
 
-Archivo relacionado: `runtime/src/cli/granja_dry_run.py`.
+Archivos relacionados:
+
+- `runtime/src/cli/granja_dry_run.py`;
+- `runtime/src/core/dry_run.py`;
+- `runtime/src/core/classifier.py`;
+- `runtime/src/core/parsing.py`;
+- `runtime/src/core/builders.py`.
 
 ## Idea general
 
@@ -24,7 +30,7 @@ analizar y proponer, no ejecutar ni registrar hechos reales
 flowchart TD
     A[Usuario ejecuta CLI] --> B[main]
     B --> C[Leer message y today opcional]
-    C --> D[build_dry_run]
+    C --> D[core.dry_run build_dry_run]
 
     D --> E[classify]
     E --> E1[normalize]
@@ -58,11 +64,11 @@ flowchart TD
 sequenceDiagram
     actor User as Usuario
     participant CLI as CLI main()
-    participant Runtime as build_dry_run()
-    participant Classifier as classify()
-    participant Parser as parse_items()
-    participant Drafts as Draft builders
-    participant UI as build_ui_response()
+    participant Runtime as core.dry_run
+    participant Classifier as core.classifier
+    participant Parser as core.parsing
+    participant Drafts as core.builders
+    participant UI as core.builders.build_ui_response
 
     User->>CLI: python3 runtime/src/cli/granja_dry_run.py "Compre 2 bolsas de maiz..."
     CLI->>Runtime: build_dry_run(message, today)
@@ -158,15 +164,15 @@ Lectura del flujo:
 | Funcion | Rol |
 |---|---|
 | `main` | Lee argumentos del CLI e imprime JSON. |
-| `build_dry_run` | Coordina todo el flujo. |
-| `classify` | Define intencion, dominios, riesgo y confirmacion requerida. |
-| `parse_items` | Extrae items de compra con reglas simples. |
-| `build_purchase_draft` | Prepara borrador de compra. |
-| `build_stock_movements` | Propone movimientos de stock derivados de compras. |
-| `build_log_entry` | Prepara entrada de bitacora en borrador. |
-| `build_suggested_tasks` | Propone tareas si detecta senales como revisar o limpiar. |
-| `build_confirmation` | Formula la pregunta de confirmacion. |
-| `build_ui_response` | Prepara componentes renderizables por una app host. |
+| `core.dry_run.build_dry_run` | Coordina todo el flujo. |
+| `core.classifier.classify` | Define intencion, dominios, riesgo y confirmacion requerida. |
+| `core.parsing.parse_items` | Extrae items de compra con reglas simples. |
+| `core.builders.build_purchase_draft` | Prepara borrador de compra. |
+| `core.builders.build_stock_movements` | Propone movimientos de stock derivados de compras. |
+| `core.builders.build_log_entry` | Prepara entrada de bitacora en borrador. |
+| `core.builders.build_suggested_tasks` | Propone tareas si detecta senales como revisar o limpiar. |
+| `core.builders.build_confirmation` | Formula la pregunta de confirmacion. |
+| `core.builders.build_ui_response` | Prepara componentes renderizables por una app host. |
 
 ## Limites actuales
 

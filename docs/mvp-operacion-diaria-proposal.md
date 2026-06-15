@@ -67,7 +67,8 @@ Salida esperada:
 
 ```text
 mensaje natural
-  -> runtime/src/cli framework-agnostic
+  -> runtime/src/cli
+  -> runtime/src/core framework-agnostic
   -> reglas locales de clasificacion
   -> extraccion heuristica
   -> evaluacion de riesgo

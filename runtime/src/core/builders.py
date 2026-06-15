@@ -1,0 +1,225 @@
+from __future__ import annotations
+
+from decimal import Decimal
+from typing import Any
+
+from core.parsing import ParsedItem, number_to_json
+from core.text import normalize
+
+
+def purchase_missing_data(items: list[ParsedItem]) -> list[str]:
+    missing = [
+        "fecha real de compra",
+        "proveedor",
+        "comprobante o evidencia",
+        "confirmacion de impacto en stock",
+    ]
+    if any(item.unit_price is None for item in items):
+        missing.append("precio unitario de cada item")
+    if not items:
+        missing.extend(["producto/insumo", "cantidad", "unidad"])
+    return missing
+
+
+def build_purchase_draft(items: list[ParsedItem], today: str) -> dict[str, Any] | None:
+    if not items:
+        return None
+    total = sum((item.subtotal for item in items if item.subtotal is not None), Decimal("0"))
+    has_full_total = all(item.subtotal is not None for item in items)
+    return {
+        "estado": "draft",
+        "fecha_inferida": today,
+        "fecha_real": None,
+        "proveedor": None,
+        "moneda": "PYG",
+        "items": [item.to_dict() for item in items],
+        "total_inferido": number_to_json(total) if has_full_total else None,
+        "fuente": "conversacion",
+        "requiere_confirmacion": True,
+    }
+
+
+def build_stock_movements(items: list[ParsedItem], primary_domain: str) -> list[dict[str, Any]]:
+    if not items or primary_domain != "compras":
+        return []
+    movements: list[dict[str, Any]] = []
+    for item in items:
+        movements.append(
+            {
+                "estado": "draft",
+                "tipo_movimiento": "entrada",
+                "motivo": "compra",
+                "producto": item.product,
+                "cantidad": number_to_json(item.quantity),
+                "unidad": item.unit,
+                "origen": "proveedor pendiente",
+                "destino": "deposito pendiente",
+                "requiere_confirmacion": True,
+            }
+        )
+    return movements
+
+
+def build_log_entry(text: str, classification: dict[str, Any], today: str) -> dict[str, Any]:
+    return {
+        "estado": "draft",
+        "fecha_inferida": today,
+        "dominio_primario": classification["primary_domain"],
+        "dominios_secundarios": classification["secondary_domains"],
+        "riesgo": classification["risk_level"],
+        "fuente": "conversacion",
+        "relato": text,
+    }
+
+
+def build_suggested_tasks(text: str, classification: dict[str, Any]) -> list[dict[str, Any]]:
+    normalized_text = normalize(text)
+    task_signals = ("revisar", "limpiar", "reparar", "pendiente", "hacer", "manana")
+    if not any(signal in normalized_text for signal in task_signals):
+        return []
+    title = text.strip().rstrip(".")
+    return [
+        {
+            "estado": "draft",
+            "titulo": title[:90],
+            "dominio": classification["primary_domain"],
+            "riesgo": classification["risk_level"],
+            "proximo_paso": "confirmar si debe pasar a tasks/inbox.md",
+            "requiere_confirmacion": classification["requires_confirmation"],
+        }
+    ]
+
+
+def build_confirmation(classification: dict[str, Any], items: list[ParsedItem]) -> dict[str, Any]:
+    if not classification["requires_confirmation"]:
+        return {
+            "required": False,
+            "question": "No se requiere confirmacion para este dry-run de bajo riesgo.",
+        }
+    if classification["intent"] == "registrar_compra" and items:
+        products = ", ".join(item.product for item in items)
+        return {
+            "required": True,
+            "question": (
+                "Confirmas que prepare este borrador de compra y el movimiento de "
+                f"stock propuesto para: {products}? No se registrara como hecho real "
+                "hasta que lo confirmes explicitamente."
+            ),
+        }
+    return {
+        "required": True,
+        "question": (
+            "Confirmas que esta propuesta debe avanzar como borrador? "
+            "No se registrara como hecho real sin confirmacion explicita."
+        ),
+    }
+
+
+def build_next_actions(classification: dict[str, Any], missing_data: list[str]) -> list[str]:
+    actions = ["revisar datos detectados"]
+    if missing_data:
+        actions.append("responder datos faltantes")
+    if classification["requires_confirmation"]:
+        actions.append("confirmar explicitamente antes de registrar hechos operativos")
+    return actions
+
+
+def build_ui_response(
+    classification: dict[str, Any],
+    detected_data: dict[str, Any],
+    missing_data: list[str],
+    purchase: dict[str, Any] | None,
+    stock_movements: list[dict[str, Any]],
+    confirmation: dict[str, Any],
+) -> dict[str, Any]:
+    components: list[dict[str, Any]] = [
+        {
+            "component": "summary_card",
+            "props": {
+                "title": "Revision de operacion",
+                "body": "Se preparo una propuesta en modo dry-run. No se modificaron datos reales.",
+            },
+        }
+    ]
+    if detected_data.get("items"):
+        components.append(
+            {
+                "component": "data_table",
+                "props": {
+                    "title": "Items detectados",
+                    "rows": detected_data["items"],
+                },
+            }
+        )
+    if missing_data:
+        components.append(
+            {
+                "component": "checklist",
+                "props": {
+                    "title": "Datos faltantes",
+                    "items": missing_data,
+                },
+            }
+        )
+    if purchase:
+        components.append(
+            {
+                "component": "summary_card",
+                "props": {
+                    "title": "Borrador de compra",
+                    "body": "Compra propuesta en estado draft.",
+                    "data": purchase,
+                },
+            }
+        )
+    if stock_movements:
+        components.append(
+            {
+                "component": "data_table",
+                "props": {
+                    "title": "Movimientos de stock propuestos",
+                    "rows": stock_movements,
+                },
+            }
+        )
+    components.append(
+        {
+            "component": "action_group",
+            "props": {
+                "actions": [
+                    {
+                        "id": "confirm",
+                        "label": "Confirmar borrador",
+                        "requires_confirmation": confirmation["required"],
+                    },
+                    {
+                        "id": "edit",
+                        "label": "Corregir datos",
+                        "requires_confirmation": False,
+                    },
+                    {
+                        "id": "cancel",
+                        "label": "Cancelar",
+                        "requires_confirmation": False,
+                    },
+                ]
+            },
+        }
+    )
+    return {
+        "schema_version": "0.1",
+        "response_type": "review",
+        "title": "Revision de Granja Luna",
+        "summary": confirmation["question"],
+        "risk_level": classification["risk_level"],
+        "requires_confirmation": classification["requires_confirmation"],
+        "rendering_mode": "host_native",
+        "components": components,
+        "information_status": {
+            "classification": "borrador",
+            "detected_data": "inferido",
+            "missing_data": "pendiente_validar",
+            "drafts": "borrador",
+        },
+    }
+

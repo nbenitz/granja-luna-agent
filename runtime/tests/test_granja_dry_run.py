@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src" / "cli"))
-from granja_dry_run import build_dry_run
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from core.dry_run import build_dry_run
 
 
 class GranjaDryRunTests(unittest.TestCase):

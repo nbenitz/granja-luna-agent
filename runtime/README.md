@@ -26,6 +26,13 @@ runtime/
     granja-dry-run.schema.json
     ui-response.schema.json
   src/
+    core/
+      README.md
+      classifier.py
+      parsing.py
+      risk.py
+      builders.py
+      dry_run.py
     cli/
       granja_dry_run.py
     ui/
