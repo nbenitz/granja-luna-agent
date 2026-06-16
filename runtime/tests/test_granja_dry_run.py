@@ -70,11 +70,34 @@ class GranjaDryRunTests(unittest.TestCase):
         self.assertIn("Datos faltantes:", summary)
         self.assertIn("side_effects: []", summary)
 
+    def test_context_guides_classification_without_side_effects(self) -> None:
+        result = build_dry_run(
+            "Quiero saber si en ese momento puedo usar su huevo para meter en la incubadora. "
+            "Yo solo meto en la incubadora, no consumo.",
+            today="2026-06-15",
+            context={
+                "text": "Conversacion sobre uso de huevos de aves medicadas para incubacion, no consumo.",
+                "source": "source_context",
+                "information_status": "pending_review",
+            },
+        )
+
+        self.assertEqual(result["side_effects"], [])
+        self.assertTrue(result["detected_data"]["context_used"])
+        self.assertEqual(result["input"]["context"]["source"], "source_context")
+        self.assertEqual(result["classification"]["intent"], "analizar_decision_operativa")
+        self.assertEqual(result["classification"]["primary_domain"], "incubacion")
+        self.assertIn("sanidad", result["classification"]["secondary_domains"])
+        self.assertEqual(result["classification"]["risk_level"], "alto")
+        self.assertIn("producto administrado", result["missing_data"])
+        self.assertEqual(result["detected_data"]["items"], [])
+        self.assertEqual(result["detected_data"]["stock_observations"], [])
+
     def test_examples_dataset(self) -> None:
         cases = json.loads(EXAMPLES_PATH.read_text(encoding="utf-8"))
         for case in cases:
             with self.subTest(case=case["id"]):
-                result = build_dry_run(case["message"], today="2026-06-14")
+                result = build_dry_run(case["message"], today="2026-06-14", context=case.get("context"))
                 expected = case["expected"]
                 classification = result["classification"]
 

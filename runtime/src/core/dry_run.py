@@ -22,12 +22,19 @@ from core.builders import (
     workflow_candidate_missing_data,
 )
 from core.classifier import classify
+from core.context import build_analysis_text, normalize_context
 from core.parsing import parse_items, parse_stock_observations
 
 
-def build_dry_run(text: str, today: str | None = None) -> dict[str, Any]:
+def build_dry_run(
+    text: str,
+    today: str | None = None,
+    context: str | dict[str, Any] | None = None,
+) -> dict[str, Any]:
     today = today or date.today().isoformat()
-    classification = classify(text)
+    context_payload = normalize_context(context)
+    analysis_text = build_analysis_text(text, context_payload)
+    classification = classify(analysis_text)
     items = parse_items(text) if classification["intent"] == "registrar_compra" else []
     stock_observations = (
         parse_stock_observations(text)
@@ -67,6 +74,7 @@ def build_dry_run(text: str, today: str | None = None) -> dict[str, Any]:
 
     detected_data: dict[str, Any] = {
         "texto_original": text,
+        "context_used": context_payload is not None,
         "items": [item.to_dict() for item in items],
         "stock_observations": stock_observations,
     }
@@ -75,14 +83,17 @@ def build_dry_run(text: str, today: str | None = None) -> dict[str, Any]:
         detected_data["moneda"] = "PYG"
 
     confirmation = build_confirmation(classification, items)
+    input_payload: dict[str, Any] = {
+        "text": text,
+        "source": "cli",
+    }
+    if context_payload:
+        input_payload["context"] = context_payload
     return {
         "schema_version": "0.1",
         "mode": "dry_run",
         "side_effects": [],
-        "input": {
-            "text": text,
-            "source": "cli",
-        },
+        "input": input_payload,
         "classification": classification,
         "detected_data": detected_data,
         "missing_data": missing_data,

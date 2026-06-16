@@ -11,6 +11,7 @@ No es todavia una app completa. Es la capa que recibe mensajes, clasifica intenc
 El MVP 0.1 debe:
 
 - recibir un mensaje natural;
+- recibir contexto/memoria auxiliar opcional;
 - clasificar intencion, dominio y riesgo;
 - detectar datos de compras, stock y tareas;
 - preparar borradores sin confirmar hechos reales;
@@ -50,6 +51,7 @@ runtime/
 ```bash
 python3 runtime/src/cli/granja_dry_run.py "Compre 2 bolsas de maiz a 95000 cada una"
 python3 runtime/src/cli/granja_dry_run.py "Compre 2 bolsas de maiz a 95000 cada una" --format summary
+python3 runtime/src/cli/granja_dry_run.py "Quiero saber si puedo usar su huevo para meter en la incubadora" --context "Conversacion sobre huevos de aves medicadas para incubacion" --format summary
 python3 runtime/src/cli/review_imported_cases.py --list
 python3 runtime/src/cli/review_imported_cases.py --limit 3
 python3 runtime/src/cli/review_imported_cases.py --summary
@@ -72,3 +74,5 @@ python3 -m unittest runtime/tests/test_granja_dry_run.py
 ## Regla central
 
 El runtime propone. No registra compras, ventas, stock, sanidad ni tareas como hechos reales sin confirmacion explicita.
+
+El `context` de entrada ayuda a clasificar intencion, riesgo y datos faltantes. No confirma hechos operativos por si solo y no se usa para extraer compras, stock o tratamientos como registros reales.

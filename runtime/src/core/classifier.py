@@ -11,6 +11,7 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
     "sanidad": (
         "medicamento",
         "medicamentos",
+        "medicacion",
         "enfermedad",
         "sintoma",
         "sintomas",
@@ -18,6 +19,15 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "aislamiento",
         "tratamiento",
         "medicar",
+        "medicada",
+        "medicadas",
+        "medicado",
+        "medicados",
+        "tratada",
+        "tratadas",
+        "tratado",
+        "tratados",
+        "retiro",
         "dosis",
         "antiparasitario",
         "ivermectina",
@@ -261,6 +271,8 @@ def match_domain_signals(normalized_text: str) -> dict[str, list[str]]:
 def signal_matches(normalized_text: str, signal: str) -> bool:
     if signal == "cuanto" and re.search(r"\ben cuanto a\b", normalized_text):
         return False
+    if signal == "consumo" and re.search(r"\b(no consumo|no es para consumo|no para consumo)\b", normalized_text):
+        return False
     pattern = rf"(?<!\w){re.escape(signal)}(?!\w)"
     return re.search(pattern, normalized_text) is not None
 
@@ -283,6 +295,8 @@ def detect_intent(normalized_text: str, domains: list[str]) -> str:
         return "preparar_reporte"
     if is_stock_replenishment_question(normalized_text, domains):
         return "analizar_existencias_reposicion"
+    if is_incubation_sanitary_decision(normalized_text, domains):
+        return "analizar_decision_operativa"
     if is_sanitary_inventory_update(normalized_text, domains):
         return "registrar_movimiento_stock_borrador"
     if is_workflow_candidate(normalized_text, domains):
@@ -402,6 +416,42 @@ def is_sanitary_decision_question(normalized_text: str) -> bool:
         "despues",
     )
     return any(marker in normalized_text for marker in decision_markers)
+
+
+def is_incubation_sanitary_decision(normalized_text: str, domains: list[str]) -> bool:
+    if not {"incubacion", "sanidad"}.issubset(set(domains)):
+        return False
+    incubation_markers = ("incubadora", "incubar", "incubacion")
+    egg_markers = ("huevo", "huevos")
+    decision_markers = (
+        "puedo usar",
+        "usar su huevo",
+        "usar sus huevos",
+        "meter en la incubadora",
+        "sirve para incubar",
+        "apto para incubar",
+    )
+    sanitary_markers = (
+        "medicacion",
+        "medicada",
+        "medicadas",
+        "medicado",
+        "medicados",
+        "tratamiento",
+        "tratada",
+        "tratadas",
+        "tratado",
+        "tratados",
+        "retiro",
+        "ivermectina",
+        "antibiotico",
+    )
+    return (
+        any(marker in normalized_text for marker in incubation_markers)
+        and any(marker in normalized_text for marker in egg_markers)
+        and any(marker in normalized_text for marker in decision_markers)
+        and any(marker in normalized_text for marker in sanitary_markers)
+    )
 
 
 def is_sanitary_inventory_update(normalized_text: str, domains: list[str]) -> bool:
@@ -538,6 +588,9 @@ def classify(text: str) -> dict[str, Any]:
     if intent == "detectar_workflow_candidato":
         primary_domain = choose_workflow_primary_domain(domains)
         secondary_domains = [domain for domain in domains if domain != primary_domain]
+    if intent == "analizar_decision_operativa" and is_incubation_sanitary_decision(normalized_text, domains):
+        primary_domain = "incubacion"
+        secondary_domains = [domain for domain in domains if domain != "incubacion"]
     if intent == "analizar_decision_operativa" and "sanidad" not in domains:
         primary_domain = choose_decision_primary_domain(domains)
         secondary_domains = [domain for domain in domains if domain != primary_domain]
@@ -545,7 +598,7 @@ def classify(text: str) -> dict[str, Any]:
         "registrar_evento_sanitario_borrador",
         "analizar_decision_operativa",
         "preguntar_datos_faltantes",
-    } and "sanidad" in domains:
+    } and "sanidad" in domains and not is_incubation_sanitary_decision(normalized_text, domains):
         primary_domain = "sanidad"
         secondary_domains = [domain for domain in domains if domain != "sanidad"]
     if intent == "registrar_movimiento_stock_borrador" and "sanidad" in domains and "stock-insumos" in domains:

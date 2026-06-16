@@ -11,6 +11,7 @@ Estado: `draft`
 Cada caso define:
 
 - mensaje de entrada;
+- contexto/memoria auxiliar opcional;
 - intencion esperada;
 - dominio primario esperado;
 - dominios secundarios esperados;
@@ -37,6 +38,7 @@ Si una frase falla, primero decidir si:
 - falta vocabulario;
 - falta una regla de prioridad;
 - falta un parser;
+- falta contexto/memoria conversacional;
 - la frase es ambigua y el sistema debe preguntar.
 
 ## Importaciones pendientes

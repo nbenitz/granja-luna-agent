@@ -11,6 +11,7 @@ El CLI, una futura API, una app web o una integracion con el Asistente Personal 
 | Modulo | Responsabilidad |
 |---|---|
 | `text.py` | Normalizacion simple de texto. |
+| `context.py` | Normalizacion de contexto/memoria auxiliar para analisis. |
 | `classifier.py` | Deteccion de dominios e intencion. |
 | `risk.py` | Evaluacion de riesgo. |
 | `parsing.py` | Extraccion basica de items y numeros. |
@@ -62,7 +63,12 @@ La cuarta calibracion completo la revision inicial de 24 casos y agrego soporte 
 - mantenimiento de cama con consumo de insumos;
 - compras con precios hablados y casos mixtos con gasto personal.
 
-El caso restante que no coincide depende de contexto conversacional externo al texto de entrada, por lo que no conviene resolverlo con mas reglas locales.
+La quinta mejora agrego soporte inicial para contexto/memoria auxiliar:
+
+- `build_dry_run` acepta `context` opcional;
+- el contexto se usa para clasificacion, riesgo y datos faltantes;
+- las extracciones de compras, stock e inventario siguen usando solo el texto principal;
+- el caso de huevos para incubadora de aves medicadas se promueve como regression test contextual.
 
 ## Regla
 

@@ -27,6 +27,13 @@ def main() -> int:
         help="Fecha ISO para pruebas o reproduccion. Por defecto usa la fecha local.",
     )
     parser.add_argument(
+        "--context",
+        help=(
+            "Contexto o memoria auxiliar para clasificar riesgo/intencion. "
+            "No se registra como hecho operativo confirmado."
+        ),
+    )
+    parser.add_argument(
         "--format",
         choices=("json", "summary"),
         default="json",
@@ -34,7 +41,7 @@ def main() -> int:
         help="Formato de salida. Por defecto: json.",
     )
     args = parser.parse_args()
-    result = build_dry_run(args.message, today=args.today)
+    result = build_dry_run(args.message, today=args.today, context=args.context)
     if args.output_format == "summary":
         print(format_summary(result))
     else:

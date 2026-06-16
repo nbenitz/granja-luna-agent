@@ -35,7 +35,27 @@
       "required": ["text", "source"],
       "properties": {
         "text": {"type": "string"},
-        "source": {"type": "string"}
+        "source": {"type": "string"},
+        "context": {
+          "type": "object",
+          "required": ["text", "source", "information_status", "used_for"],
+          "properties": {
+            "text": {"type": "string"},
+            "source": {"type": "string"},
+            "information_status": {
+              "type": "string",
+              "enum": ["draft", "pending_review", "confirmed", "confirmed_by_user", "legacy_reference", "archived"]
+            },
+            "used_for": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["classification", "risk", "missing_data"]
+              }
+            }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },

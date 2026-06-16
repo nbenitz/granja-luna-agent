@@ -156,9 +156,21 @@ La cuarta mejora promovio 9 casos al dataset ejecutable y agrego soporte inicial
 |---:|---:|---:|---:|---:|
 | 24 | 23 | 24 | 23 | 23 |
 
-El unico caso que no coincide completo es `gl-003-huevos-incubadora-despues-medicacion`, marcado por Nestor como `needs_edit`. El `input_text` no menciona explicitamente que se trata de huevos de aves medicadas; esa lectura viene del `source_context`.
+El unico caso que no coincidia completo era `gl-003-huevos-incubadora-despues-medicacion`, marcado por Nestor como `needs_edit`. El `input_text` no menciona explicitamente que se trata de huevos de aves medicadas; esa lectura viene del `source_context`.
 
 Conclusion: el runtime por reglas ya cubre bien la tanda inicial, pero el MVP operativo necesitara pasar contexto conversacional o memoria junto con la entrada cuando la frase aislada no sea suficiente.
+
+## Quinta mejora: contexto explicito
+
+Se agrego soporte inicial para `input_text + context` en el dry-run:
+
+- el CLI acepta `--context`;
+- `build_dry_run` acepta `context` opcional;
+- el contexto se usa para clasificar intencion, riesgo y datos faltantes;
+- el texto principal sigue siendo la unica fuente para extraccion de compras, stock o inventario;
+- `gl-003-huevos-incubadora-despues-medicacion` se promovio como caso contextual en `dry-run-cases.json`.
+
+Esto permite tratar el caso como promovido bajo una condicion precisa: no era promovible como prueba de texto aislado, pero si como prueba de entrada con contexto/memoria.
 
 ## Casos recomendados para promover primero
 

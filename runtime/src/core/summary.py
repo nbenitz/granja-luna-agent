@@ -25,6 +25,7 @@ def format_summary(result: dict[str, Any]) -> str:
     append_matched_signals(lines, classification.get("matched_signals", {}))
     append_detected_items(lines, result["detected_data"].get("items", []))
     append_inventory_observations(lines, result["detected_data"].get("stock_observations", []))
+    append_context(lines, result.get("input", {}).get("context"))
     append_purchase(lines, result["drafts"].get("purchase"))
     append_stock_movements(lines, result["drafts"].get("stock_movements", []))
     append_suggested_tasks(lines, result.get("suggested_tasks", []))
@@ -85,6 +86,17 @@ def append_inventory_observations(lines: list[str], observations: list[dict[str,
         if observation.get("kg_estimados_restantes") is not None:
             details.append(f"{observation['kg_estimados_restantes']} kg estimados")
         lines.append(f"- {' | '.join(details)}")
+
+
+def append_context(lines: list[str], context: dict[str, Any] | None) -> None:
+    if not context:
+        return
+    used_for = ", ".join(context.get("used_for", []))
+    lines.append("")
+    lines.append("Contexto auxiliar usado:")
+    lines.append(f"- Fuente: {context.get('source', 'context')} ({context.get('information_status', 'pending_review')})")
+    if used_for:
+        lines.append(f"- Usado para: {used_for}")
 
 
 def append_purchase(lines: list[str], purchase: dict[str, Any] | None) -> None:

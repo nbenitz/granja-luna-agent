@@ -622,5 +622,36 @@
       "stock_movements_count": 1,
       "suggested_tasks_count": 0
     }
+  },
+  {
+    "id": "incubacion-huevos-aves-medicadas-contextual",
+    "message": "Quiero saber si en ese momento puedo usar su huevo para meter en la incubadora. Yo solo meto en la incubadora, no consumo.",
+    "context": {
+      "text": "Conversacion sobre uso de huevos de aves medicadas para incubacion, no consumo.",
+      "source": "source_context",
+      "information_status": "pending_review"
+    },
+    "expected": {
+      "intent": "analizar_decision_operativa",
+      "primary_domain": "incubacion",
+      "secondary_domains_include": ["sanidad", "reproductores"],
+      "risk_level": "alto",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "incubacion": ["incubadora", "huevo"],
+        "sanidad": ["medicadas"],
+        "reproductores": ["aves"]
+      },
+      "missing_data_include": [
+        "producto administrado",
+        "fecha y hora del tratamiento",
+        "lote o aves que pusieron los huevos",
+        "criterio veterinario"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
   }
 ]

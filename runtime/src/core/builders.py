@@ -175,9 +175,23 @@ def forage_decision_missing_data() -> list[str]:
     ]
 
 
+def incubation_decision_missing_data() -> list[str]:
+    return [
+        "producto administrado",
+        "fecha y hora del tratamiento",
+        "lote o aves que pusieron los huevos",
+        "fecha de postura de los huevos",
+        "restricciones de etiqueta",
+        "si el tratamiento afecta fertilidad, embrion o nacimiento",
+        "criterio veterinario",
+    ]
+
+
 def operational_decision_missing_data(primary_domain: str, risk_level: str) -> list[str]:
     if primary_domain == "alimentacion":
         return forage_decision_missing_data()
+    if primary_domain == "incubacion":
+        return incubation_decision_missing_data()
     if primary_domain == "reproductores":
         missing = [
             "objetivo principal: huevos, carne, reproductores, venta o genetica",
