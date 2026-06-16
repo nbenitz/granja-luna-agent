@@ -422,5 +422,205 @@
       "stock_movements_count": 0,
       "suggested_tasks_count": 0
     }
+  },
+  {
+    "id": "reporte-tratamientos-sanitarios-mes",
+    "message": "Mostrame qué tratamientos sanitarios hice este mes.",
+    "expected": {
+      "intent": "preparar_reporte",
+      "primary_domain": "reportes",
+      "secondary_domains_include": ["sanidad"],
+      "risk_level": "bajo",
+      "requires_confirmation": false,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "reportes": ["mostrame", "tratamientos", "mes"],
+        "sanidad": ["sanitarios"]
+      },
+      "missing_data_include": [
+        "periodo exacto si no se usa la fecha actual",
+        "si incluir borradores o solo confirmados"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "sanidad-oximed-antibiotico-no-vacuna",
+    "message": "Le estoy dando Oximed a las aves. Tené en cuenta que la oxitetraciclina es un antibiótico, no es una vacuna para fortalecer el sistema inmunológico.",
+    "expected": {
+      "intent": "registrar_evento_sanitario_borrador",
+      "primary_domain": "sanidad",
+      "secondary_domains_include": ["stock-insumos", "reproductores"],
+      "risk_level": "alto",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "sanidad": ["vacuna", "oximed", "oxitetraciclina", "antibiotico"],
+        "stock-insumos": ["oximed", "antibiotico"]
+      },
+      "missing_data_include": [
+        "producto exacto y concentracion",
+        "lote, galpon o corral afectado"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "incubacion-clavo-olor-desinfeccion",
+    "message": "Puse clavo de olor en la incubadora. Mi objetivo no es tanto aromatizar, sino desinfectar un poco el ambiente adentro.",
+    "expected": {
+      "intent": "registrar_bitacora_borrador",
+      "primary_domain": "incubacion",
+      "secondary_domains_include": ["sanidad"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "incubacion": ["incubadora", "clavo", "olor"],
+        "sanidad": ["desinfectar"]
+      },
+      "missing_data_include": [
+        "fecha exacta de la accion o recoleccion",
+        "estado sanitario del lote"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "infraestructura-perchas-leghorn",
+    "message": "Estoy armando las perchas para las Leghorn. No quiero tres lados iguales, el diseño es de un triángulo isósceles. Y acordate que la inclinación del drenaje es hacia afuera, no en V.",
+    "expected": {
+      "intent": "crear_tarea_borrador",
+      "primary_domain": "infraestructura",
+      "risk_level": "bajo",
+      "requires_confirmation": false,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "infraestructura": ["perchas", "leghorn", "triangulo", "isosceles", "drenaje"]
+      },
+      "missing_data_include": [
+        "materiales a utilizar",
+        "dimensiones exactas"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 1,
+      "suggested_task_titles_include": ["Construir perchas"]
+    }
+  },
+  {
+    "id": "alimentacion-fvh-riego-secado",
+    "message": "Ya cargué las bandejas de forraje verde hidropónico con maíz. Hay que ver bien el tema de los ciclos de riego porque me parece que se están secando muy rápido.",
+    "expected": {
+      "intent": "analizar_decision_operativa",
+      "primary_domain": "alimentacion",
+      "secondary_domains_include": ["stock-insumos"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "alimentacion": ["forraje", "hidroponico", "riego", "secando", "bandejas"],
+        "stock-insumos": ["maiz"]
+      },
+      "missing_data_include": [
+        "frecuencia de riego actual",
+        "dias desde la siembra en bandeja"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 1,
+      "suggested_task_titles_include": ["Preparar bandeja perforada"]
+    }
+  },
+  {
+    "id": "compra-maiz-noventa-mil",
+    "message": "Anotá que compré dos bolsas de maíz a 90 mil cada una.",
+    "expected": {
+      "intent": "registrar_compra",
+      "primary_domain": "compras",
+      "secondary_domains_include": ["stock-insumos", "alimentacion"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "compras": ["compre"],
+        "stock-insumos": ["bolsas", "maiz"]
+      },
+      "purchase_present": true,
+      "stock_movements_count": 1,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "stock-cama-cascarilla",
+    "message": "Registrá que cambiamos la cama del galpón de Rhode Island y usamos una bolsa de cascarilla.",
+    "expected": {
+      "intent": "registrar_movimiento_stock_borrador",
+      "primary_domain": "tareas-mantenimiento",
+      "secondary_domains_include": ["stock-insumos", "infraestructura", "reproductores"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "tareas-mantenimiento": ["cama", "cambiamos", "usamos"],
+        "stock-insumos": ["bolsa", "cascarilla"]
+      },
+      "missing_data_include": [
+        "cantidad exacta usada",
+        "stock restante"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "incubacion-huevos-barrados",
+    "message": "Anotá 12 huevos de barrados para incubadora.",
+    "expected": {
+      "intent": "registrar_bitacora_borrador",
+      "primary_domain": "incubacion",
+      "secondary_domains_include": ["reproductores"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "incubacion": ["incubadora", "huevos"],
+        "reproductores": ["barrados"]
+      },
+      "missing_data_include": [
+        "fecha exacta de la accion o recoleccion",
+        "estado sanitario del lote"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "compra-mixta-iniciador-personal",
+    "message": "Che, vengo del agroveterinario. Compré dos bolsas de iniciador para los pollitos nuevos, salieron 110.000 cada una. También compré un kilo de yerba y unos yuyos para el tereré con plata mía, así que eso no lo anotes en los gastos de la granja. Ah, y fijate que me dijeron que el maíz en grano sube la semana que viene.",
+    "expected": {
+      "intent": "registrar_compra",
+      "primary_domain": "compras",
+      "secondary_domains_include": ["finanzas", "stock-insumos", "alimentacion", "ventas"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "compras": ["compre"],
+        "stock-insumos": ["bolsas", "maiz"],
+        "finanzas": ["plata mia", "gastos"]
+      },
+      "purchase_present": true,
+      "stock_movements_count": 1,
+      "suggested_tasks_count": 0
+    }
   }
 ]

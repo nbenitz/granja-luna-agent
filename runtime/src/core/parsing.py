@@ -73,12 +73,16 @@ class ParsedItem:
 
 def parse_decimal(raw_value: str) -> Decimal | None:
     value = raw_value.strip().lower()
+    multiplier = Decimal("1")
+    if value.endswith(" mil"):
+        value = value.removesuffix(" mil").strip()
+        multiplier = Decimal("1000")
     if value in NUMBER_WORDS:
-        return NUMBER_WORDS[value]
+        return NUMBER_WORDS[value] * multiplier
     value = value.replace("gs", "").replace("pyg", "").strip()
     value = value.replace(".", "").replace(",", ".")
     try:
-        return Decimal(value)
+        return Decimal(value) * multiplier
     except InvalidOperation:
         return None
 
@@ -96,8 +100,10 @@ def parse_items(text: str) -> list[ParsedItem]:
     quantity_pattern = r"(?P<qty>\d+(?:[.,]\d+)?|un|una|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)"
     unit_pattern = r"(?P<unit>bolsas?|kg|kilos?|litros?|lts|unidades?|unidad)"
     product_pattern = r"(?P<product>[a-z0-9\s]+?)"
-    price_pattern = r"(?:\s+a\s+(?P<price>\d[\d.,]*)(?:\s+cada\s+(?:una|uno|bolsa|unidad))?)?"
-    boundary = r"(?=\s+y\s+|\s*,|\s+\.|$)"
+    price_pattern = (
+        r"(?:\s+a\s+(?P<price>\d[\d.,]*(?:\s+mil)?)(?:\s+cada\s+(?:una|uno|bolsa|unidad))?)?"
+    )
+    boundary = r"(?=\s+y\s+|\s*,|\.|$)"
     pattern = re.compile(
         rf"{quantity_pattern}\s+{unit_pattern}\s+de\s+{product_pattern}{price_pattern}{boundary}"
     )
@@ -107,7 +113,11 @@ def parse_items(text: str) -> list[ParsedItem]:
         quantity = parse_decimal(match.group("qty"))
         unit = UNIT_ALIASES.get(match.group("unit"), match.group("unit"))
         product = clean_product(match.group("product"))
+        if should_ignore_personal_item(product):
+            continue
         unit_price = parse_decimal(match.group("price")) if match.group("price") else None
+        if unit_price is None:
+            unit_price = infer_unit_price_after_match(normalized_text, match.end())
         if quantity is None or not product:
             continue
         items.append(
@@ -119,6 +129,22 @@ def parse_items(text: str) -> list[ParsedItem]:
             )
         )
     return items
+
+
+def infer_unit_price_after_match(normalized_text: str, end: int) -> Decimal | None:
+    nearby = normalized_text[end : end + 90]
+    match = re.search(
+        r"\b(?:salieron|salio|salió|salieron a)\s+(?P<price>\d[\d.,]*(?:\s+mil)?)\s+cada\s+(?:una|uno|bolsa|unidad)\b",
+        nearby,
+    )
+    if not match:
+        return None
+    return parse_decimal(match.group("price"))
+
+
+def should_ignore_personal_item(product: str) -> bool:
+    personal_markers = ("yerba", "yuyos", "terere", "tereré")
+    return any(marker in product for marker in personal_markers)
 
 
 def parse_stock_observations(text: str) -> list[dict[str, Any]]:

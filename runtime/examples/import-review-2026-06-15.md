@@ -132,6 +132,34 @@ La tercera mejora promovio 5 casos al dataset ejecutable y agrego soporte inicia
 |---:|---:|---:|---:|---:|
 | 24 | 20 | 21 | 21 | 17 |
 
+## Revision humana completa
+
+Nestor reviso los 24 casos importados:
+
+| Total revisados | Promover | Necesita edicion | Textos representativos | Salidas esperadas aceptadas |
+|---:|---:|---:|---:|---:|
+| 24 | 23 | 1 | 24 | 24 |
+
+La cuarta mejora promovio 9 casos al dataset ejecutable y agrego soporte inicial para:
+
+- reportes sanitarios por periodo;
+- bitacora de incubacion con sanitizacion o carga de huevos;
+- especificaciones/tareas de infraestructura como perchas;
+- decisiones FVH por ciclos de riego y secado rapido;
+- mantenimiento de cama con consumo de insumos;
+- compras con precios hablados como `90 mil`;
+- compras mixtas con gastos personales excluidos del item principal.
+
+## Diagnostico despues de la cuarta mejora
+
+| Total | Intent ok | Dominio ok | Riesgo ok | Todo ok |
+|---:|---:|---:|---:|---:|
+| 24 | 23 | 24 | 23 | 23 |
+
+El unico caso que no coincide completo es `gl-003-huevos-incubadora-despues-medicacion`, marcado por Nestor como `needs_edit`. El `input_text` no menciona explicitamente que se trata de huevos de aves medicadas; esa lectura viene del `source_context`.
+
+Conclusion: el runtime por reglas ya cubre bien la tanda inicial, pero el MVP operativo necesitara pasar contexto conversacional o memoria junto con la entrada cuando la frase aislada no sea suficiente.
+
 ## Casos recomendados para promover primero
 
 Promover en tandas pequenas:

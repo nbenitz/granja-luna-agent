@@ -70,6 +70,15 @@ def stock_analysis_missing_data() -> list[str]:
     ]
 
 
+def report_missing_data() -> list[str]:
+    return [
+        "periodo exacto si no se usa la fecha actual",
+        "si incluir borradores o solo confirmados",
+        "si filtrar por lote, galpon o corral",
+        "formato de salida",
+    ]
+
+
 def sanitary_missing_data(intent: str) -> list[str]:
     if intent == "preguntar_datos_faltantes":
         return [
@@ -146,7 +155,29 @@ def workflow_candidate_missing_data(primary_domain: str) -> list[str]:
     ]
 
 
+def incubation_log_missing_data() -> list[str]:
+    return [
+        "fecha exacta de la accion o recoleccion",
+        "lote, galpon o grupo de origen",
+        "si corresponde a huevos ya cargados o solo seleccionados",
+        "estado sanitario del lote",
+        "observaciones de incubadora si aplica",
+    ]
+
+
+def forage_decision_missing_data() -> list[str]:
+    return [
+        "frecuencia de riego actual",
+        "temperatura o ambiente de la zona de forraje",
+        "dias desde la siembra en bandeja",
+        "cantidad de bandejas afectadas",
+        "tipo de drenaje o ubicacion actual",
+    ]
+
+
 def operational_decision_missing_data(primary_domain: str, risk_level: str) -> list[str]:
+    if primary_domain == "alimentacion":
+        return forage_decision_missing_data()
     if primary_domain == "reproductores":
         missing = [
             "objetivo principal: huevos, carne, reproductores, venta o genetica",
@@ -197,6 +228,33 @@ def stock_movement_missing_data(primary_domain: str, secondary_domains: list[str
             "si se registra como stock real o solo referencia",
             "ubicacion fisica en deposito",
         ]
+    if primary_domain == "tareas-mantenimiento":
+        return [
+            "fecha",
+            "responsable",
+            "cantidad exacta usada",
+            "stock restante",
+            "estado de la cama antes y despues",
+            "galpon o lote afectado",
+        ]
+    return []
+
+
+def task_missing_data(primary_domain: str) -> list[str]:
+    if primary_domain == "infraestructura":
+        return [
+            "materiales a utilizar",
+            "dimensiones exactas",
+            "ubicacion",
+            "fecha de inicio o fin",
+        ]
+    if primary_domain == "alimentacion":
+        return [
+            "cantidad de maiz o semilla por bandeja",
+            "cantidad de bandejas",
+            "lote destinatario",
+            "fecha de inicio",
+        ]
     return []
 
 
@@ -229,6 +287,19 @@ def build_suggested_tasks(text: str, classification: dict[str, Any]) -> list[dic
                 "dominios_relacionados": ["infraestructura", "stock-insumos"],
                 "riesgo": classification["risk_level"],
                 "proximo_paso": "confirmar si debe pasar a tareas como preparacion de bandeja FVH",
+                "requiere_confirmacion": classification["requires_confirmation"],
+            }
+        ]
+    infrastructure_title = build_infrastructure_task_title(normalized_text)
+    if infrastructure_title:
+        return [
+            {
+                "estado": "draft",
+                "titulo": infrastructure_title,
+                "dominio": "infraestructura",
+                "dominios_relacionados": ["tareas-mantenimiento"],
+                "riesgo": classification["risk_level"],
+                "proximo_paso": "confirmar si debe pasar a tareas de infraestructura",
                 "requiere_confirmacion": classification["requires_confirmation"],
             }
         ]
@@ -273,6 +344,14 @@ def build_forage_task_title(normalized_text: str) -> str | None:
     if not any(marker in normalized_text for marker in ("bandeja", "tupper", "agujeros", "perforar", "perforando")):
         return None
     return "Preparar bandeja perforada para forraje germinado"
+
+
+def build_infrastructure_task_title(normalized_text: str) -> str | None:
+    if "perchas" in normalized_text and "leghorn" in normalized_text:
+        return "Construir perchas isosceles para lote Leghorn"
+    if "perchas" in normalized_text:
+        return "Construir perchas"
+    return None
 
 
 def build_confirmation(classification: dict[str, Any], items: list[ParsedItem]) -> dict[str, Any]:

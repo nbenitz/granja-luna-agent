@@ -36,6 +36,11 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "suministrar",
         "indicaciones",
         "sanidad",
+        "sanitarios",
+        "desinfectar",
+        "desinfectar",
+        "desinfeccion",
+        "desinfección",
         "gentamicina",
         "bolo",
     ),
@@ -111,6 +116,8 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "incubaciones",
         "escalonado",
         "escalonada",
+        "clavo",
+        "olor",
     ),
     "infraestructura": (
         "galpon",
@@ -126,15 +133,33 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "travesanos",
         "travesaños",
         "construccion",
+        "construcción",
         "infraestructura",
         "listos",
+        "perchas",
+        "leghorn",
+        "triangulo",
+        "triángulo",
+        "isosceles",
+        "isósceles",
+        "drenaje",
+        "inclinacion",
+        "inclinación",
     ),
     "alimentacion": (
         "racion",
         "consumo",
         "forraje",
         "forrajes",
+        "fvh",
+        "hidroponico",
+        "hidropónico",
+        "riego",
+        "riegos",
+        "secando",
+        "secan",
         "bandeja",
+        "bandejas",
         "balanceado",
         "maiz",
         "alimento",
@@ -184,6 +209,9 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "plato",
         "comedero",
         "mantenimiento",
+        "cama",
+        "cambiamos",
+        "usamos",
         "agujeros",
         "perforando",
         "perforar",
@@ -191,6 +219,11 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
     "reportes": (
         "resumen",
         "informe",
+        "mostrame",
+        "mostrar",
+        "reporte",
+        "tratamientos",
+        "mes",
         "cuanto",
         "cuantos",
         "cuántos",
@@ -209,6 +242,9 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "costos",
         "presupuesto",
         "mercado",
+        "plata mia",
+        "plata mía",
+        "gastos",
     ),
 }
 
@@ -243,16 +279,26 @@ def build_domain_scores(matched_signals: dict[str, list[str]]) -> dict[str, int]
 
 
 def detect_intent(normalized_text: str, domains: list[str]) -> str:
+    if is_report_request(normalized_text, domains):
+        return "preparar_reporte"
     if is_stock_replenishment_question(normalized_text, domains):
         return "analizar_existencias_reposicion"
     if is_sanitary_inventory_update(normalized_text, domains):
         return "registrar_movimiento_stock_borrador"
+    if is_workflow_candidate(normalized_text, domains):
+        return "detectar_workflow_candidato"
+    if is_maintenance_stock_usage(normalized_text, domains):
+        return "registrar_movimiento_stock_borrador"
+    if is_forage_decision(normalized_text, domains):
+        return "analizar_decision_operativa"
     if is_forage_task(normalized_text, domains):
         return "crear_tarea_borrador"
     if is_egg_color_observation(normalized_text, domains):
         return "registrar_bitacora_borrador"
-    if is_workflow_candidate(normalized_text, domains):
-        return "detectar_workflow_candidato"
+    if is_incubation_log(normalized_text, domains):
+        return "registrar_bitacora_borrador"
+    if is_infrastructure_task(normalized_text, domains):
+        return "crear_tarea_borrador"
     if "sanidad" in domains:
         if is_sanitary_applied_event(normalized_text):
             return "registrar_evento_sanitario_borrador"
@@ -274,6 +320,14 @@ def detect_intent(normalized_text: str, domains: list[str]) -> str:
     if "reportes" in domains:
         return "preparar_reporte"
     return "registrar_bitacora_borrador"
+
+
+def is_report_request(normalized_text: str, domains: list[str]) -> bool:
+    report_markers = ("mostrame", "mostrar", "reporte", "informe", "resumen")
+    period_markers = ("este mes", "mes", "semana", "hoy")
+    if not any(marker in normalized_text for marker in report_markers):
+        return False
+    return "reportes" in domains or any(marker in normalized_text for marker in period_markers)
 
 
 def is_stock_replenishment_question(normalized_text: str, domains: list[str]) -> bool:
@@ -366,6 +420,26 @@ def is_sanitary_inventory_update(normalized_text: str, domains: list[str]) -> bo
     return any(marker in normalized_text for marker in inventory_markers)
 
 
+def is_maintenance_stock_usage(normalized_text: str, domains: list[str]) -> bool:
+    if not {"stock-insumos", "tareas-mantenimiento"}.issubset(set(domains)):
+        return False
+    maintenance_markers = ("cambiamos la cama", "cambiar la cama", "mantenimiento de cama", "usamos una bolsa")
+    stock_markers = ("cascarilla", "viruta", "cal")
+    return any(marker in normalized_text for marker in maintenance_markers) and any(
+        marker in normalized_text for marker in stock_markers
+    )
+
+
+def is_forage_decision(normalized_text: str, domains: list[str]) -> bool:
+    if "alimentacion" not in domains:
+        return False
+    forage_markers = ("forraje verde hidroponico", "forraje verde hidropónico", "fvh", "bandejas de forraje")
+    decision_markers = ("ciclos de riego", "secando", "se secan", "riego")
+    return any(marker in normalized_text for marker in forage_markers) and any(
+        marker in normalized_text for marker in decision_markers
+    )
+
+
 def is_forage_task(normalized_text: str, domains: list[str]) -> bool:
     if "alimentacion" not in domains:
         return False
@@ -384,6 +458,23 @@ def is_egg_color_observation(normalized_text: str, domains: list[str]) -> bool:
     return any(marker in normalized_text for marker in egg_markers) and any(
         marker in normalized_text for marker in color_markers
     )
+
+
+def is_incubation_log(normalized_text: str, domains: list[str]) -> bool:
+    if "incubacion" not in domains:
+        return False
+    incubator_markers = ("incubadora", "incubar", "incubacion", "incubación")
+    log_markers = ("anota", "anotá", "puse", "cargue", "cargué", "huevos")
+    return any(marker in normalized_text for marker in incubator_markers) and any(
+        marker in normalized_text for marker in log_markers
+    )
+
+
+def is_infrastructure_task(normalized_text: str, domains: list[str]) -> bool:
+    if "infraestructura" not in domains:
+        return False
+    task_markers = ("estoy armando", "armando", "construccion", "construcción", "perchas")
+    return any(marker in normalized_text for marker in task_markers)
 
 
 def is_workflow_candidate(normalized_text: str, domains: list[str]) -> bool:
@@ -460,12 +551,24 @@ def classify(text: str) -> dict[str, Any]:
     if intent == "registrar_movimiento_stock_borrador" and "sanidad" in domains and "stock-insumos" in domains:
         primary_domain = "stock-insumos"
         secondary_domains = [domain for domain in domains if domain != "stock-insumos"]
+    if intent == "registrar_movimiento_stock_borrador" and is_maintenance_stock_usage(normalized_text, domains):
+        primary_domain = "tareas-mantenimiento"
+        secondary_domains = [domain for domain in domains if domain != "tareas-mantenimiento"]
     if intent == "crear_tarea_borrador" and is_forage_task(normalized_text, domains):
         primary_domain = "alimentacion"
         secondary_domains = [domain for domain in domains if domain != "alimentacion"]
+    if intent == "crear_tarea_borrador" and is_infrastructure_task(normalized_text, domains):
+        primary_domain = "infraestructura"
+        secondary_domains = [domain for domain in domains if domain != "infraestructura"]
     if intent == "registrar_bitacora_borrador" and is_egg_color_observation(normalized_text, domains):
         primary_domain = "reproductores"
         secondary_domains = [domain for domain in domains if domain != "reproductores"]
+    if intent == "registrar_bitacora_borrador" and is_incubation_log(normalized_text, domains):
+        primary_domain = "incubacion"
+        secondary_domains = [domain for domain in domains if domain != "incubacion"]
+    if intent == "preparar_reporte":
+        primary_domain = "reportes"
+        secondary_domains = [domain for domain in domains if domain != "reportes"]
     risk_level = evaluate_risk(intent, domains, normalized_text)
     return {
         "intent": intent,
@@ -488,7 +591,7 @@ def choose_workflow_primary_domain(domains: list[str]) -> str:
 
 
 def choose_decision_primary_domain(domains: list[str]) -> str:
-    for preferred in ("infraestructura", "reproductores", "stock-insumos"):
+    for preferred in ("infraestructura", "reproductores", "alimentacion", "stock-insumos"):
         if preferred in domains:
             return preferred
     return domains[0] if domains else "otro"

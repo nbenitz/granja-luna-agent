@@ -53,6 +53,17 @@ La tercera calibracion agrego soporte inicial para:
 - restricciones de infraestructura por galpones;
 - workflows de ficha sanitaria para clientes.
 
+La cuarta calibracion completo la revision inicial de 24 casos y agrego soporte para:
+
+- reportes sanitarios por periodo;
+- bitacoras de incubacion;
+- tareas de infraestructura;
+- decisiones FVH por riego/secado;
+- mantenimiento de cama con consumo de insumos;
+- compras con precios hablados y casos mixtos con gasto personal.
+
+El caso restante que no coincide depende de contexto conversacional externo al texto de entrada, por lo que no conviene resolverlo con mas reglas locales.
+
 ## Regla
 
 El core puede analizar y proponer, pero no debe escribir archivos ni confirmar hechos operativos en modo `dry_run`.
