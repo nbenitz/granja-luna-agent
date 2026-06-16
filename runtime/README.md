@@ -25,6 +25,10 @@ runtime/
   contracts/
     granja-dry-run.schema.json
     ui-response.schema.json
+  examples/
+    dry-run-cases.json
+    imported-cases-pending-review.json
+    case-review-feedback.jsonl
   src/
     core/
       README.md
@@ -45,12 +49,25 @@ runtime/
 
 ```bash
 python3 runtime/src/cli/granja_dry_run.py "Compre 2 bolsas de maiz a 95000 cada una"
+python3 runtime/src/cli/granja_dry_run.py "Compre 2 bolsas de maiz a 95000 cada una" --format summary
+python3 runtime/src/cli/review_imported_cases.py --list
+python3 runtime/src/cli/review_imported_cases.py --limit 3
+python3 runtime/src/cli/review_imported_cases.py --summary
 python3 -m unittest runtime/tests/test_granja_dry_run.py
 ```
+
+## Ejemplos de evaluacion
+
+`runtime/examples/dry-run-cases.json` contiene casos versionados para probar el router con frases reales o realistas.
+
+`runtime/examples/imported-cases-pending-review.json` contiene casos recibidos desde asistentes externos. No se edita como fuente principal de feedback.
+
+`runtime/src/cli/review_imported_cases.py` permite revisarlos desde terminal y guarda las respuestas en `runtime/examples/case-review-feedback.jsonl`.
 
 ## Diagramas
 
 - `runtime/docs/granja-dry-run-flow.md`: diagrama Mermaid del flujo del CLI `dry_run`.
+- `runtime/docs/module-emergence.md`: como una entrada real puede revelar un modulo candidato.
 
 ## Regla central
 

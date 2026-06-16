@@ -50,6 +50,9 @@ Salida esperada:
 - Propuesta de tarea cuando la entrada parezca accion pendiente.
 - Salida JSON estable.
 - Respuesta de UI estructurada para renderizar revision y confirmacion.
+- Dataset de ejemplos para evaluar ruteo, riesgo y borradores esperados.
+- Bandeja de casos importados pendientes de curaduria para alimentar el aprendizaje del router.
+- Salida humana resumida con `--format summary`.
 - Pruebas unitarias basicas.
 
 ### Excluido
@@ -82,6 +85,7 @@ mensaje natural
 - La salida declara `mode: dry_run`.
 - La salida declara `side_effects: []`.
 - La salida incluye `ui_response` con componentes estructurados.
+- La clasificacion incluye `matched_signals`, `domain_scores` y `confidence`.
 - Toda compra o movimiento de stock requiere confirmacion.
 - Las pruebas unitarias pasan con `python3 -m unittest`.
 
@@ -102,3 +106,17 @@ Cuando el flujo sea util, evaluar:
 - LLM como extractor asistido;
 - MCP o A2A;
 - framework agentico solo si aparece una necesidad clara.
+
+## Casos de aprendizaje
+
+Los casos recibidos desde ChatGPT/Gemini quedan en `runtime/examples/imported-cases-pending-review.json`.
+
+No deben entrar todos al MVP como tests. La regla es curar tandas pequenas y promover solo casos claros a `runtime/examples/dry-run-cases.json`.
+
+Prioridad sugerida:
+
+- sanidad de alto riesgo como borrador con datos faltantes y confirmacion explicita;
+- incubacion como bitacora o decision operativa;
+- FVH/alimentacion como workflow candidato;
+- infraestructura como tarea/especificacion;
+- compras mixtas separando gastos de granja y gastos personales.

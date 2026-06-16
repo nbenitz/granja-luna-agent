@@ -1,0 +1,1516 @@
+{
+  "id": "import-2026-06-15-chatgpt-gemini",
+  "title": "User-provided Granja Luna learning cases from ChatGPT and Gemini",
+  "information_status": "pending_review",
+  "created_at": "2026-06-15",
+  "purpose": "Staging area for candidate learning cases. These cases are not operational records and are not yet regression tests.",
+  "import_policy": [
+    "Keep every imported case as pending review, draft, or inferred according to the source payload.",
+    "Do not mark purchases, stock, treatments, sales, or sanitary decisions as confirmed from this file.",
+    "Promote only curated, minimal cases into dry-run-cases.json.",
+    "Use high-risk sanitary cases to improve classification and confirmation behavior, not to give medical instructions."
+  ],
+  "source_summaries": [
+    {
+      "source": "chatgpt",
+      "provided_file": "chatgpt.md",
+      "json_blocks": 2,
+      "conversation_candidates": 16,
+      "synthetic_variants": 3
+    },
+    {
+      "source": "gemini",
+      "provided_file": "gemini.md",
+      "json_blocks": 2,
+      "conversation_candidates": 4,
+      "synthetic_variants": 1
+    }
+  ],
+  "conversation_candidates": [
+    {
+      "id": "gl-001-ivermectina-agua-26-aves",
+      "source": "chatgpt",
+      "source_context": "Conversacion reciente sobre aplicacion de ivermectina en agua a gallinas.",
+      "input_text": "Hola, le acabo de dar antiparasitario la ivermectina en su agua a mis gallinas. Incluso le di antes de comer. Bueno, ellos tenían luego comida en su comedero, pero todavía no comieron el desayuno formal porque les suele sobrar luego del día anterior. y ellas van a comer al despertarse y van comiendo lo que sobró del día anterior. pero les dejé un rato sin agua y les di la ivermectina. Le puse tres milímetros, o sea, tres mililitros, en dos litros de agua más o menos para 26 aves que son un poco pesadas. Quiero saber ahora si después de la ivermectina del antiparasitario tengo que tener algo en cuenta relacionado con su alimentación, más agua, si les doy, tengo que dar vitamina después o qué puedo hacer.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "registrar_evento_sanitario_borrador",
+        "candidate_intent": null,
+        "primary_domain": "sanidad",
+        "secondary_domains": [
+          "alimentacion",
+          "stock-insumos",
+          "reproductores"
+        ],
+        "risk_level": "critico",
+        "requires_confirmation": true,
+        "detected_data": {
+          "product": "ivermectina / IVERM Avicola",
+          "administration_route": "agua de bebida",
+          "dose_administered": {
+            "amount": 3,
+            "unit": "ml"
+          },
+          "water_volume": {
+            "amount": 2,
+            "unit": "litros"
+          },
+          "animal_count": 26,
+          "animal_description": "aves un poco pesadas",
+          "feeding_context": "tenian comida sobrante disponible, aun no desayuno formal",
+          "water_withholding": "se dejo un rato sin agua antes de administrar"
+        },
+        "missing_data": [
+          "fecha y hora exacta de administracion",
+          "lote o galpon afectado",
+          "peso promedio estimado por ave",
+          "peso total vivo estimado",
+          "producto exacto y concentracion",
+          "motivo del tratamiento",
+          "consumo real del agua medicada",
+          "si quedaron restos de agua medicada",
+          "si hay aves ponedoras y destino de huevos",
+          "indicacion veterinaria o etiqueta usada",
+          "observaciones posteriores"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "tratamiento_sanitario_pendiente",
+            "title": "Ivermectina en agua para grupo de 26 aves",
+            "status": "pending_confirmation"
+          }
+        ],
+        "should_not_do": [
+          "no registrar como tratamiento confirmado sin confirmacion humana",
+          "no asumir que la dosis fue correcta sin peso total vivo y etiqueta",
+          "no recomendar combinar con antibiotico o vitaminas sin evaluar contexto",
+          "no marcar huevos/carne como aptos sin revisar restricciones"
+        ]
+      },
+      "learning_notes": [
+        "Detectar cuando el usuario ya ejecuto una accion sanitaria y convertirla en borrador de evento, no en registro definitivo.",
+        "Extraer volumen de producto, volumen de agua y cantidad de aves aunque esten dichos de forma oral o imprecisa.",
+        "Subir riesgo a critico cuando hay medicacion ya administrada y posible impacto en salud animal."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "registro_sanitario_post_aplicacion",
+        "reason": "El sistema necesita registrar tratamientos ya aplicados y pedir datos faltantes para trazabilidad."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-002-gallinas-debiles-orden-tratamiento",
+      "source": "chatgpt",
+      "source_context": "Conversacion sobre gallinas debiles, flacas, con sintomas respiratorios y posible parasitosis.",
+      "input_text": "¿Qué me conviene darle primero a mis gallinas si están débiles? ¿un antiparasitario, el ivermectina que tengo? o darle las vitaminas, ¿viste que tengo el ivermectina, el antiparasitario que es de una sola aplicación un solo día. Luego tengo la vitamina que es el antibiótico vitaminado, porque muchas están engripadas. ellas están débiles y flacas. Probablemente tienen bichos parásitos porque suelen comer comida y suelen quedarse sus heces en su plato. Ahora voy a mejorar su plato para que no caguen encima. Entonces, ¿qué me recomiendas? Primero el antiparasitario y después el antibiótico vitaminado, ¿en qué orden me recomiendas dárselos?",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "analizar_decision_operativa",
+        "candidate_intent": null,
+        "primary_domain": "sanidad",
+        "secondary_domains": [
+          "alimentacion",
+          "tareas-mantenimiento",
+          "stock-insumos"
+        ],
+        "risk_level": "critico",
+        "requires_confirmation": true,
+        "detected_data": {
+          "symptoms": [
+            "debilidad",
+            "delgadez",
+            "sintomas respiratorios tipo gripe"
+          ],
+          "suspected_causes": [
+            "parasitos",
+            "contaminacion de comedero con heces"
+          ],
+          "available_products": [
+            "ivermectina",
+            "antibiotico vitaminado"
+          ],
+          "planned_infrastructure_action": "mejorar comedero/plato para evitar heces en alimento"
+        },
+        "missing_data": [
+          "cantidad de aves afectadas",
+          "lotes o galpones afectados",
+          "edad/peso aproximado",
+          "signos concretos: tos, moco, diarrea, decaimiento, mortalidad",
+          "temperatura/clima reciente",
+          "consumo de agua y alimento",
+          "producto exacto y etiqueta",
+          "si hay ponedoras y destino de huevos",
+          "diagnostico o indicacion veterinaria"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "evaluacion_sanitaria_pendiente",
+            "title": "Gallinas debiles con sospecha respiratoria y parasitaria",
+            "status": "pending_review"
+          },
+          {
+            "type": "tarea_mantenimiento",
+            "title": "Mejorar comedero para evitar contaminacion con heces",
+            "status": "draft"
+          }
+        ],
+        "should_not_do": [
+          "no indicar combinacion o secuencia de medicamentos como hecho seguro",
+          "no registrar tratamiento hasta que el usuario confirme producto, dosis y lote",
+          "no omitir advertencia veterinaria en aves debiles",
+          "no confundir recomendacion conversacional con diagnostico confirmado"
+        ]
+      },
+      "learning_notes": [
+        "Una entrada puede mezclar sanidad y mantenimiento.",
+        "El router debe detectar decision operativa de alto riesgo y no solo clasificar como consulta.",
+        "Cuando hay sintomas y medicamentos, pedir datos faltantes antes de proponer registro."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "triaje_sanitario_por_lote",
+        "reason": "Hace falta un flujo guiado para sintomas, lote, severidad, medicacion disponible y confirmacion veterinaria."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-003-huevos-incubadora-despues-medicacion",
+      "source": "chatgpt",
+      "source_context": "Conversacion sobre uso de huevos de aves medicadas para incubacion, no consumo.",
+      "input_text": "Quiero saber si en ese momento puedo usar su huevo para meter en la incubadora. Yo solo meto en la incubadora, no consumo.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "analizar_decision_operativa",
+        "candidate_intent": null,
+        "primary_domain": "incubacion",
+        "secondary_domains": [
+          "sanidad",
+          "reproductores",
+          "produccion-postura"
+        ],
+        "risk_level": "alto",
+        "requires_confirmation": true,
+        "detected_data": {
+          "egg_destination": "incubadora",
+          "not_for_human_consumption": true,
+          "context": "huevos de aves bajo tratamiento o cercanas a tratamiento"
+        },
+        "missing_data": [
+          "producto administrado",
+          "fecha y hora del tratamiento",
+          "lote o aves que pusieron los huevos",
+          "fecha de postura de los huevos",
+          "restricciones de etiqueta",
+          "si el tratamiento afecta fertilidad, embrion o nacimiento",
+          "criterio veterinario"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "decision_incubacion_pendiente",
+            "title": "Evaluar huevos de aves medicadas para incubadora",
+            "status": "pending_review"
+          }
+        ],
+        "should_not_do": [
+          "no registrar huevos como aptos para incubacion sin revisar producto y fecha",
+          "no asumir que no consumir elimina todos los riesgos",
+          "no mezclar huevos de lotes tratados y no tratados sin trazabilidad"
+        ]
+      },
+      "learning_notes": [
+        "Detectar que 'no consumo' cambia el riesgo sanitario humano, pero no elimina riesgo productivo/incubacion.",
+        "Pedir trazabilidad huevo-lote-tratamiento."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "validacion_huevos_para_incubacion_post_tratamiento",
+        "reason": "El sistema debe cruzar sanidad con incubacion antes de aceptar huevos fértiles."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-004-iverm-a-lote-con-ponedoras",
+      "source": "chatgpt",
+      "source_context": "Conversacion sobre aplicar IVERM Avicola a lotes donde algunas aves ponen huevos.",
+      "input_text": "Ese IVERM Avícola le puedo dar a mis barrados, que dos o tres son los que ponen huevo, el resto no pone huevo. De diez o quince gallinas solamente eso ponen huevo, el resto no. ¿Le puedo dar ivermectina a todas?",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "analizar_decision_operativa",
+        "candidate_intent": null,
+        "primary_domain": "sanidad",
+        "secondary_domains": [
+          "reproductores",
+          "incubacion",
+          "produccion-postura"
+        ],
+        "risk_level": "alto",
+        "requires_confirmation": true,
+        "detected_data": {
+          "product": "IVERM Avicola / ivermectina",
+          "target_group": "barrados",
+          "laying_hens_estimate": "2 o 3",
+          "group_size_estimate": "10 a 15 gallinas",
+          "question": "si puede aplicarse a todas"
+        },
+        "missing_data": [
+          "cantidad exacta de aves",
+          "peso promedio",
+          "producto exacto y etiqueta",
+          "dosis calculada",
+          "destino de huevos",
+          "si hay gallos en el grupo",
+          "motivo del tratamiento",
+          "fecha prevista",
+          "confirmacion veterinaria si hay dudas"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "tratamiento_sanitario_pendiente",
+            "title": "Evaluar IVERM para lote barrado con algunas ponedoras",
+            "status": "pending_confirmation"
+          }
+        ],
+        "should_not_do": [
+          "no registrar aplicacion sin confirmacion",
+          "no calcular dosis sin peso promedio",
+          "no asumir periodo de retiro sin revisar etiqueta visible",
+          "no ignorar que hay aves en postura"
+        ]
+      },
+      "learning_notes": [
+        "El sistema debe entender rangos imprecisos como '10 o 15' y marcar datos faltantes.",
+        "Cuando el usuario pregunta 'a todas', detectar alcance de lote y posible impacto en huevos."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "tratamiento_por_lote_con_ponedoras",
+        "reason": "Permite decidir tratamiento por lote y marcar restricciones de huevos."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-005-oxyclina-como-suministrar",
+      "source": "chatgpt",
+      "source_context": "Conversacion sobre indicaciones del producto Oxyclina/Oxitetraciclina vitaminada.",
+      "input_text": "¿Y tenés ahí las indicaciones del Oxyclina vitaminado? ¿Cómo suministrarles a las gallinas?",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "preguntar_datos_faltantes",
+        "candidate_intent": null,
+        "primary_domain": "sanidad",
+        "secondary_domains": [
+          "stock-insumos",
+          "alimentacion"
+        ],
+        "risk_level": "critico",
+        "requires_confirmation": true,
+        "detected_data": {
+          "product": "Oxyclina / Oxitetraciclina vitaminada",
+          "requested_action": "saber como suministrar a gallinas"
+        },
+        "missing_data": [
+          "foto o etiqueta completa del producto",
+          "principio activo y concentracion",
+          "cantidad de aves",
+          "peso/edad",
+          "lote afectado",
+          "sintomas",
+          "si son ponedoras",
+          "destino de huevos",
+          "duracion prevista",
+          "si ya recibieron otro medicamento",
+          "indicacion veterinaria"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "consulta_sanitaria_pendiente",
+            "title": "Revisar forma de administracion de Oxyclina vitaminada",
+            "status": "pending_review"
+          }
+        ],
+        "should_not_do": [
+          "no aplicar dosis sin validar etiqueta y contexto",
+          "no mezclar con ivermectina en el mismo bebedero sin indicacion veterinaria",
+          "no registrar tratamiento si solo se esta consultando",
+          "no omitir restricciones sobre huevos si el producto las indica"
+        ]
+      },
+      "learning_notes": [
+        "Preguntas de dosis deben ser clasificadas como riesgo alto o critico.",
+        "El sistema debe distinguir consulta de administracion vs registro de tratamiento."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "calculadora_y_validador_de_dosis_sanitaria",
+        "reason": "Necesita guiar con datos obligatorios y confirmar antes de aplicar."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-006-alta-producto-sanitario-comprado",
+      "source": "chatgpt",
+      "source_context": "Conversacion sobre registrar productos sanitarios comprados como Gentamicina, IVERM Avicola y OXITETRACICLINA-VIT.",
+      "input_text": "Quiero crear un subagente o archivo de sanidad e inventario para productos de sanidad, alimentos y demás. Registrá gentamicina, Iverm Avícola y su forma de administrar. También este otro producto que compré para darle.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "registrar_movimiento_stock_borrador",
+        "candidate_intent": "registrar_producto_sanitario_borrador",
+        "primary_domain": "stock-insumos",
+        "secondary_domains": [
+          "sanidad",
+          "otro"
+        ],
+        "risk_level": "alto",
+        "requires_confirmation": true,
+        "detected_data": {
+          "products_mentioned": [
+            "Gentamicina",
+            "Iverm Avicola",
+            "Oxitetraciclina-VIT / Oxyclina vitaminada"
+          ],
+          "action": "registrar productos sanitarios y forma de administracion",
+          "context": "inventario sanitario y conocimiento operativo"
+        },
+        "missing_data": [
+          "cantidad disponible de cada producto",
+          "unidad de medida",
+          "fecha de compra",
+          "proveedor",
+          "precio",
+          "vencimiento",
+          "lote del producto",
+          "foto o etiqueta",
+          "si se registra como stock real o solo referencia",
+          "ubicacion fisica en deposito"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "producto_sanitario",
+            "title": "Ficha sanitaria pendiente para productos comprados",
+            "status": "pending_review"
+          }
+        ],
+        "should_not_do": [
+          "no convertir descripcion del producto en stock confirmado sin cantidad y confirmacion",
+          "no guardar dosis como protocolo definitivo si viene solo de conversacion",
+          "no mezclar inventario real con referencia historica"
+        ]
+      },
+      "learning_notes": [
+        "Distinguir alta de producto, alta de stock y documentacion sanitaria.",
+        "Cuando el usuario dice 'compré este producto', faltan cantidad, precio y proveedor."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "inventario_sanitario_con_fichas_de_producto",
+        "reason": "Debe unir stock, etiqueta, fotos, restricciones y uso por lote."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-007-stock-alimentos-insumos-proyecto",
+      "source": "chatgpt",
+      "source_context": "Pedido de fuente/base para el proyecto Stock de Alimentos dentro de Gestion Granja Luna.",
+      "input_text": "Genera la fuente para este proyecto. El mismo formará parte del ecosistema de Gestión Granja Luna. Compartirá datos y flujos de tareas con otros proyectos como Compras. El nombre actual es Stock de Alimentos, pero queda pendiente trabajar en una nomenclatura. Tiene que trabajar sobre la existencia de productos alimenticios, vitaminas y otros productos como vinagre, ajo, cebolla, etc. También insumos o materiales para mantenimiento del galpón como viruta, cascarilla de arroz, cal, creolina. Se tiene que poder dar de alta y baja estos materiales. La forma de actualizar stock puede ser por compra, tarea de mantenimiento de cama, o inventario del depósito.",
+      "information_status": "draft",
+      "expected": {
+        "intent": "detectar_workflow_candidato",
+        "candidate_intent": "definir_modulo_operativo",
+        "primary_domain": "stock-insumos",
+        "secondary_domains": [
+          "compras",
+          "alimentacion",
+          "tareas-mantenimiento",
+          "infraestructura"
+        ],
+        "risk_level": "bajo",
+        "requires_confirmation": false,
+        "detected_data": {
+          "module_names_under_review": [
+            "Stock de Alimentos",
+            "Gestion de Alimentos - Granja Luna",
+            "Alimentos - Granja Luna",
+            "Inventario",
+            "Stock",
+            "Materiales",
+            "Materia prima"
+          ],
+          "items_scope": [
+            "alimentos",
+            "vitaminas",
+            "vinagre",
+            "ajo",
+            "cebolla",
+            "viruta",
+            "cascarilla de arroz",
+            "cal",
+            "creolina"
+          ],
+          "stock_update_sources": [
+            "compras",
+            "tareas de mantenimiento de cama",
+            "inventario de deposito"
+          ]
+        },
+        "missing_data": [
+          "nombre final del modulo",
+          "unidades de medida oficiales",
+          "categorias definitivas",
+          "si vitaminas/medicamentos van en stock general o sanitario",
+          "politica de stock minimo",
+          "quien confirma movimientos",
+          "estructura de depositos"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "modulo",
+            "title": "Stock e Insumos - Granja Luna",
+            "status": "draft"
+          }
+        ],
+        "should_not_do": [
+          "no crear stock real inicial sin inventario confirmado",
+          "no mezclar alimentos y medicamentos sin categorias claras",
+          "no asumir nomenclatura definitiva"
+        ]
+      },
+      "learning_notes": [
+        "Una entrada de diseño puede revelar varios workflows de datos.",
+        "El sistema debe separar definicion de modulo de registros operativos."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "stock_insumos_integrado",
+        "reason": "Flujo central para compras, alimentacion, sanidad y mantenimiento."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-008-bandeja-forraje-germinado",
+      "source": "chatgpt",
+      "source_context": "Conversacion sobre usar un tupper como bandeja para forraje de maiz.",
+      "input_text": "Tengo este tupper que tiene más o menos 7 centímetros de altura y unos 40, 35 centímetros de largo y 20 por ahí de ancho. Digamos 20 por 35, 40 por 7 centímetros de alto. Quiero usar como bandeja para hacer forrajes. Tengo maíz y quiero echar en él. Entiendo que tengo que hacer agujeros en el fondo. ¿Cómo puedo ir perforando los agujeros? ¿De qué medida, cada cuánto? ¿Solamente en el borde o completo? ¿Y cómo voy ubicando mi bandeja en una superficie para que el agua no se tranque abajo?",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "crear_tarea_borrador",
+        "candidate_intent": "planificar_forraje_germinado",
+        "primary_domain": "alimentacion",
+        "secondary_domains": [
+          "infraestructura",
+          "stock-insumos",
+          "tareas-mantenimiento"
+        ],
+        "risk_level": "bajo",
+        "requires_confirmation": false,
+        "detected_data": {
+          "container": "tupper / bandeja plastica",
+          "dimensions": {
+            "height_cm": 7,
+            "length_cm_estimate": "35-40",
+            "width_cm_estimate": 20
+          },
+          "seed": "maiz",
+          "goal": "hacer forraje germinado",
+          "concerns": [
+            "agujeros de drenaje",
+            "medida",
+            "espaciado",
+            "ubicacion para escurrido"
+          ]
+        },
+        "missing_data": [
+          "cantidad de maiz por bandeja",
+          "cantidad de bandejas",
+          "lote destinatario",
+          "frecuencia deseada de produccion",
+          "lugar donde se ubicaran",
+          "disponibilidad de agua y sombra",
+          "fecha de inicio"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "tarea",
+            "title": "Preparar bandeja perforada para forraje germinado",
+            "status": "draft"
+          }
+        ],
+        "should_not_do": [
+          "no descontar maiz de stock sin confirmar cantidad usada",
+          "no registrar produccion de forraje hasta que se inicie el proceso",
+          "no asumir destino del forraje"
+        ]
+      },
+      "learning_notes": [
+        "Detectar medidas aproximadas y convertirlas en datos estructurados con incertidumbre.",
+        "Una consulta tecnica puede crear tarea y workflow recurrente."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "forraje_germinado",
+        "reason": "Puede registrar remojo, siembra, riego, cosecha y consumo."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-009-cerco-vivo-mandioca",
+      "source": "chatgpt",
+      "source_context": "Idea conversada sobre cerco vivo o divisoria con ramas de mandioca.",
+      "input_text": "Idea para la granja: hacer un cerco vivo con ramas de mandioca enterradas unos 5 a 10 centímetros, atadas con hilo tipo arpillera a travesaños de bambú. Quiero evaluar si puede durar 1 o 2 años, qué grosor conviene y qué mantenimiento tendría como divisoria.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "detectar_workflow_candidato",
+        "candidate_intent": "registrar_idea_infraestructura",
+        "primary_domain": "infraestructura",
+        "secondary_domains": [
+          "tareas-mantenimiento",
+          "otro"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": false,
+        "detected_data": {
+          "idea": "cerco vivo con ramas de mandioca",
+          "bury_depth_cm": "5-10",
+          "materials": [
+            "ramas de mandioca",
+            "hilo tipo arpillera",
+            "travesaños de bambu"
+          ],
+          "expected_duration_question": "1-2 años",
+          "purpose": "divisoria"
+        },
+        "missing_data": [
+          "ubicacion del cerco",
+          "largo total",
+          "cantidad de ramas disponibles",
+          "tipo de animales que debe contener o separar",
+          "riesgo de escape/depredadores",
+          "fecha prevista de instalacion",
+          "responsable"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "idea_infraestructura",
+            "title": "Cerco vivo con mandioca",
+            "status": "pending_review"
+          }
+        ],
+        "should_not_do": [
+          "no convertir idea en tarea confirmada sin ubicacion ni fecha",
+          "no asumir que sirve como cerco de seguridad para aves",
+          "no descontar materiales sin confirmar uso"
+        ]
+      },
+      "learning_notes": [
+        "Registrar ideas sin convertirlas en operacion ejecutada.",
+        "Separar infraestructura experimental de tareas reales."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "ideas_infraestructura_granja",
+        "reason": "Permite guardar ideas, evaluarlas y luego convertirlas en tareas."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-010-versus-rhode-brahma-sussex",
+      "source": "chatgpt",
+      "source_context": "Conversacion sobre comparar razas y conveniencia para criadero.",
+      "input_text": "Hola, quiero que me hagas una comparativa entre la gallina de la raza Rhode Island Red y la Brahma Sussex Light, el blanco. Es una comparativa, digamos, un versus y qué sale, por ejemplo, de los cruces por ahí, si es que me conviene mantener o adquirir esa raza como criadero de animales o quizás no valga tanto la pena.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "analizar_decision_operativa",
+        "candidate_intent": null,
+        "primary_domain": "reproductores",
+        "secondary_domains": [
+          "finanzas",
+          "infraestructura",
+          "ventas"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": false,
+        "detected_data": {
+          "breeds_compared": [
+            "Rhode Island Red",
+            "Brahma",
+            "Sussex Light"
+          ],
+          "decision": "si conviene mantener o adquirir raza para criadero",
+          "interest": "cruces y valor operativo"
+        },
+        "missing_data": [
+          "objetivo principal: huevos, carne, reproductores, venta de pollitos o estetica",
+          "espacio disponible",
+          "costo de adquisicion",
+          "cantidad de aves actuales por raza",
+          "demanda de mercado",
+          "capacidad de separar lineas",
+          "presupuesto"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "analisis_decision",
+            "title": "Comparativa Rhode Island Red vs Brahma/Sussex Light",
+            "status": "draft"
+          }
+        ],
+        "should_not_do": [
+          "no registrar compra o descarte de raza sin confirmacion",
+          "no asumir objetivo productivo unico",
+          "no mezclar razas en plan genetico sin definir objetivo"
+        ]
+      },
+      "learning_notes": [
+        "Comparativas de razas son decisiones operativas, no registros.",
+        "El router debe vincular reproductores con finanzas e infraestructura."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "evaluacion_de_razas_y_cruzas",
+        "reason": "El sistema podria comparar razas segun objetivo, espacio, mercado y costo."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-011-barrado-vs-sussex-doble-proposito",
+      "source": "chatgpt",
+      "source_context": "Conversacion sobre doble proposito con carne y comparativa Plymouth Rock barrado vs Sussex Light.",
+      "input_text": "En cuanto a doble propósito con carne, ¿qué tal sería entonces si hacemos un versus entre el Plymouth Rock barrado y la Sussex Light?",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "analizar_decision_operativa",
+        "candidate_intent": null,
+        "primary_domain": "reproductores",
+        "secondary_domains": [
+          "ventas",
+          "finanzas",
+          "infraestructura"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": false,
+        "detected_data": {
+          "breeds_compared": [
+            "Plymouth Rock barrado",
+            "Sussex Light"
+          ],
+          "goal": "doble proposito con carne"
+        },
+        "missing_data": [
+          "peso esperado o mercado objetivo",
+          "prioridad entre postura y carne",
+          "cantidad de aves disponibles",
+          "edad de lotes",
+          "espacio para separar reproductores",
+          "si se busca venta de pollitos o consumo/venta de carne"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "analisis_decision",
+            "title": "Plymouth Rock barrado vs Sussex Light para doble proposito",
+            "status": "draft"
+          }
+        ],
+        "should_not_do": [
+          "no cambiar plan de reproductores sin confirmar objetivo",
+          "no asumir que la mejor raza es la misma para postura, carne y venta"
+        ]
+      },
+      "learning_notes": [
+        "Detectar cuando el usuario redefine el objetivo productivo durante la conversacion.",
+        "Mantener la decision como borrador hasta confirmar estrategia."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "matriz_decision_reproductores",
+        "reason": "Comparar razas por postura, carne, rusticidad, mercado y espacio."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-012-plan-black-star-rhode-barrados",
+      "source": "chatgpt",
+      "source_context": "Contexto previo sobre objetivo de producir Black Star usando Rhode Island y barrados.",
+      "input_text": "Quiero avanzar con el plan Black Star: usar Rhode Island con barrados, mantener la línea pura barrada separada, incubar escalonado y retirar gallos excedentes. La meta a futuro sería llegar a unas 500 Black Star.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "analizar_decision_operativa",
+        "candidate_intent": "planificar_programa_reproductores",
+        "primary_domain": "reproductores",
+        "secondary_domains": [
+          "incubacion",
+          "infraestructura",
+          "ventas",
+          "finanzas"
+        ],
+        "risk_level": "alto",
+        "requires_confirmation": true,
+        "detected_data": {
+          "goal": "producir Black Star",
+          "crossing_strategy": "Rhode Island + barrados",
+          "constraints": [
+            "mantener linea pura barrada separada",
+            "incubacion escalonada",
+            "retirar gallos excedentes"
+          ],
+          "future_target": "500 Black Star"
+        },
+        "missing_data": [
+          "cantidad actual de Rhode Island",
+          "cantidad actual de barrados",
+          "sexo y edad de reproductores",
+          "corrales disponibles",
+          "capacidad real de incubadora",
+          "calendario de incubaciones",
+          "mercado o destino de hembras y machos",
+          "costos de alimentacion",
+          "criterios de seleccion"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "plan_reproductores",
+            "title": "Plan Black Star por etapas",
+            "status": "pending_review"
+          }
+        ],
+        "should_not_do": [
+          "no registrar apareamientos como ejecutados sin confirmacion",
+          "no mover aves o retirar gallos sin tarea confirmada",
+          "no asumir capacidad real de galpones sin actualizar infraestructura"
+        ]
+      },
+      "learning_notes": [
+        "Objetivos grandes deben convertirse en plan por etapas y no en accion inmediata.",
+        "Cruzas afectan reproductores, incubacion, infraestructura, costos y ventas."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "programa_genetico_black_star",
+        "reason": "Necesita controlar lotes, cruces, incubaciones, seleccion y resultados."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-013-color-huevos-identificacion",
+      "source": "chatgpt",
+      "source_context": "Conversacion con imagen/audio sobre colores de huevos y posible relacion con raza.",
+      "input_text": "Tengo muchos huevos acá y quiero mostrarte los colores de algunos. No sé si se puede, por su color se puede saber más o menos su raza o algo así. Algunos son un poco más verdosos, estos son un poco más celestes, estos más azulados. Quiero saber si por el color de huevo se puede saber más o menos de qué raza son o qué puedo saber sobre la gallina que puso el huevo.",
+      "information_status": "inferred",
+      "expected": {
+        "intent": "registrar_bitacora_borrador",
+        "candidate_intent": "clasificar_huevos_por_color",
+        "primary_domain": "reproductores",
+        "secondary_domains": [
+          "produccion-postura",
+          "incubacion"
+        ],
+        "risk_level": "bajo",
+        "requires_confirmation": false,
+        "detected_data": {
+          "egg_colors_observed": [
+            "verdoso",
+            "celeste",
+            "azulado"
+          ],
+          "question": "si el color permite inferir raza o gallina",
+          "possible_use": "identificar origen de huevos"
+        },
+        "missing_data": [
+          "lote o galpon de origen",
+          "gallinas posibles",
+          "fecha de recoleccion",
+          "cantidad por color",
+          "si iran a incubacion",
+          "registro fotografico estandarizado"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "observacion_postura",
+            "title": "Huevos verdosos/celestes/azulados observados",
+            "status": "draft"
+          }
+        ],
+        "should_not_do": [
+          "no asignar raza exacta solo por color",
+          "no registrar origen de huevo como confirmado sin trazabilidad",
+          "no usar inferencia como dato genetico firme"
+        ]
+      },
+      "learning_notes": [
+        "El sistema debe diferenciar observacion visual de identificacion confirmada.",
+        "Puede crear bitacora de postura sin afirmar origen genetico."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "trazabilidad_huevos_por_lote_color",
+        "reason": "Ayudaria a asociar huevos, gallinas, lotes y destino de incubacion."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-014-falta-galpones-criadero-versatil",
+      "source": "chatgpt",
+      "source_context": "Conversacion sobre que aun no conviene un criadero versatil porque la infraestructura no esta lista.",
+      "input_text": "De momento, no, criadero versátil no me viene bien porque todavía estoy en fase de crecimiento y ni siquiera tengo todavía listos los galpones para todos los que ya tengo.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "analizar_decision_operativa",
+        "candidate_intent": null,
+        "primary_domain": "infraestructura",
+        "secondary_domains": [
+          "reproductores",
+          "finanzas",
+          "tareas-mantenimiento"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": false,
+        "detected_data": {
+          "decision_context": "posponer criadero versatil",
+          "constraint": "galpones no listos para todos los animales actuales",
+          "stage": "fase de crecimiento"
+        },
+        "missing_data": [
+          "cantidad actual por galpon",
+          "galpones disponibles",
+          "galpones en construccion",
+          "capacidad por galpon",
+          "prioridad de lotes",
+          "fecha estimada de terminacion",
+          "presupuesto"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "decision_operativa",
+            "title": "Posponer criadero versatil hasta completar galpones",
+            "status": "pending_review"
+          }
+        ],
+        "should_not_do": [
+          "no recomendar adquirir nuevas razas sin validar infraestructura",
+          "no crear plan de expansion que ignore capacidad actual"
+        ]
+      },
+      "learning_notes": [
+        "Las decisiones de compra/reproductores deben consultar infraestructura disponible.",
+        "Detectar restricciones estrategicas expresadas en lenguaje natural."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "capacidad_galpones_y_plan_expansion",
+        "reason": "Cruza cantidad de aves, galpones, fases de crecimiento y compras futuras."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-015-referencias-sanitarias-para-clientes",
+      "source": "chatgpt",
+      "source_context": "Conversacion sobre gestionar fotos/referencias de medicamentos para compartir con clientes al vender pollitos.",
+      "input_text": "Quiero gestión de fotos o referencias de medicamentos para compartir con clientes al vender pollitos, para poder decir qué producto les doy o qué bolo les doy.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "detectar_workflow_candidato",
+        "candidate_intent": "preparar_ficha_sanitaria_para_cliente",
+        "primary_domain": "ventas",
+        "secondary_domains": [
+          "sanidad",
+          "stock-insumos",
+          "otro"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": true,
+        "detected_data": {
+          "need": "fotos o referencias de medicamentos",
+          "use_case": "compartir con clientes al vender pollitos",
+          "related_products": "medicamentos usados o recomendados"
+        },
+        "missing_data": [
+          "que informacion se puede compartir",
+          "productos exactos",
+          "lotes de pollitos vendidos",
+          "tratamientos reales aplicados",
+          "si es recomendacion o historial",
+          "advertencias legales/veterinarias",
+          "formato de ficha para cliente"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "workflow",
+            "title": "Ficha sanitaria para venta de pollitos",
+            "status": "draft"
+          }
+        ],
+        "should_not_do": [
+          "no afirmar tratamientos aplicados si no estan registrados",
+          "no dar instrucciones veterinarias al cliente como garantia",
+          "no compartir datos sensibles o engañosos",
+          "no confundir ficha comercial con receta veterinaria"
+        ]
+      },
+      "learning_notes": [
+        "Ventas puede depender de sanidad y trazabilidad.",
+        "El sistema debe distinguir historial sanitario real, recomendacion y material informativo."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "ficha_cliente_pollitos",
+        "reason": "Al vender pollitos podria generarse una ficha con origen, edad, cuidados, tratamientos registrados y advertencias."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-016-reporte-tratamientos-mes",
+      "source": "chatgpt",
+      "source_context": "Ejemplo recurrente del diseño del sistema para reportes sanitarios.",
+      "input_text": "Mostrame qué tratamientos sanitarios hice este mes.",
+      "information_status": "draft",
+      "expected": {
+        "intent": "preparar_reporte",
+        "candidate_intent": null,
+        "primary_domain": "reportes",
+        "secondary_domains": [
+          "sanidad"
+        ],
+        "risk_level": "bajo",
+        "requires_confirmation": false,
+        "detected_data": {
+          "report_type": "tratamientos sanitarios",
+          "period": "este mes"
+        },
+        "missing_data": [
+          "mes exacto si no se usa fecha actual del sistema",
+          "si incluir borradores o solo confirmados",
+          "si filtrar por lote/galpon",
+          "formato de salida"
+        ],
+        "suggested_drafts": [
+          {
+            "type": "reporte",
+            "title": "Tratamientos sanitarios del mes",
+            "status": "draft"
+          }
+        ],
+        "should_not_do": [
+          "no inventar tratamientos si no hay registros",
+          "no incluir borradores como tratamientos confirmados",
+          "no ocultar registros con restricciones de huevos/carne"
+        ]
+      },
+      "learning_notes": [
+        "Reportes deben distinguir confirmed, pending_review y draft.",
+        "La palabra 'este mes' debe resolverse con fecha local del sistema."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "reportes_sanitarios",
+        "reason": "Permite auditar tratamientos por periodo, lote y producto."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-real-001",
+      "source": "gemini",
+      "source_context": "Historial de chat sobre esquemas de salud aviar",
+      "input_text": "Le estoy dando Oximed a las aves. Tené en cuenta que la oxitetraciclina es un antibiótico, no es una vacuna para fortalecer el sistema inmunológico.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "registrar_evento_sanitario_borrador",
+        "candidate_intent": null,
+        "primary_domain": "sanidad",
+        "secondary_domains": [
+          "stock-insumos"
+        ],
+        "risk_level": "alto",
+        "requires_confirmation": true,
+        "detected_data": {
+          "items": [
+            {
+              "producto": "Oximed",
+              "tipo": "antibiótico",
+              "principio_activo": "oxitetraciclina"
+            }
+          ]
+        },
+        "missing_data": [
+          "cantidad administrada",
+          "lote o aves específicas tratadas",
+          "duración del tratamiento",
+          "período de retiro de huevos/carne"
+        ],
+        "suggested_drafts": [
+          "Borrador de evento sanitario: Administración de Oximed."
+        ],
+        "should_not_do": [
+          "no registrar como hecho confirmado sin validación de dosis",
+          "no clasificar como vacunación"
+        ]
+      },
+      "learning_notes": [
+        "El router debe aprender a distinguir estrictamente entre antibióticos y vacunas.",
+        "Cualquier mención de antibióticos eleva el riesgo a 'alto' por implicancias en bioseguridad y consumo."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "Protocolo de Tratamiento con Antibióticos",
+        "reason": "Requiere seguimiento de días de administración y cálculo de período de retiro."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-real-002",
+      "source": "gemini",
+      "source_context": "Historial de chat sobre ajustes y carga de la incubadora",
+      "input_text": "Puse clavo de olor en la incubadora. Mi objetivo no es tanto aromatizar, sino desinfectar un poco el ambiente adentro.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "registrar_bitacora_borrador",
+        "candidate_intent": null,
+        "primary_domain": "incubacion",
+        "secondary_domains": [
+          "sanidad"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": true,
+        "detected_data": {
+          "items": [
+            {
+              "accion": "colocación de clavo de olor",
+              "ubicacion": "incubadora",
+              "proposito": "desinfección ambiental"
+            }
+          ]
+        },
+        "missing_data": [
+          "fecha exacta de la acción",
+          "impacto esperado en humedad/temperatura (si lo hay)",
+          "lote de huevos actual en la máquina"
+        ],
+        "suggested_drafts": [
+          "Nota en bitácora de incubación: Sanitización ambiental con clavo de olor."
+        ],
+        "should_not_do": [
+          "no modificar parámetros de temperatura/humedad sin instrucción expresa"
+        ]
+      },
+      "learning_notes": [
+        "El agente debe capturar el 'por qué' de la acción (sanidad, no estética) para el contexto operativo de la granja."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": false,
+        "name": null,
+        "reason": null
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-real-003",
+      "source": "gemini",
+      "source_context": "Historial de chat sobre construcción y diseño de galpones",
+      "input_text": "Estoy armando las perchas para las Leghorn. No quiero tres lados iguales, el diseño es de un triángulo isósceles. Y acordate que la inclinación del drenaje es hacia afuera, no en V.",
+      "information_status": "draft",
+      "expected": {
+        "intent": "crear_tarea_borrador",
+        "candidate_intent": "registrar_especificacion_infraestructura",
+        "primary_domain": "infraestructura",
+        "secondary_domains": [
+          "tareas-mantenimiento"
+        ],
+        "risk_level": "bajo",
+        "requires_confirmation": false,
+        "detected_data": {
+          "items": [
+            {
+              "elemento": "perchas",
+              "raza_destino": "Leghorn",
+              "forma_geometrica": "triángulo isósceles",
+              "drenaje": "inclinación hacia afuera"
+            }
+          ]
+        },
+        "missing_data": [
+          "materiales a utilizar",
+          "dimensiones exactas (base, altura)",
+          "fecha de inicio/fin de la construcción"
+        ],
+        "suggested_drafts": [
+          "Borrador de tarea: Construcción de perchas isósceles para lote Leghorn."
+        ],
+        "should_not_do": [
+          "no agendar como tarea finalizada"
+        ]
+      },
+      "learning_notes": [
+        "El sistema debe capturar correcciones geométricas y espaciales exactas, fundamentales para los módulos de construcción de Granja Luna."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "Gestión de Proyectos de Infraestructura",
+        "reason": "Detecta especificaciones técnicas de planos/diseños que necesitan seguimiento de obra."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    },
+    {
+      "id": "gl-real-004",
+      "source": "gemini",
+      "source_context": "Historial de chat sobre alternativas de alimentación y forraje",
+      "input_text": "Ya cargué las bandejas de forraje verde hidropónico con maíz. Hay que ver bien el tema de los ciclos de riego porque me parece que se están secando muy rápido.",
+      "information_status": "pending_review",
+      "expected": {
+        "intent": "analizar_decision_operativa",
+        "candidate_intent": "detectar_workflow_candidato",
+        "primary_domain": "alimentacion",
+        "secondary_domains": [
+          "tareas-mantenimiento"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": false,
+        "detected_data": {
+          "items": [
+            {
+              "sistema": "FVH",
+              "semilla": "maíz",
+              "estado_observado": "secado rápido"
+            }
+          ]
+        },
+        "missing_data": [
+          "frecuencia de riego actual",
+          "temperatura ambiental de la zona de forraje",
+          "días desde la siembra en bandeja"
+        ],
+        "suggested_drafts": [
+          "Alerta de mantenimiento: Revisar frecuencia de riego en sistema FVH."
+        ],
+        "should_not_do": [
+          "no alterar inventario de maíz sin confirmar cuántos kilos se usaron para las bandejas"
+        ]
+      },
+      "learning_notes": [
+        "Ambigüedad: Expresa un problema operativo ('se secan') sin dar el dato del ciclo actual. El agente debe reaccionar preguntando los datos faltantes para calcular la solución."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": true,
+        "name": "Automatización/Alertas de FVH",
+        "reason": "La hidroponía requiere cronogramas estrictos; el agente puede crear un workflow de recordatorios de riego."
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "conversation_candidate"
+    }
+  ],
+  "synthetic_variants": [
+    {
+      "id": "sint-001-compra-clara-maiz",
+      "input_text": "Anotá que compré dos bolsas de maíz a 90 mil cada una.",
+      "information_status": "draft",
+      "expected_intent": "registrar_compra",
+      "primary_domain": "compras",
+      "secondary_domains": [
+        "stock-insumos",
+        "alimentacion",
+        "finanzas"
+      ],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "missing_data": [
+        "fecha real",
+        "proveedor",
+        "forma de pago",
+        "comprobante",
+        "confirmacion de impacto en stock"
+      ],
+      "source": "chatgpt",
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "synthetic_variant",
+      "expected": {
+        "intent": "registrar_compra",
+        "candidate_intent": null,
+        "primary_domain": "compras",
+        "secondary_domains": [
+          "stock-insumos",
+          "alimentacion",
+          "finanzas"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": true,
+        "detected_data": {},
+        "missing_data": [
+          "fecha real",
+          "proveedor",
+          "forma de pago",
+          "comprobante",
+          "confirmacion de impacto en stock"
+        ],
+        "suggested_drafts": [],
+        "should_not_do": [
+          "no registrar como hecho confirmado sin confirmacion"
+        ]
+      },
+      "normalization_notes": [
+        "Source provided a compact synthetic format; expected fields were normalized for review."
+      ]
+    },
+    {
+      "id": "sint-002-mantenimiento-cama",
+      "input_text": "Registrá que cambiamos la cama del galpón de Rhode Island y usamos una bolsa de cascarilla.",
+      "information_status": "draft",
+      "expected_intent": "registrar_movimiento_stock_borrador",
+      "primary_domain": "tareas-mantenimiento",
+      "secondary_domains": [
+        "stock-insumos",
+        "infraestructura"
+      ],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "missing_data": [
+        "fecha",
+        "responsable",
+        "cantidad exacta usada",
+        "stock restante",
+        "estado de la cama antes/despues"
+      ],
+      "source": "chatgpt",
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "synthetic_variant",
+      "expected": {
+        "intent": "registrar_movimiento_stock_borrador",
+        "candidate_intent": null,
+        "primary_domain": "tareas-mantenimiento",
+        "secondary_domains": [
+          "stock-insumos",
+          "infraestructura"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": true,
+        "detected_data": {},
+        "missing_data": [
+          "fecha",
+          "responsable",
+          "cantidad exacta usada",
+          "stock restante",
+          "estado de la cama antes/despues"
+        ],
+        "suggested_drafts": [],
+        "should_not_do": [
+          "no registrar como hecho confirmado sin confirmacion"
+        ]
+      },
+      "normalization_notes": [
+        "Source provided a compact synthetic format; expected fields were normalized for review."
+      ]
+    },
+    {
+      "id": "sint-003-incubacion-simple",
+      "input_text": "Anotá 12 huevos de barrados para incubadora.",
+      "information_status": "draft",
+      "expected_intent": "registrar_bitacora_borrador",
+      "primary_domain": "incubacion",
+      "secondary_domains": [
+        "reproductores",
+        "produccion-postura"
+      ],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "missing_data": [
+        "fecha de recoleccion",
+        "fecha de carga",
+        "lote exacto",
+        "gallo/reproductor si aplica",
+        "estado sanitario del lote"
+      ],
+      "source": "chatgpt",
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "synthetic_variant",
+      "expected": {
+        "intent": "registrar_bitacora_borrador",
+        "candidate_intent": null,
+        "primary_domain": "incubacion",
+        "secondary_domains": [
+          "reproductores",
+          "produccion-postura"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": true,
+        "detected_data": {},
+        "missing_data": [
+          "fecha de recoleccion",
+          "fecha de carga",
+          "lote exacto",
+          "gallo/reproductor si aplica",
+          "estado sanitario del lote"
+        ],
+        "suggested_drafts": [],
+        "should_not_do": [
+          "no registrar como hecho confirmado sin confirmacion"
+        ]
+      },
+      "normalization_notes": [
+        "Source provided a compact synthetic format; expected fields were normalized for review."
+      ]
+    },
+    {
+      "id": "gl-sintetico-001",
+      "source": "synthetic",
+      "source_context": "Simulación de nota de voz de compras cruzadas",
+      "input_text": "Che, vengo del agroveterinario. Compré dos bolsas de iniciador para los pollitos nuevos, salieron 110.000 cada una. También compré un kilo de yerba y unos yuyos para el tereré con plata mía, así que eso no lo anotes en los gastos de la granja. Ah, y fijate que me dijeron que el maíz en grano sube la semana que viene.",
+      "information_status": "draft",
+      "expected": {
+        "intent": "registrar_compra",
+        "candidate_intent": null,
+        "primary_domain": "compras",
+        "secondary_domains": [
+          "finanzas",
+          "stock-insumos"
+        ],
+        "risk_level": "medio",
+        "requires_confirmation": true,
+        "detected_data": {
+          "items": [
+            {
+              "producto": "balanceado iniciador",
+              "cantidad": 2,
+              "unidad": "bolsa",
+              "precio_unitario": 110000
+            },
+            {
+              "alerta_mercado": "maíz en grano con tendencia al alza"
+            }
+          ]
+        },
+        "missing_data": [
+          "proveedor",
+          "método de pago utilizado",
+          "fecha del comprobante"
+        ],
+        "suggested_drafts": [
+          "Borrador de compra: 2 bolsas iniciador a 220.000 total."
+        ],
+        "should_not_do": [
+          "no registrar la compra de yerba/yuyos en el ERP de la granja (aislamiento de finanzas personales)"
+        ]
+      },
+      "learning_notes": [
+        "El modelo debe aprender a ignorar datos explícitamente marcados como 'no registrar' o 'plata mía', aislando lo personal de la empresa."
+      ],
+      "module_or_workflow_candidate": {
+        "is_candidate": false,
+        "name": null,
+        "reason": null
+      },
+      "import_status": "pending_human_review",
+      "import_notes": [
+        "Imported from user-provided assistant output for learning/curation.",
+        "Do not treat as confirmed operational fact."
+      ],
+      "case_kind": "synthetic_variant"
+    }
+  ]
+}
