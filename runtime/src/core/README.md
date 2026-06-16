@@ -38,6 +38,13 @@ La primera calibracion con feedback humano agrego soporte inicial para:
 - datos faltantes sanitarios por tipo de intencion;
 - tarea derivada cuando una consulta sanitaria revela mantenimiento de comederos/platos.
 
+La segunda calibracion agrego soporte inicial para:
+
+- diseno de modulos o workflows candidatos;
+- ideas de infraestructura que no deben convertirse automaticamente en tareas;
+- comparativas y planes de reproductores como decisiones operativas;
+- datos faltantes para decisiones de reproductores e infraestructura.
+
 ## Regla
 
 El core puede analizar y proponer, pero no debe escribir archivos ni confirmar hechos operativos en modo `dry_run`.

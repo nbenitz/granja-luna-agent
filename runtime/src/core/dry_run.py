@@ -11,9 +11,11 @@ from core.builders import (
     build_stock_movements,
     build_suggested_tasks,
     build_ui_response,
+    operational_decision_missing_data,
     purchase_missing_data,
     sanitary_missing_data,
     stock_analysis_missing_data,
+    workflow_candidate_missing_data,
 )
 from core.classifier import classify
 from core.parsing import parse_items, parse_stock_observations
@@ -34,6 +36,13 @@ def build_dry_run(text: str, today: str | None = None) -> dict[str, Any]:
         missing_data = stock_analysis_missing_data()
     elif classification["primary_domain"] == "sanidad":
         missing_data = sanitary_missing_data(classification["intent"])
+    elif classification["intent"] == "detectar_workflow_candidato":
+        missing_data = workflow_candidate_missing_data(classification["primary_domain"])
+    elif classification["intent"] == "analizar_decision_operativa":
+        missing_data = operational_decision_missing_data(
+            classification["primary_domain"],
+            classification["risk_level"],
+        )
     else:
         missing_data = []
     purchase = build_purchase_draft(items, today)

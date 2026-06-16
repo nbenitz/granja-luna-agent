@@ -108,6 +108,69 @@ def sanitary_missing_data(intent: str) -> list[str]:
     ]
 
 
+def workflow_candidate_missing_data(primary_domain: str) -> list[str]:
+    if primary_domain == "stock-insumos":
+        return [
+            "nombre final del modulo",
+            "unidades de medida oficiales",
+            "categorias definitivas de insumos",
+            "si vitaminas y medicamentos van en stock general o sanitario",
+            "politica de stock minimo",
+            "quien confirma movimientos",
+            "estructura de depositos",
+        ]
+    if primary_domain == "infraestructura":
+        return [
+            "ubicacion exacta",
+            "largo total o alcance",
+            "materiales disponibles",
+            "tipo de animales que debe contener o separar",
+            "riesgo de escape o depredadores",
+            "fecha prevista",
+            "responsable",
+        ]
+    return [
+        "objetivo del workflow",
+        "datos necesarios",
+        "criterio de confirmacion",
+    ]
+
+
+def operational_decision_missing_data(primary_domain: str, risk_level: str) -> list[str]:
+    if primary_domain == "reproductores":
+        missing = [
+            "objetivo principal: huevos, carne, reproductores, venta o genetica",
+            "cantidad actual de aves por raza o linea",
+            "sexo y edad de reproductores disponibles",
+            "espacio o corrales disponibles",
+            "capacidad de separar lineas",
+            "demanda de mercado o destino de produccion",
+            "presupuesto y costo de alimentacion",
+        ]
+        if risk_level == "alto":
+            missing.extend(
+                [
+                    "capacidad real de incubadora",
+                    "calendario de incubaciones",
+                    "criterios de seleccion y descarte",
+                ]
+            )
+        return missing
+    if primary_domain == "infraestructura":
+        return [
+            "ubicacion",
+            "materiales",
+            "impacto operativo",
+            "fecha tentativa",
+            "responsable",
+        ]
+    return [
+        "objetivo de la decision",
+        "opciones disponibles",
+        "datos faltantes para comparar",
+    ]
+
+
 def build_log_entry(text: str, classification: dict[str, Any], today: str) -> dict[str, Any]:
     return {
         "estado": "draft",
@@ -125,6 +188,8 @@ def build_suggested_tasks(text: str, classification: dict[str, Any]) -> list[dic
     derived_task = build_comedero_task(normalized_text, classification)
     if derived_task:
         return [derived_task]
+    if classification["intent"] == "detectar_workflow_candidato":
+        return []
     task_signals = ("revisar", "limpiar", "reparar", "pendiente", "manana", "mejorar")
     if not any(signal in normalized_text for signal in task_signals):
         return []

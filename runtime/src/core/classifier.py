@@ -45,11 +45,25 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "insumo",
         "insumos",
         "material",
+        "materiales",
+        "productos",
+        "producto",
         "maiz",
         "balanceado",
         "balanceados",
+        "alimentos",
+        "alimenticios",
+        "vitaminas",
+        "vinagre",
+        "ajo",
+        "cebolla",
         "viruta",
         "cascarilla",
+        "creolina",
+        "cal",
+        "inventario",
+        "alta",
+        "baja",
         "ivermectina",
         "iverm",
         "oxyclina",
@@ -83,12 +97,25 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "huevos",
         "nacimiento",
         "incubar",
+        "incubacion",
+        "incubación",
+        "incubaciones",
+        "escalonado",
+        "escalonada",
     ),
     "infraestructura": (
         "galpon",
+        "galpón",
         "corral",
         "cerco",
+        "divisoria",
+        "mandioca",
+        "bambu",
+        "bambú",
+        "travesanos",
+        "travesaños",
         "construccion",
+        "infraestructura",
     ),
     "alimentacion": (
         "racion",
@@ -96,6 +123,8 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "balanceado",
         "maiz",
         "alimento",
+        "alimentos",
+        "alimenticios",
         "comida",
         "comedero",
         "agua",
@@ -108,8 +137,21 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "barrados",
         "ponedoras",
         "raza",
+        "razas",
         "cruce",
+        "cruces",
         "reproductor",
+        "reproductores",
+        "criadero",
+        "rhode",
+        "brahma",
+        "sussex",
+        "plymouth",
+        "black star",
+        "doble proposito",
+        "doble propósito",
+        "linea",
+        "línea",
     ),
     "tareas-mantenimiento": (
         "hacer",
@@ -121,6 +163,7 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "manana",
         "plato",
         "comedero",
+        "mantenimiento",
     ),
     "reportes": (
         "resumen",
@@ -135,6 +178,15 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "duracion",
         "duración",
     ),
+    "finanzas": (
+        "adquirir",
+        "valga",
+        "valor",
+        "costo",
+        "costos",
+        "presupuesto",
+        "mercado",
+    ),
 }
 
 
@@ -148,6 +200,8 @@ def match_domain_signals(normalized_text: str) -> dict[str, list[str]]:
 
 
 def signal_matches(normalized_text: str, signal: str) -> bool:
+    if signal == "cuanto" and re.search(r"\ben cuanto a\b", normalized_text):
+        return False
     pattern = rf"(?<!\w){re.escape(signal)}(?!\w)"
     return re.search(pattern, normalized_text) is not None
 
@@ -168,6 +222,8 @@ def build_domain_scores(matched_signals: dict[str, list[str]]) -> dict[str, int]
 def detect_intent(normalized_text: str, domains: list[str]) -> str:
     if is_stock_replenishment_question(normalized_text, domains):
         return "analizar_existencias_reposicion"
+    if is_workflow_candidate(normalized_text, domains):
+        return "detectar_workflow_candidato"
     if "sanidad" in domains:
         if is_sanitary_applied_event(normalized_text):
             return "registrar_evento_sanitario_borrador"
@@ -176,6 +232,8 @@ def detect_intent(normalized_text: str, domains: list[str]) -> str:
         if is_sanitary_decision_question(normalized_text):
             return "analizar_decision_operativa"
         return "registrar_evento_sanitario_borrador"
+    if is_operational_decision(normalized_text, domains):
+        return "analizar_decision_operativa"
     if "compras" in domains:
         return "registrar_compra"
     if "ventas" in domains:
@@ -263,6 +321,41 @@ def is_sanitary_decision_question(normalized_text: str) -> bool:
     return any(marker in normalized_text for marker in decision_markers)
 
 
+def is_workflow_candidate(normalized_text: str, domains: list[str]) -> bool:
+    workflow_markers = (
+        "proyecto",
+        "modulo",
+        "módulo",
+        "nomenclatura",
+        "ecosistema",
+        "se tiene que poder",
+        "forma de actualizar",
+        "dar de alta y baja",
+        "idea para la granja",
+    )
+    if not any(marker in normalized_text for marker in workflow_markers):
+        return False
+    return any(domain in domains for domain in ("stock-insumos", "infraestructura", "tareas-mantenimiento"))
+
+
+def is_operational_decision(normalized_text: str, domains: list[str]) -> bool:
+    decision_markers = (
+        "comparativa",
+        "versus",
+        "conviene",
+        "vale la pena",
+        "quiero avanzar con el plan",
+        "plan black star",
+        "meta a futuro",
+        "objetivo",
+        "doble proposito",
+        "doble propósito",
+    )
+    if not any(marker in normalized_text for marker in decision_markers):
+        return False
+    return any(domain in domains for domain in ("reproductores", "infraestructura", "ventas", "finanzas"))
+
+
 def classify(text: str) -> dict[str, Any]:
     normalized_text = normalize(text)
     matched_signals = match_domain_signals(normalized_text)
@@ -277,6 +370,12 @@ def classify(text: str) -> dict[str, Any]:
     if intent == "analizar_existencias_reposicion":
         primary_domain = "stock-insumos"
         secondary_domains = [domain for domain in domains if domain != "stock-insumos"]
+    if intent == "detectar_workflow_candidato":
+        primary_domain = choose_workflow_primary_domain(domains)
+        secondary_domains = [domain for domain in domains if domain != primary_domain]
+    if intent == "analizar_decision_operativa" and "sanidad" not in domains:
+        primary_domain = choose_decision_primary_domain(domains)
+        secondary_domains = [domain for domain in domains if domain != primary_domain]
     if intent in {
         "registrar_evento_sanitario_borrador",
         "analizar_decision_operativa",
@@ -296,6 +395,20 @@ def classify(text: str) -> dict[str, Any]:
         "domain_scores": domain_scores,
         "confidence": estimate_confidence(intent, primary_domain, domain_scores),
     }
+
+
+def choose_workflow_primary_domain(domains: list[str]) -> str:
+    for preferred in ("stock-insumos", "infraestructura", "tareas-mantenimiento"):
+        if preferred in domains:
+            return preferred
+    return domains[0] if domains else "otro"
+
+
+def choose_decision_primary_domain(domains: list[str]) -> str:
+    for preferred in ("reproductores", "infraestructura", "stock-insumos"):
+        if preferred in domains:
+            return preferred
+    return domains[0] if domains else "otro"
 
 
 def estimate_confidence(intent: str, primary_domain: str, domain_scores: dict[str, int]) -> str:

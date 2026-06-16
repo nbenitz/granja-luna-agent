@@ -199,5 +199,119 @@
       "stock_movements_count": 0,
       "suggested_tasks_count": 0
     }
+  },
+  {
+    "id": "workflow-stock-alimentos-insumos",
+    "message": "Genera la fuente para este proyecto. El mismo formará parte del ecosistema de Gestión Granja Luna. Compartirá datos y flujos de tareas con otros proyectos como Compras. El nombre actual es Stock de Alimentos, pero queda pendiente trabajar en una nomenclatura. Tiene que trabajar sobre la existencia de productos alimenticios, vitaminas y otros productos como vinagre, ajo, cebolla, etc. También insumos o materiales para mantenimiento del galpón como viruta, cascarilla de arroz, cal, creolina. Se tiene que poder dar de alta y baja estos materiales. La forma de actualizar stock puede ser por compra, tarea de mantenimiento de cama, o inventario del depósito.",
+    "expected": {
+      "intent": "detectar_workflow_candidato",
+      "primary_domain": "stock-insumos",
+      "secondary_domains_include": ["alimentacion", "tareas-mantenimiento", "compras", "infraestructura"],
+      "risk_level": "bajo",
+      "requires_confirmation": false,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "stock-insumos": ["stock", "inventario"],
+        "alimentacion": ["alimentos"],
+        "tareas-mantenimiento": ["mantenimiento"]
+      },
+      "missing_data_include": [
+        "nombre final del modulo",
+        "unidades de medida oficiales"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "workflow-cerco-vivo-mandioca",
+    "message": "Idea para la granja: hacer un cerco vivo con ramas de mandioca enterradas unos 5 a 10 centímetros, atadas con hilo tipo arpillera a travesaños de bambú. Quiero evaluar si puede durar 1 o 2 años, qué grosor conviene y qué mantenimiento tendría como divisoria.",
+    "expected": {
+      "intent": "detectar_workflow_candidato",
+      "primary_domain": "infraestructura",
+      "secondary_domains_include": ["tareas-mantenimiento", "reportes"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "infraestructura": ["cerco", "mandioca", "bambu"],
+        "tareas-mantenimiento": ["mantenimiento"]
+      },
+      "missing_data_include": [
+        "ubicacion exacta",
+        "materiales disponibles"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "decision-rhode-brahma-sussex",
+    "message": "Hola, quiero que me hagas una comparativa entre la gallina de la raza Rhode Island Red y la Brahma Sussex Light, el blanco. Es una comparativa, digamos, un versus y qué sale, por ejemplo, de los cruces por ahí, si es que me conviene mantener o adquirir esa raza como criadero de animales o quizás no valga tanto la pena.",
+    "expected": {
+      "intent": "analizar_decision_operativa",
+      "primary_domain": "reproductores",
+      "secondary_domains_include": ["finanzas"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "reproductores": ["raza", "cruces", "rhode", "brahma", "sussex"],
+        "finanzas": ["adquirir", "valga"]
+      },
+      "missing_data_include": [
+        "objetivo principal: huevos, carne, reproductores, venta o genetica",
+        "espacio o corrales disponibles"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "decision-barrado-sussex-doble-proposito",
+    "message": "En cuanto a doble propósito con carne, ¿qué tal sería entonces si hacemos un versus entre el Plymouth Rock barrado y la Sussex Light?",
+    "expected": {
+      "intent": "analizar_decision_operativa",
+      "primary_domain": "reproductores",
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "reproductores": ["sussex", "plymouth", "doble proposito"]
+      },
+      "missing_data_include": [
+        "objetivo principal: huevos, carne, reproductores, venta o genetica",
+        "cantidad actual de aves por raza o linea"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "decision-plan-black-star",
+    "message": "Quiero avanzar con el plan Black Star: usar Rhode Island con barrados, mantener la línea pura barrada separada, incubar escalonado y retirar gallos excedentes. La meta a futuro sería llegar a unas 500 Black Star.",
+    "expected": {
+      "intent": "analizar_decision_operativa",
+      "primary_domain": "reproductores",
+      "secondary_domains_include": ["incubacion"],
+      "risk_level": "alto",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "reproductores": ["barrados", "rhode", "black star"],
+        "incubacion": ["incubar", "escalonado"]
+      },
+      "missing_data_include": [
+        "capacidad real de incubadora",
+        "calendario de incubaciones"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
   }
 ]

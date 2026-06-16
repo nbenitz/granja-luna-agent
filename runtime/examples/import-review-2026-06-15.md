@@ -86,6 +86,30 @@ La primera mejora promovio 4 casos sanitarios al dataset ejecutable y ajusto el 
 |---:|---:|---:|---:|---:|
 | 24 | 10 | 14 | 13 | 7 |
 
+## Segunda revision humana
+
+Nestor reviso 5 casos adicionales desde el CLI:
+
+| Total revisados acumulados | Promover | Necesita edicion | Textos representativos | Salidas esperadas aceptadas |
+|---:|---:|---:|---:|---:|
+| 10 | 9 | 1 | 10 | 10 |
+
+La segunda mejora promovio 5 casos al dataset ejecutable y agrego soporte inicial para:
+
+- distinguir diseno de modulo/workflow frente a registros operativos;
+- detectar ideas de infraestructura como workflow candidato;
+- interpretar comparativas de razas como decisiones operativas de reproductores;
+- detectar planes reproductivos de alto impacto, como Black Star, con riesgo `alto`;
+- pedir datos faltantes de decision: objetivo, lineas, espacio, mercado, presupuesto, incubadora y calendario.
+
+Nota de politica: cuando un caso curado queda con riesgo `medio`, el runtime conserva `requires_confirmation: true` aunque el import original no lo pidiera, porque el contrato actual exige confirmacion para riesgo medio o superior.
+
+## Diagnostico despues de la segunda mejora
+
+| Total | Intent ok | Dominio ok | Riesgo ok | Todo ok |
+|---:|---:|---:|---:|---:|
+| 24 | 15 | 17 | 19 | 12 |
+
 ## Casos recomendados para promover primero
 
 Promover en tandas pequenas:
