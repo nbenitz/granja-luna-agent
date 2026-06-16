@@ -12,16 +12,30 @@ from core.builders import (
     build_suggested_tasks,
     build_ui_response,
     purchase_missing_data,
+    sanitary_missing_data,
+    stock_analysis_missing_data,
 )
 from core.classifier import classify
-from core.parsing import parse_items
+from core.parsing import parse_items, parse_stock_observations
 
 
 def build_dry_run(text: str, today: str | None = None) -> dict[str, Any]:
     today = today or date.today().isoformat()
     classification = classify(text)
     items = parse_items(text) if classification["intent"] == "registrar_compra" else []
-    missing_data = purchase_missing_data(items) if classification["intent"] == "registrar_compra" else []
+    stock_observations = (
+        parse_stock_observations(text)
+        if classification["intent"] in {"analizar_existencias_reposicion", "registrar_movimiento_stock_borrador"}
+        else []
+    )
+    if classification["intent"] == "registrar_compra":
+        missing_data = purchase_missing_data(items)
+    elif classification["intent"] == "analizar_existencias_reposicion":
+        missing_data = stock_analysis_missing_data()
+    elif classification["primary_domain"] == "sanidad":
+        missing_data = sanitary_missing_data(classification["intent"])
+    else:
+        missing_data = []
     purchase = build_purchase_draft(items, today)
     stock_movements = build_stock_movements(items, classification["primary_domain"])
     log_entry = build_log_entry(text, classification, today)
@@ -30,6 +44,7 @@ def build_dry_run(text: str, today: str | None = None) -> dict[str, Any]:
     detected_data: dict[str, Any] = {
         "texto_original": text,
         "items": [item.to_dict() for item in items],
+        "stock_observations": stock_observations,
     }
     if purchase and purchase.get("total_inferido") is not None:
         detected_data["total_inferido"] = purchase["total_inferido"]
@@ -50,6 +65,7 @@ def build_dry_run(text: str, today: str | None = None) -> dict[str, Any]:
         "drafts": {
             "purchase": purchase,
             "stock_movements": stock_movements,
+            "inventory_observations": stock_observations,
             "log_entry": log_entry,
         },
         "suggested_tasks": suggested_tasks,
@@ -64,4 +80,3 @@ def build_dry_run(text: str, today: str | None = None) -> dict[str, Any]:
         ),
         "next_actions": build_next_actions(classification, missing_data),
     }
-

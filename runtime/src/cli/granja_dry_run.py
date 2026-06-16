@@ -16,6 +16,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from core.dry_run import build_dry_run
+from core.summary import format_summary
 
 
 def main() -> int:
@@ -25,9 +26,19 @@ def main() -> int:
         "--today",
         help="Fecha ISO para pruebas o reproduccion. Por defecto usa la fecha local.",
     )
+    parser.add_argument(
+        "--format",
+        choices=("json", "summary"),
+        default="json",
+        dest="output_format",
+        help="Formato de salida. Por defecto: json.",
+    )
     args = parser.parse_args()
     result = build_dry_run(args.message, today=args.today)
-    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+    if args.output_format == "summary":
+        print(format_summary(result))
+    else:
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
 

@@ -21,6 +21,7 @@ NUMBER_WORDS: dict[str, Decimal] = {
     "ocho": Decimal("8"),
     "nueve": Decimal("9"),
     "diez": Decimal("10"),
+    "setenta": Decimal("70"),
 }
 
 UNIT_ALIASES: dict[str, str] = {
@@ -34,6 +35,14 @@ UNIT_ALIASES: dict[str, str] = {
     "lts": "litro",
     "unidad": "unidad",
     "unidades": "unidad",
+}
+
+FRACTION_WORDS: dict[str, Decimal] = {
+    "mitad": Decimal("0.5"),
+    "medio": Decimal("0.5"),
+    "media": Decimal("0.5"),
+    "un cuarto": Decimal("0.25"),
+    "cuarto": Decimal("0.25"),
 }
 
 
@@ -112,8 +121,122 @@ def parse_items(text: str) -> list[ParsedItem]:
     return items
 
 
+def parse_stock_observations(text: str) -> list[dict[str, Any]]:
+    normalized_text = normalize(text)
+    clauses = [clause.strip() for clause in re.split(r"[,.;?]", normalized_text) if clause.strip()]
+    observations: list[dict[str, Any]] = []
+    pattern = re.compile(
+        r"(?P<qty>\d+(?:[.,]\d+)?|un|una|uno)\s+bolsa"
+        r"(?:\s+y\s+(?P<fraction>un cuarto|cuarto|medio|media|mitad))?"
+        r"\s+de\s+(?P<tail>.+)"
+    )
+    for clause in clauses:
+        match = pattern.search(clause)
+        if not match:
+            apply_percentage_to_previous_observation(clause, observations)
+            continue
+        quantity = parse_decimal(match.group("qty"))
+        if quantity is None:
+            continue
+        fraction = parse_fraction(match.group("fraction"))
+        tail = match.group("tail")
+        product = clean_inventory_product(tail)
+        if not product:
+            continue
+        percentage = parse_percentage(tail)
+        if percentage is None:
+            percentage = parse_remaining_fraction(tail)
+        package_kg = parse_package_kg(tail)
+        if fraction is not None:
+            estimated_bags = quantity + fraction
+        elif percentage is not None:
+            estimated_bags = quantity * percentage
+        else:
+            estimated_bags = quantity
+        observation: dict[str, Any] = {
+            "estado": "pending_review",
+            "producto": product,
+            "unidad": "bolsa",
+            "cantidad_reportada": number_to_json(quantity),
+            "bolsas_estimadas_restantes": number_to_json(estimated_bags),
+            "fuente": "conversacion",
+        }
+        if percentage is not None:
+            observation["porcentaje_restante_inferido"] = number_to_json(percentage * Decimal("100"))
+        if package_kg is not None:
+            observation["peso_bolsa_kg"] = number_to_json(package_kg)
+            observation["kg_estimados_restantes"] = number_to_json(estimated_bags * package_kg)
+        observations.append(observation)
+    return observations
+
+
+def apply_percentage_to_previous_observation(
+    clause: str,
+    observations: list[dict[str, Any]],
+) -> None:
+    if not observations:
+        return
+    percentage = parse_percentage(clause)
+    if percentage is None:
+        return
+    previous = observations[-1]
+    if "porcentaje_restante_inferido" in previous:
+        return
+    quantity = Decimal(str(previous["cantidad_reportada"]))
+    estimated_bags = quantity * percentage
+    previous["porcentaje_restante_inferido"] = number_to_json(percentage * Decimal("100"))
+    previous["bolsas_estimadas_restantes"] = number_to_json(estimated_bags)
+    if "peso_bolsa_kg" in previous:
+        package_kg = Decimal(str(previous["peso_bolsa_kg"]))
+        previous["kg_estimados_restantes"] = number_to_json(estimated_bags * package_kg)
+
+
 def clean_product(product: str) -> str:
     product = re.sub(r"\b(cada|una|uno|unidad|bolsa)\b.*$", "", product).strip()
     product = re.sub(r"\s+", " ", product)
     return product.strip(" .,:;")
 
+
+def clean_inventory_product(value: str) -> str:
+    value = re.split(
+        r"\b(abierto|mas o menos|tambien|también|al\s+\d+|al\s+setenta|a la mitad|por ciento)\b",
+        value,
+        maxsplit=1,
+    )[0]
+    value = re.sub(r"\s+de\s+\d+(?:[.,]\d+)?\s+kilogramos?.*$", "", value).strip()
+    value = re.sub(r"\s+", " ", value)
+    return value.strip(" .,:;")
+
+
+def parse_fraction(value: str | None) -> Decimal | None:
+    if not value:
+        return None
+    return FRACTION_WORDS.get(value.strip())
+
+
+def parse_remaining_fraction(value: str) -> Decimal | None:
+    for word, fraction in FRACTION_WORDS.items():
+        if word in value:
+            return fraction
+    return None
+
+
+def parse_percentage(value: str) -> Decimal | None:
+    numeric_match = re.search(r"\b(?P<number>\d+(?:[.,]\d+)?)\s*por ciento\b", value)
+    if numeric_match:
+        parsed = parse_decimal(numeric_match.group("number"))
+        if parsed is not None:
+            return parsed / Decimal("100")
+    word_match = re.search(r"\b(?P<number>setenta)\s+por ciento\b", value)
+    if word_match:
+        parsed = parse_decimal(word_match.group("number"))
+        if parsed is not None:
+            return parsed / Decimal("100")
+    return None
+
+
+def parse_package_kg(value: str) -> Decimal | None:
+    match = re.search(r"\bde\s+(?P<kg>\d+(?:[.,]\d+)?)\s+kilogramos?\b", value)
+    if not match:
+        return None
+    return parse_decimal(match.group("kg"))

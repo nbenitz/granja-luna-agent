@@ -123,6 +123,8 @@ flowchart LR
     B --> B3[secondary_domains]
     B --> B4[risk_level]
     B --> B5[requires_confirmation]
+    B --> B6[matched_signals]
+    B --> B7[confidence]
 
     E --> E1[purchase]
     E --> E2[stock_movements]
@@ -159,6 +161,12 @@ Lectura del flujo:
 8. Se crea una `ui_response` con componentes para revisar datos, faltantes y acciones.
 9. La salida mantiene `side_effects: []`.
 
+La clasificacion tambien incluye:
+
+- `matched_signals`: senales que explican por que se detectaron dominios;
+- `domain_scores`: cantidad de senales por dominio;
+- `confidence`: confianza inicial del router, por ahora `low` o `medium`.
+
 ## Funciones principales
 
 | Funcion | Rol |
@@ -166,6 +174,7 @@ Lectura del flujo:
 | `main` | Lee argumentos del CLI e imprime JSON. |
 | `core.dry_run.build_dry_run` | Coordina todo el flujo. |
 | `core.classifier.classify` | Define intencion, dominios, riesgo y confirmacion requerida. |
+| `core.classifier.match_domain_signals` | Explica que palabras o frases activaron cada dominio. |
 | `core.parsing.parse_items` | Extrae items de compra con reglas simples. |
 | `core.builders.build_purchase_draft` | Prepara borrador de compra. |
 | `core.builders.build_stock_movements` | Propone movimientos de stock derivados de compras. |

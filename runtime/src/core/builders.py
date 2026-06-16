@@ -60,6 +60,54 @@ def build_stock_movements(items: list[ParsedItem], primary_domain: str) -> list[
     return movements
 
 
+def stock_analysis_missing_data() -> list[str]:
+    return [
+        "consumo diario aproximado por alimento",
+        "cantidad de aves o lotes que consumen cada alimento",
+        "stock minimo deseado antes de reponer",
+        "fecha estimada de proxima visita al proveedor",
+        "precios actuales si se quiere preparar compra minima",
+    ]
+
+
+def sanitary_missing_data(intent: str) -> list[str]:
+    if intent == "preguntar_datos_faltantes":
+        return [
+            "foto o etiqueta completa del producto",
+            "principio activo y concentracion",
+            "cantidad de aves",
+            "peso o edad aproximada",
+            "lote o grupo afectado",
+            "sintomas observados",
+            "si hay ponedoras y destino de huevos",
+            "si ya recibieron otro medicamento",
+            "indicacion veterinaria si existe",
+        ]
+    if intent == "analizar_decision_operativa":
+        return [
+            "cantidad exacta de aves afectadas",
+            "lote, galpon o corral afectado",
+            "peso promedio estimado",
+            "producto exacto y etiqueta",
+            "motivo de la decision sanitaria",
+            "sintomas concretos y evolucion",
+            "si hay ponedoras y destino de huevos",
+            "indicacion veterinaria si existe",
+        ]
+    return [
+        "fecha y hora exacta de administracion",
+        "lote, galpon o corral afectado",
+        "cantidad exacta de aves",
+        "peso promedio estimado por ave",
+        "producto exacto y concentracion",
+        "motivo del tratamiento",
+        "consumo real del agua o alimento medicado",
+        "si hay aves ponedoras y destino de huevos",
+        "indicacion veterinaria o etiqueta usada",
+        "observaciones posteriores",
+    ]
+
+
 def build_log_entry(text: str, classification: dict[str, Any], today: str) -> dict[str, Any]:
     return {
         "estado": "draft",
@@ -74,7 +122,10 @@ def build_log_entry(text: str, classification: dict[str, Any], today: str) -> di
 
 def build_suggested_tasks(text: str, classification: dict[str, Any]) -> list[dict[str, Any]]:
     normalized_text = normalize(text)
-    task_signals = ("revisar", "limpiar", "reparar", "pendiente", "hacer", "manana")
+    derived_task = build_comedero_task(normalized_text, classification)
+    if derived_task:
+        return [derived_task]
+    task_signals = ("revisar", "limpiar", "reparar", "pendiente", "manana", "mejorar")
     if not any(signal in normalized_text for signal in task_signals):
         return []
     title = text.strip().rstrip(".")
@@ -88,6 +139,25 @@ def build_suggested_tasks(text: str, classification: dict[str, Any]) -> list[dic
             "requiere_confirmacion": classification["requires_confirmation"],
         }
     ]
+
+
+def build_comedero_task(
+    normalized_text: str,
+    classification: dict[str, Any],
+) -> dict[str, Any] | None:
+    if "mejorar" not in normalized_text:
+        return None
+    if not any(marker in normalized_text for marker in ("comedero", "plato")):
+        return None
+    return {
+        "estado": "draft",
+        "titulo": "Mejorar comedero/plato para reducir contaminacion del alimento",
+        "dominio": "tareas-mantenimiento",
+        "dominios_relacionados": ["infraestructura", classification["primary_domain"]],
+        "riesgo": "medio" if classification["risk_level"] in {"alto", "critico"} else classification["risk_level"],
+        "proximo_paso": "confirmar si debe planificarse como tarea de mantenimiento",
+        "requiere_confirmacion": True,
+    }
 
 
 def build_confirmation(classification: dict[str, Any], items: list[ParsedItem]) -> dict[str, Any]:
@@ -148,6 +218,16 @@ def build_ui_response(
                 "props": {
                     "title": "Items detectados",
                     "rows": detected_data["items"],
+                },
+            }
+        )
+    if detected_data.get("stock_observations"):
+        components.append(
+            {
+                "component": "data_table",
+                "props": {
+                    "title": "Existencias detectadas",
+                    "rows": detected_data["stock_observations"],
                 },
             }
         )
@@ -222,4 +302,3 @@ def build_ui_response(
             "drafts": "borrador",
         },
     }
-

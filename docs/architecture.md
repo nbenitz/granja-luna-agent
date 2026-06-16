@@ -88,6 +88,21 @@ Para eso, el runtime emite una `ui_response` estructurada. El runtime define la 
 
 La app de Granja Luna puede ofrecer una UI mas rica de dominio. La app del Asistente Personal puede renderizar componentes genericos o delegar/embeber una vista de Granja Luna cuando corresponda.
 
+### 8. Modulos emergentes
+
+Los modulos no deben definirse todos desde el inicio.
+
+Una entrada real puede revelar una intencion nueva, un workflow candidato o un futuro subagente interno.
+
+Ejemplo actual:
+
+- entrada: inventario observado de balanceados y pregunta de reposicion;
+- intencion detectada: `analizar_existencias_reposicion`;
+- estado: workflow candidato;
+- posible evolucion: modulo de existencias, duracion y reposicion.
+
+La explicacion detallada vive en `runtime/docs/module-emergence.md`.
+
 ## Regla de diseño
 
 El LLM decide, interpreta y propone. El código valida, persiste y audita.

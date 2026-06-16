@@ -1,0 +1,203 @@
+[
+  {
+    "id": "compra-maiz-con-precio",
+    "message": "Compre 2 bolsas de maiz a 95000 cada una",
+    "expected": {
+      "intent": "registrar_compra",
+      "primary_domain": "compras",
+      "secondary_domains_include": ["stock-insumos", "alimentacion"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "compras": ["compre"],
+        "stock-insumos": ["bolsas", "maiz"],
+        "alimentacion": ["maiz"]
+      },
+      "purchase_present": true,
+      "stock_movements_count": 1,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "compra-balanceado-sin-precio",
+    "message": "Compre una bolsa de balanceado",
+    "expected": {
+      "intent": "registrar_compra",
+      "primary_domain": "compras",
+      "secondary_domains_include": ["stock-insumos", "alimentacion"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "missing_data_include": ["precio unitario de cada item"],
+      "purchase_present": true,
+      "stock_movements_count": 1
+    }
+  },
+  {
+    "id": "tarea-revisar-galpon",
+    "message": "Manana revisar el galpon",
+    "expected": {
+      "intent": "crear_tarea_borrador",
+      "primary_domain": "tareas-mantenimiento",
+      "secondary_domains_include": ["infraestructura"],
+      "risk_level": "bajo",
+      "requires_confirmation": false,
+      "confidence": "medium",
+      "purchase_present": false,
+      "suggested_tasks_count": 1
+    }
+  },
+  {
+    "id": "stock-observado",
+    "message": "Quedan 3 bolsas de maiz en deposito",
+    "expected": {
+      "intent": "registrar_movimiento_stock_borrador",
+      "primary_domain": "stock-insumos",
+      "secondary_domains_include": ["alimentacion"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "purchase_present": false,
+      "stock_movements_count": 0
+    }
+  },
+  {
+    "id": "sanidad-alto-riesgo",
+    "message": "Tengo gallinas con sintomas y quiero medicar",
+    "expected": {
+      "intent": "registrar_evento_sanitario_borrador",
+      "primary_domain": "sanidad",
+      "risk_level": "critico",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "purchase_present": false,
+      "stock_movements_count": 0
+    }
+  },
+  {
+    "id": "frase-ambigua",
+    "message": "Anota esto para despues",
+    "expected": {
+      "intent": "registrar_bitacora_borrador",
+      "primary_domain": "otro",
+      "risk_level": "bajo",
+      "requires_confirmation": false,
+      "confidence": "low",
+      "purchase_present": false,
+      "stock_movements_count": 0
+    }
+  },
+  {
+    "id": "inventario-real-balanceados-2026-06-15",
+    "message": "Hola, estoy en el depósito, te quiero comentar cuántos de balanceados tenemos. Tengo una bolsa de crecimiento abierto, mas o menos al setenta por ciento, 1 bolsa de maíz molido de 40 kilogramos tambien al 70 por ciento aproximadamente, una bolsa de iniciador a la mitad, 1 bolsa y un cuarto de ponedora, o sea, una bolsa entera y uno abierto, que queda un cuarto por ahí. Eso es todo, creo que ya me va a faltar el maíz. ¿hasta cuándo me va a durar estas existencias? Qué debo comprar mínimamente la próxima que vaya al proveedor?",
+    "expected": {
+      "intent": "analizar_existencias_reposicion",
+      "primary_domain": "stock-insumos",
+      "secondary_domains_include": ["reportes", "compras", "alimentacion"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "inventory_observations_count": 4,
+      "inventory_products_include": ["crecimiento", "maiz molido", "iniciador", "ponedora"],
+      "missing_data_include": ["consumo diario aproximado por alimento"]
+    }
+  },
+  {
+    "id": "sanidad-ivermectina-agua-26-aves",
+    "message": "Hola, le acabo de dar antiparasitario la ivermectina en su agua a mis gallinas. Incluso le di antes de comer. Bueno, ellos tenían luego comida en su comedero, pero todavía no comieron el desayuno formal porque les suele sobrar luego del día anterior. y ellas van a comer al despertarse y van comiendo lo que sobró del día anterior. pero les dejé un rato sin agua y les di la ivermectina. Le puse tres milímetros, o sea, tres mililitros, en dos litros de agua más o menos para 26 aves que son un poco pesadas. Quiero saber ahora si después de la ivermectina del antiparasitario tengo que tener algo en cuenta relacionado con su alimentación, más agua, si les doy, tengo que dar vitamina después o qué puedo hacer.",
+    "expected": {
+      "intent": "registrar_evento_sanitario_borrador",
+      "primary_domain": "sanidad",
+      "secondary_domains_include": ["alimentacion", "reproductores", "stock-insumos"],
+      "risk_level": "critico",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "sanidad": ["antiparasitario", "ivermectina"],
+        "alimentacion": ["agua"],
+        "reproductores": ["aves"]
+      },
+      "missing_data_include": [
+        "fecha y hora exacta de administracion",
+        "producto exacto y concentracion"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "sanidad-debiles-orden-tratamiento-y-comedero",
+    "message": "¿Qué me conviene darle primero a mis gallinas si están débiles? ¿un antiparasitario, el ivermectina que tengo? o darle las vitaminas, ¿viste que tengo el ivermectina, el antiparasitario que es de una sola aplicación un solo día. Luego tengo la vitamina que es el antibiótico vitaminado, porque muchas están engripadas. ellas están débiles y flacas. Probablemente tienen bichos parásitos porque suelen comer comida y suelen quedarse sus heces en su plato. Ahora voy a mejorar su plato para que no caguen encima. Entonces, ¿qué me recomiendas? Primero el antiparasitario y después el antibiótico vitaminado, ¿en qué orden me recomiendas dárselos?",
+    "expected": {
+      "intent": "analizar_decision_operativa",
+      "primary_domain": "sanidad",
+      "secondary_domains_include": ["tareas-mantenimiento", "stock-insumos", "alimentacion", "reproductores"],
+      "risk_level": "critico",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "sanidad": ["antiparasitario", "ivermectina", "antibiotico", "debiles"],
+        "tareas-mantenimiento": ["mejorar", "plato"]
+      },
+      "missing_data_include": [
+        "cantidad exacta de aves afectadas",
+        "producto exacto y etiqueta"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 1,
+      "suggested_task_titles_include": ["Mejorar comedero/plato"]
+    }
+  },
+  {
+    "id": "sanidad-iverm-barrados-ponedoras",
+    "message": "Ese IVERM Avícola le puedo dar a mis barrados, que dos o tres son los que ponen huevo, el resto no pone huevo. De diez o quince gallinas solamente eso ponen huevo, el resto no. ¿Le puedo dar ivermectina a todas?",
+    "expected": {
+      "intent": "analizar_decision_operativa",
+      "primary_domain": "sanidad",
+      "secondary_domains_include": ["reproductores", "incubacion"],
+      "risk_level": "alto",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "sanidad": ["iverm", "ivermectina"],
+        "reproductores": ["barrados", "gallinas"],
+        "incubacion": ["huevo"]
+      },
+      "missing_data_include": [
+        "cantidad exacta de aves afectadas",
+        "si hay ponedoras y destino de huevos"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "sanidad-oxyclina-indicaciones",
+    "message": "¿Y tenés ahí las indicaciones del Oxyclina vitaminado? ¿Cómo suministrarles a las gallinas?",
+    "expected": {
+      "intent": "preguntar_datos_faltantes",
+      "primary_domain": "sanidad",
+      "secondary_domains_include": ["stock-insumos", "reproductores"],
+      "risk_level": "critico",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "sanidad": ["oxyclina", "vitaminado", "indicaciones"],
+        "stock-insumos": ["oxyclina", "vitaminado"]
+      },
+      "missing_data_include": [
+        "foto o etiqueta completa del producto",
+        "principio activo y concentracion"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  }
+]

@@ -47,7 +47,10 @@
         "secondary_domains",
         "risk_level",
         "information_status",
-        "requires_confirmation"
+        "requires_confirmation",
+        "matched_signals",
+        "domain_scores",
+        "confidence"
       ],
       "properties": {
         "intent": {"type": "string"},
@@ -64,7 +67,22 @@
           "type": "string",
           "enum": ["draft", "pending_review", "confirmed", "confirmed_by_user", "legacy_reference", "archived"]
         },
-        "requires_confirmation": {"type": "boolean"}
+        "requires_confirmation": {"type": "boolean"},
+        "matched_signals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        },
+        "domain_scores": {
+          "type": "object",
+          "additionalProperties": {"type": "integer"}
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        }
       },
       "additionalProperties": false
     },
@@ -84,6 +102,10 @@
           "additionalProperties": true
         },
         "stock_movements": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "inventory_observations": {
           "type": "array",
           "items": {"type": "object"}
         },
