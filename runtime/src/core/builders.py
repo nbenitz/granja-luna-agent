@@ -109,6 +109,16 @@ def sanitary_missing_data(intent: str) -> list[str]:
 
 
 def workflow_candidate_missing_data(primary_domain: str) -> list[str]:
+    if primary_domain == "ventas":
+        return [
+            "productos exactos que se pueden mencionar al cliente",
+            "tratamientos reales aplicados y confirmados",
+            "lotes de pollitos vendidos o a vender",
+            "si la ficha es historial, recomendacion o advertencia",
+            "advertencias veterinarias o legales",
+            "fotos o etiquetas autorizadas para compartir",
+            "formato de ficha para cliente",
+        ]
     if primary_domain == "stock-insumos":
         return [
             "nombre final del modulo",
@@ -158,17 +168,36 @@ def operational_decision_missing_data(primary_domain: str, risk_level: str) -> l
         return missing
     if primary_domain == "infraestructura":
         return [
-            "ubicacion",
-            "materiales",
-            "impacto operativo",
-            "fecha tentativa",
-            "responsable",
+            "cantidad actual por galpon",
+            "galpones disponibles",
+            "galpones en construccion",
+            "capacidad por galpon",
+            "prioridad de lotes",
+            "fecha estimada de terminacion",
+            "presupuesto",
         ]
     return [
         "objetivo de la decision",
         "opciones disponibles",
         "datos faltantes para comparar",
     ]
+
+
+def stock_movement_missing_data(primary_domain: str, secondary_domains: list[str]) -> list[str]:
+    if primary_domain == "stock-insumos" and "sanidad" in secondary_domains:
+        return [
+            "cantidad disponible de cada producto",
+            "unidad de medida",
+            "fecha de compra",
+            "proveedor",
+            "precio",
+            "vencimiento",
+            "lote del producto",
+            "foto o etiqueta",
+            "si se registra como stock real o solo referencia",
+            "ubicacion fisica en deposito",
+        ]
+    return []
 
 
 def build_log_entry(text: str, classification: dict[str, Any], today: str) -> dict[str, Any]:
@@ -190,6 +219,19 @@ def build_suggested_tasks(text: str, classification: dict[str, Any]) -> list[dic
         return [derived_task]
     if classification["intent"] == "detectar_workflow_candidato":
         return []
+    forage_title = build_forage_task_title(normalized_text)
+    if forage_title:
+        return [
+            {
+                "estado": "draft",
+                "titulo": forage_title,
+                "dominio": "alimentacion",
+                "dominios_relacionados": ["infraestructura", "stock-insumos"],
+                "riesgo": classification["risk_level"],
+                "proximo_paso": "confirmar si debe pasar a tareas como preparacion de bandeja FVH",
+                "requiere_confirmacion": classification["requires_confirmation"],
+            }
+        ]
     task_signals = ("revisar", "limpiar", "reparar", "pendiente", "manana", "mejorar")
     if not any(signal in normalized_text for signal in task_signals):
         return []
@@ -223,6 +265,14 @@ def build_comedero_task(
         "proximo_paso": "confirmar si debe planificarse como tarea de mantenimiento",
         "requiere_confirmacion": True,
     }
+
+
+def build_forage_task_title(normalized_text: str) -> str | None:
+    if not any(marker in normalized_text for marker in ("forraje", "forrajes")):
+        return None
+    if not any(marker in normalized_text for marker in ("bandeja", "tupper", "agujeros", "perforar", "perforando")):
+        return None
+    return "Preparar bandeja perforada para forraje germinado"
 
 
 def build_confirmation(classification: dict[str, Any], items: list[ParsedItem]) -> dict[str, Any]:

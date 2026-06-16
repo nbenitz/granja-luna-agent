@@ -14,6 +14,7 @@ from core.builders import (
     operational_decision_missing_data,
     purchase_missing_data,
     sanitary_missing_data,
+    stock_movement_missing_data,
     stock_analysis_missing_data,
     workflow_candidate_missing_data,
 )
@@ -42,6 +43,11 @@ def build_dry_run(text: str, today: str | None = None) -> dict[str, Any]:
         missing_data = operational_decision_missing_data(
             classification["primary_domain"],
             classification["risk_level"],
+        )
+    elif classification["intent"] == "registrar_movimiento_stock_borrador":
+        missing_data = stock_movement_missing_data(
+            classification["primary_domain"],
+            classification["secondary_domains"],
         )
     else:
         missing_data = []

@@ -45,6 +45,14 @@ La segunda calibracion agrego soporte inicial para:
 - comparativas y planes de reproductores como decisiones operativas;
 - datos faltantes para decisiones de reproductores e infraestructura.
 
+La tercera calibracion agrego soporte inicial para:
+
+- inventario sanitario comprado como stock pendiente de confirmar;
+- tareas FVH/forraje germinado;
+- observaciones de postura por color de huevo;
+- restricciones de infraestructura por galpones;
+- workflows de ficha sanitaria para clientes.
+
 ## Regla
 
 El core puede analizar y proponer, pero no debe escribir archivos ni confirmar hechos operativos en modo `dry_run`.

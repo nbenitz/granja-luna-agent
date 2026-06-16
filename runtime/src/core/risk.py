@@ -4,21 +4,27 @@ from __future__ import annotations
 def evaluate_risk(intent: str, domains: list[str], normalized_text: str) -> str:
     if any(word in normalized_text for word in ("borrar", "eliminar")):
         return "critico"
+    if intent == "detectar_workflow_candidato":
+        if "ventas" in domains and "sanidad" in domains:
+            return "medio"
+        if "infraestructura" in domains and any(marker in normalized_text for marker in ("cerco", "divisoria")):
+            return "medio"
+        return "bajo"
     if "sanidad" in domains and has_critical_sanitary_marker(normalized_text):
         return "critico"
     if "sanidad" in domains:
         return "alto"
-    if intent == "detectar_workflow_candidato":
-        if "infraestructura" in domains and any(marker in normalized_text for marker in ("cerco", "divisoria")):
-            return "medio"
-        return "bajo"
     if intent == "analizar_decision_operativa":
         if has_high_risk_reproductive_plan(normalized_text):
             return "alto"
         if "reproductores" in domains or "infraestructura" in domains:
             return "medio"
+    if intent in {"crear_tarea_borrador", "registrar_bitacora_borrador"}:
+        return "bajo"
     if intent in {"registrar_compra", "registrar_venta_borrador", "analizar_existencias_reposicion"}:
         return "medio"
+    if intent == "registrar_movimiento_stock_borrador" and "sanidad" in domains:
+        return "alto"
     if "stock-insumos" in domains:
         return "medio"
     return "bajo"

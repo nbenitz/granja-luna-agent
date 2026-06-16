@@ -10,6 +10,7 @@ from core.text import normalize
 DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
     "sanidad": (
         "medicamento",
+        "medicamentos",
         "enfermedad",
         "sintoma",
         "sintomas",
@@ -34,6 +35,9 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "parasitos",
         "suministrar",
         "indicaciones",
+        "sanidad",
+        "gentamicina",
+        "bolo",
     ),
     "stock-insumos": (
         "bolsa",
@@ -48,6 +52,8 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "materiales",
         "productos",
         "producto",
+        "referencias",
+        "fotos",
         "maiz",
         "balanceado",
         "balanceados",
@@ -85,8 +91,11 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
     ),
     "ventas": (
         "vendi",
+        "vender",
         "venta",
         "cliente",
+        "clientes",
+        "pollitos",
         "cobre",
         "entrega",
     ),
@@ -106,6 +115,8 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
     "infraestructura": (
         "galpon",
         "galpón",
+        "galpones",
+        "galpónes",
         "corral",
         "cerco",
         "divisoria",
@@ -116,10 +127,14 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "travesaños",
         "construccion",
         "infraestructura",
+        "listos",
     ),
     "alimentacion": (
         "racion",
         "consumo",
+        "forraje",
+        "forrajes",
+        "bandeja",
         "balanceado",
         "maiz",
         "alimento",
@@ -152,6 +167,11 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "doble propósito",
         "linea",
         "línea",
+        "color",
+        "colores",
+        "verdosos",
+        "celestes",
+        "azulados",
     ),
     "tareas-mantenimiento": (
         "hacer",
@@ -164,6 +184,9 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "plato",
         "comedero",
         "mantenimiento",
+        "agujeros",
+        "perforando",
+        "perforar",
     ),
     "reportes": (
         "resumen",
@@ -222,6 +245,12 @@ def build_domain_scores(matched_signals: dict[str, list[str]]) -> dict[str, int]
 def detect_intent(normalized_text: str, domains: list[str]) -> str:
     if is_stock_replenishment_question(normalized_text, domains):
         return "analizar_existencias_reposicion"
+    if is_sanitary_inventory_update(normalized_text, domains):
+        return "registrar_movimiento_stock_borrador"
+    if is_forage_task(normalized_text, domains):
+        return "crear_tarea_borrador"
+    if is_egg_color_observation(normalized_text, domains):
+        return "registrar_bitacora_borrador"
     if is_workflow_candidate(normalized_text, domains):
         return "detectar_workflow_candidato"
     if "sanidad" in domains:
@@ -321,6 +350,42 @@ def is_sanitary_decision_question(normalized_text: str) -> bool:
     return any(marker in normalized_text for marker in decision_markers)
 
 
+def is_sanitary_inventory_update(normalized_text: str, domains: list[str]) -> bool:
+    if not {"sanidad", "stock-insumos"}.issubset(set(domains)):
+        return False
+    inventory_markers = (
+        "inventario",
+        "productos de sanidad",
+        "producto de sanidad",
+        "registrar productos",
+        "registra gentamicina",
+        "registra iverm",
+        "producto que compre",
+        "producto que compré",
+    )
+    return any(marker in normalized_text for marker in inventory_markers)
+
+
+def is_forage_task(normalized_text: str, domains: list[str]) -> bool:
+    if "alimentacion" not in domains:
+        return False
+    forage_markers = ("forraje", "forrajes", "bandeja", "tupper")
+    task_markers = ("agujeros", "perforando", "perforar", "drenaje", "agua no se tranque")
+    return any(marker in normalized_text for marker in forage_markers) and any(
+        marker in normalized_text for marker in task_markers
+    )
+
+
+def is_egg_color_observation(normalized_text: str, domains: list[str]) -> bool:
+    if "reproductores" not in domains:
+        return False
+    egg_markers = ("huevo", "huevos")
+    color_markers = ("color", "colores", "verdoso", "verdosos", "celeste", "celestes", "azulado", "azulados")
+    return any(marker in normalized_text for marker in egg_markers) and any(
+        marker in normalized_text for marker in color_markers
+    )
+
+
 def is_workflow_candidate(normalized_text: str, domains: list[str]) -> bool:
     workflow_markers = (
         "proyecto",
@@ -332,10 +397,14 @@ def is_workflow_candidate(normalized_text: str, domains: list[str]) -> bool:
         "forma de actualizar",
         "dar de alta y baja",
         "idea para la granja",
+        "gestion de fotos",
+        "gestión de fotos",
+        "referencias de medicamentos",
+        "compartir con clientes",
     )
     if not any(marker in normalized_text for marker in workflow_markers):
         return False
-    return any(domain in domains for domain in ("stock-insumos", "infraestructura", "tareas-mantenimiento"))
+    return any(domain in domains for domain in ("stock-insumos", "infraestructura", "tareas-mantenimiento", "ventas"))
 
 
 def is_operational_decision(normalized_text: str, domains: list[str]) -> bool:
@@ -350,6 +419,11 @@ def is_operational_decision(normalized_text: str, domains: list[str]) -> bool:
         "objetivo",
         "doble proposito",
         "doble propósito",
+        "no me viene bien",
+        "no conviene",
+        "todavia estoy en fase",
+        "todavía estoy en fase",
+        "galpones para todos",
     )
     if not any(marker in normalized_text for marker in decision_markers):
         return False
@@ -383,6 +457,15 @@ def classify(text: str) -> dict[str, Any]:
     } and "sanidad" in domains:
         primary_domain = "sanidad"
         secondary_domains = [domain for domain in domains if domain != "sanidad"]
+    if intent == "registrar_movimiento_stock_borrador" and "sanidad" in domains and "stock-insumos" in domains:
+        primary_domain = "stock-insumos"
+        secondary_domains = [domain for domain in domains if domain != "stock-insumos"]
+    if intent == "crear_tarea_borrador" and is_forage_task(normalized_text, domains):
+        primary_domain = "alimentacion"
+        secondary_domains = [domain for domain in domains if domain != "alimentacion"]
+    if intent == "registrar_bitacora_borrador" and is_egg_color_observation(normalized_text, domains):
+        primary_domain = "reproductores"
+        secondary_domains = [domain for domain in domains if domain != "reproductores"]
     risk_level = evaluate_risk(intent, domains, normalized_text)
     return {
         "intent": intent,
@@ -398,14 +481,14 @@ def classify(text: str) -> dict[str, Any]:
 
 
 def choose_workflow_primary_domain(domains: list[str]) -> str:
-    for preferred in ("stock-insumos", "infraestructura", "tareas-mantenimiento"):
+    for preferred in ("ventas", "stock-insumos", "infraestructura", "tareas-mantenimiento"):
         if preferred in domains:
             return preferred
     return domains[0] if domains else "otro"
 
 
 def choose_decision_primary_domain(domains: list[str]) -> str:
-    for preferred in ("reproductores", "infraestructura", "stock-insumos"):
+    for preferred in ("infraestructura", "reproductores", "stock-insumos"):
         if preferred in domains:
             return preferred
     return domains[0] if domains else "otro"

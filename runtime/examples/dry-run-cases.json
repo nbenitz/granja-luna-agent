@@ -313,5 +313,114 @@
       "stock_movements_count": 0,
       "suggested_tasks_count": 0
     }
+  },
+  {
+    "id": "stock-producto-sanitario-comprado",
+    "message": "Quiero crear un subagente o archivo de sanidad e inventario para productos de sanidad, alimentos y demás. Registrá gentamicina, Iverm Avícola y su forma de administrar. También este otro producto que compré para darle.",
+    "expected": {
+      "intent": "registrar_movimiento_stock_borrador",
+      "primary_domain": "stock-insumos",
+      "secondary_domains_include": ["sanidad", "alimentacion", "compras"],
+      "risk_level": "alto",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "sanidad": ["iverm", "gentamicina"],
+        "stock-insumos": ["inventario", "producto"]
+      },
+      "missing_data_include": [
+        "cantidad disponible de cada producto",
+        "foto o etiqueta"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "tarea-bandeja-forraje-germinado",
+    "message": "Tengo este tupper que tiene más o menos 7 centímetros de altura y unos 40, 35 centímetros de largo y 20 por ahí de ancho. Digamos 20 por 35, 40 por 7 centímetros de alto. Quiero usar como bandeja para hacer forrajes. Tengo maíz y quiero echar en él. Entiendo que tengo que hacer agujeros en el fondo. ¿Cómo puedo ir perforando los agujeros? ¿De qué medida, cada cuánto? ¿Solamente en el borde o completo? ¿Y cómo voy ubicando mi bandeja en una superficie para que el agua no se tranque abajo?",
+    "expected": {
+      "intent": "crear_tarea_borrador",
+      "primary_domain": "alimentacion",
+      "secondary_domains_include": ["tareas-mantenimiento", "stock-insumos"],
+      "risk_level": "bajo",
+      "requires_confirmation": false,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "alimentacion": ["forrajes", "bandeja"],
+        "tareas-mantenimiento": ["agujeros", "perforando"]
+      },
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 1,
+      "suggested_task_titles_include": ["Preparar bandeja perforada"]
+    }
+  },
+  {
+    "id": "bitacora-color-huevos",
+    "message": "Tengo muchos huevos acá y quiero mostrarte los colores de algunos. No sé si se puede, por su color se puede saber más o menos su raza o algo así. Algunos son un poco más verdosos, estos son un poco más celestes, estos más azulados. Quiero saber si por el color de huevo se puede saber más o menos de qué raza son o qué puedo saber sobre la gallina que puso el huevo.",
+    "expected": {
+      "intent": "registrar_bitacora_borrador",
+      "primary_domain": "reproductores",
+      "secondary_domains_include": ["incubacion"],
+      "risk_level": "bajo",
+      "requires_confirmation": false,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "reproductores": ["color", "colores", "verdosos", "celestes", "azulados"],
+        "incubacion": ["huevo", "huevos"]
+      },
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "decision-falta-galpones-criadero",
+    "message": "De momento, no, criadero versátil no me viene bien porque todavía estoy en fase de crecimiento y ni siquiera tengo todavía listos los galpones para todos los que ya tengo.",
+    "expected": {
+      "intent": "analizar_decision_operativa",
+      "primary_domain": "infraestructura",
+      "secondary_domains_include": ["reproductores"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "infraestructura": ["galpones", "listos"],
+        "reproductores": ["criadero"]
+      },
+      "missing_data_include": [
+        "cantidad actual por galpon",
+        "galpones disponibles"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
+  },
+  {
+    "id": "workflow-ficha-sanitaria-clientes",
+    "message": "Quiero gestión de fotos o referencias de medicamentos para compartir con clientes al vender pollitos, para poder decir qué producto les doy o qué bolo les doy.",
+    "expected": {
+      "intent": "detectar_workflow_candidato",
+      "primary_domain": "ventas",
+      "secondary_domains_include": ["sanidad", "stock-insumos"],
+      "risk_level": "medio",
+      "requires_confirmation": true,
+      "confidence": "medium",
+      "matched_signals_include": {
+        "ventas": ["vender", "clientes", "pollitos"],
+        "sanidad": ["medicamentos", "bolo"],
+        "stock-insumos": ["referencias", "fotos"]
+      },
+      "missing_data_include": [
+        "productos exactos que se pueden mencionar al cliente",
+        "tratamientos reales aplicados y confirmados"
+      ],
+      "purchase_present": false,
+      "stock_movements_count": 0,
+      "suggested_tasks_count": 0
+    }
   }
 ]

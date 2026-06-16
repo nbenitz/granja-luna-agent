@@ -110,6 +110,28 @@ Nota de politica: cuando un caso curado queda con riesgo `medio`, el runtime con
 |---:|---:|---:|---:|---:|
 | 24 | 15 | 17 | 19 | 12 |
 
+## Tercera revision humana
+
+Nestor reviso 5 casos adicionales desde el CLI:
+
+| Total revisados acumulados | Promover | Necesita edicion | Textos representativos | Salidas esperadas aceptadas |
+|---:|---:|---:|---:|---:|
+| 15 | 14 | 1 | 15 | 15 |
+
+La tercera mejora promovio 5 casos al dataset ejecutable y agrego soporte inicial para:
+
+- inventario de productos sanitarios comprados como movimiento de stock pendiente;
+- tareas de forraje germinado/FVH con bandejas perforadas;
+- observaciones de color de huevos como bitacora de reproductores, no stock;
+- decisiones de infraestructura por falta de galpones;
+- workflows comerciales-sanitarios para compartir fichas o referencias con clientes.
+
+## Diagnostico despues de la tercera mejora
+
+| Total | Intent ok | Dominio ok | Riesgo ok | Todo ok |
+|---:|---:|---:|---:|---:|
+| 24 | 20 | 21 | 21 | 17 |
+
 ## Casos recomendados para promover primero
 
 Promover en tandas pequenas:
