@@ -31,3 +31,9 @@ venv/
 # Local agent scratch
 .agent-scratch/
 .codex-scratch/
+
+# Runtime local state
+runtime/state/*.jsonl
+runtime/state/*.json
+!runtime/state/README.md
+!runtime/state/.gitkeep

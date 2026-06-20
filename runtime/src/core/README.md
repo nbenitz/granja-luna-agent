@@ -17,6 +17,7 @@ El CLI, una futura API, una app web o una integracion con el Asistente Personal 
 | `parsing.py` | Extraccion basica de items y numeros. |
 | `builders.py` | Construccion de borradores, confirmacion, tareas y UI response. |
 | `dry_run.py` | Orquestacion del flujo completo `dry_run`. |
+| `inbox.py` | Persistencia JSONL de propuestas pendientes del inbox operativo. |
 | `summary.py` | Formato humano resumido para CLI u otras superficies simples. |
 | `case_review.py` | Carga, resumen y persistencia JSONL de feedback humano sobre casos importados. |
 
@@ -70,6 +71,13 @@ La quinta mejora agrego soporte inicial para contexto/memoria auxiliar:
 - las extracciones de compras, stock e inventario siguen usando solo el texto principal;
 - el caso de huevos para incubadora de aves medicadas se promueve como regression test contextual.
 
+La sexta mejora agrega el primer inbox operativo:
+
+- `granja_inbox.py capture` guarda el resultado del dry-run como propuesta `pending_review`;
+- `granja_inbox.py list/show/review/summary` permite revisar la bandeja desde terminal;
+- el storage local vive en `runtime/state/inbox.jsonl` y esta ignorado por git;
+- guardar en inbox no confirma hechos operativos ni aplica cambios reales.
+
 ## Regla
 
-El core puede analizar y proponer, pero no debe escribir archivos ni confirmar hechos operativos en modo `dry_run`.
+El core puede analizar y proponer. En modo `dry_run` no debe escribir archivos ni confirmar hechos operativos. En modo inbox solo puede persistir propuestas pendientes.

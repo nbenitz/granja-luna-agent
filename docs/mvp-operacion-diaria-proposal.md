@@ -15,7 +15,8 @@ El MVP debe ayudar a registrar compras, stock, tareas y bitacora diaria desde le
 - Usar contratos y validaciones propias.
 - Separar datos detectados, inferencias y datos faltantes.
 - No registrar hechos definitivos sin confirmacion explicita.
-- Mantener `side_effects: []` en el primer CLI.
+- Mantener `side_effects: []` en el CLI `dry-run`.
+- Guardar en inbox solo propuestas `pending_review`, no hechos operativos.
 
 ## Flujo vertical inicial
 
@@ -53,11 +54,13 @@ Salida esperada:
 - Dataset de ejemplos para evaluar ruteo, riesgo y borradores esperados.
 - Bandeja de casos importados pendientes de curaduria para alimentar el aprendizaje del router.
 - Salida humana resumida con `--format summary`.
+- Inbox operativo local en JSONL para propuestas pendientes.
+- CLI para capturar, listar, ver y resumir entradas de inbox.
 - Pruebas unitarias basicas.
 
 ### Excluido
 
-- Modificar archivos de memoria o tareas.
+- Modificar archivos de memoria o tareas como hechos confirmados.
 - Confirmar compras, ventas, tratamientos o stock.
 - Base de datos.
 - LLM obligatorio.

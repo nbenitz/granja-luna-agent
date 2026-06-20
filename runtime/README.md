@@ -6,6 +6,8 @@ El runtime convierte la memoria y los workflows de Granja Luna en comportamiento
 
 No es todavia una app completa. Es la capa que recibe mensajes, clasifica intencion y dominio, evalua riesgo, prepara borradores, solicita confirmacion y devuelve respuestas estructuradas para una UI.
 
+El CLI `granja_dry_run.py` no escribe archivos. El CLI `granja_inbox.py` agrega una primera bandeja operativa local: guarda propuestas `pending_review` en `runtime/state/inbox.jsonl`, sin aplicar cambios reales.
+
 ## Objetivo inicial
 
 El MVP 0.1 debe:
@@ -17,6 +19,7 @@ El MVP 0.1 debe:
 - preparar borradores sin confirmar hechos reales;
 - devolver `side_effects: []`;
 - devolver una `ui_response` renderizable por una app;
+- guardar propuestas pendientes en un inbox local;
 - operar sin framework agentico obligatorio.
 
 ## Estructura
@@ -26,6 +29,8 @@ runtime/
   contracts/
     granja-dry-run.schema.json
     ui-response.schema.json
+  state/
+    inbox.jsonl
   examples/
     dry-run-cases.json
     imported-cases-pending-review.json
@@ -40,6 +45,7 @@ runtime/
       dry_run.py
     cli/
       granja_dry_run.py
+      granja_inbox.py
     ui/
       README.md
   tests/
@@ -52,6 +58,11 @@ runtime/
 python3 runtime/src/cli/granja_dry_run.py "Compre 2 bolsas de maiz a 95000 cada una"
 python3 runtime/src/cli/granja_dry_run.py "Compre 2 bolsas de maiz a 95000 cada una" --format summary
 python3 runtime/src/cli/granja_dry_run.py "Quiero saber si puedo usar su huevo para meter en la incubadora" --context "Conversacion sobre huevos de aves medicadas para incubacion" --format summary
+python3 runtime/src/cli/granja_inbox.py capture "Compre 2 bolsas de maiz a 95000 cada una"
+python3 runtime/src/cli/granja_inbox.py list
+python3 runtime/src/cli/granja_inbox.py show inbox-id
+python3 runtime/src/cli/granja_inbox.py review inbox-id --status needs_edit --notes "Falta proveedor"
+python3 runtime/src/cli/granja_inbox.py summary
 python3 runtime/src/cli/review_imported_cases.py --list
 python3 runtime/src/cli/review_imported_cases.py --limit 3
 python3 runtime/src/cli/review_imported_cases.py --summary
@@ -76,3 +87,5 @@ python3 -m unittest runtime/tests/test_granja_dry_run.py
 El runtime propone. No registra compras, ventas, stock, sanidad ni tareas como hechos reales sin confirmacion explicita.
 
 El `context` de entrada ayuda a clasificar intencion, riesgo y datos faltantes. No confirma hechos operativos por si solo y no se usa para extraer compras, stock o tratamientos como registros reales.
+
+El inbox operativo guarda propuestas pendientes. Es estado local ignorado por git y no equivale a bitacora confirmada, stock confirmado, compra confirmada ni tarea activa.
