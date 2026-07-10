@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import os
 from pathlib import Path
 import sys
 from threading import Lock
@@ -15,9 +16,11 @@ from pydantic import BaseModel, Field
 SRC_DIR = Path(__file__).resolve().parents[1]
 RUNTIME_DIR = Path(__file__).resolve().parents[2]
 STATIC_DIR = Path(__file__).resolve().parent / "static"
-DEFAULT_INBOX_PATH = RUNTIME_DIR / "state" / "inbox.jsonl"
-DEFAULT_USAGE_PATH = RUNTIME_DIR / "state" / "usage-events.jsonl"
-DEFAULT_REVIEW_EVENTS_PATH = RUNTIME_DIR / "state" / "review-events.jsonl"
+DEFAULT_INBOX_PATH = Path(os.getenv("GRANJA_INBOX_PATH", RUNTIME_DIR / "state" / "inbox.jsonl"))
+DEFAULT_USAGE_PATH = Path(os.getenv("GRANJA_USAGE_PATH", RUNTIME_DIR / "state" / "usage-events.jsonl"))
+DEFAULT_REVIEW_EVENTS_PATH = Path(
+    os.getenv("GRANJA_REVIEW_EVENTS_PATH", RUNTIME_DIR / "state" / "review-events.jsonl")
+)
 
 sys.path.insert(0, str(SRC_DIR))
 

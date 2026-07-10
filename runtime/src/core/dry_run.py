@@ -11,6 +11,7 @@ from core.builders import (
     build_stock_movements,
     build_suggested_tasks,
     build_ui_response,
+    egg_collection_missing_data,
     incubation_log_missing_data,
     operational_decision_missing_data,
     purchase_missing_data,
@@ -23,7 +24,13 @@ from core.builders import (
 )
 from core.classifier import classify
 from core.context import build_analysis_text, normalize_context
-from core.parsing import parse_items, parse_purchase_adjustments, parse_purchase_date, parse_stock_observations
+from core.parsing import (
+    parse_egg_collection,
+    parse_items,
+    parse_purchase_adjustments,
+    parse_purchase_date,
+    parse_stock_observations,
+)
 
 
 def build_dry_run(
@@ -45,12 +52,19 @@ def build_dry_run(
         if classification["intent"] in {"analizar_existencias_reposicion", "registrar_movimiento_stock_borrador"}
         else []
     )
+    egg_collection = (
+        parse_egg_collection(text, today)
+        if classification["intent"] == "registrar_recoleccion_huevos"
+        else None
+    )
     if classification["intent"] == "registrar_compra":
         missing_data = purchase_missing_data(items)
     elif classification["intent"] == "preparar_reporte":
         missing_data = report_missing_data()
     elif classification["intent"] == "analizar_existencias_reposicion":
         missing_data = stock_analysis_missing_data()
+    elif classification["intent"] == "registrar_recoleccion_huevos":
+        missing_data = egg_collection_missing_data(egg_collection or {})
     elif classification["primary_domain"] == "sanidad":
         missing_data = sanitary_missing_data(classification["intent"])
     elif classification["intent"] == "registrar_bitacora_borrador" and classification["primary_domain"] == "incubacion":
@@ -82,6 +96,8 @@ def build_dry_run(
         "items": [item.to_dict() for item in items],
         "stock_observations": stock_observations,
     }
+    if egg_collection:
+        detected_data["egg_collection"] = egg_collection
     if purchase and purchase.get("total_inferido") is not None:
         detected_data["total_inferido"] = purchase["total_inferido"]
         detected_data["moneda"] = "PYG"
@@ -90,7 +106,7 @@ def build_dry_run(
     if purchase and purchase.get("total_declarado") is not None:
         detected_data["total_declarado"] = purchase["total_declarado"]
 
-    confirmation = build_confirmation(classification, items)
+    confirmation = build_confirmation(classification, items, egg_collection)
     input_payload: dict[str, Any] = {
         "text": text,
         "source": "cli",
@@ -109,6 +125,7 @@ def build_dry_run(
             "purchase": purchase,
             "stock_movements": stock_movements,
             "inventory_observations": stock_observations,
+            "egg_collection": egg_collection,
             "log_entry": log_entry,
         },
         "suggested_tasks": suggested_tasks,
@@ -120,6 +137,7 @@ def build_dry_run(
             purchase,
             stock_movements,
             confirmation,
+            egg_collection,
         ),
         "next_actions": build_next_actions(classification, missing_data),
     }

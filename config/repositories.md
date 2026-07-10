@@ -4,9 +4,10 @@
 
 | Repo | Rol | Estado recomendado |
 |---|---|---|
-| `personal-agent-orchestrator` | Orquestador personal y coordinación global | activo |
+| `personal-agent-platform` | Orquestador personal y coordinación global | activo |
 | `granja-luna-agent` | Subagente de la granja | activo |
-| `career-agent` | Subagente de carrera/profesión | recomendado |
+| `nestor-career-repo` | Dominio de carrera/profesión | activo |
+| `revelo` | Dominio de proyectos Revelo | activo |
 
 ## Legacy
 
@@ -16,4 +17,5 @@
 
 ## Regla
 
-El Orquestador puede conocer todos los repos. Cada subagente debe conocer su propio repo y exponer un contrato claro.
+El Orquestador sólo enruta el dominio y aplica la política global. Cada subagente interpreta
+su propio vocabulario, conoce su repo y expone un contrato claro.

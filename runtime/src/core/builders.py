@@ -185,6 +185,15 @@ def incubation_log_missing_data() -> list[str]:
     ]
 
 
+def egg_collection_missing_data(collection: dict[str, Any]) -> list[str]:
+    fields = (
+        ("fecha", "fecha de postura o recoleccion"),
+        ("plantel", "plantel, lote o grupo de origen"),
+        ("huevos_totales", "cantidad total de huevos"),
+    )
+    return [label for field, label in fields if collection.get(field) is None]
+
+
 def forage_decision_missing_data() -> list[str]:
     return [
         "frecuencia de riego actual",
@@ -388,7 +397,11 @@ def build_infrastructure_task_title(normalized_text: str) -> str | None:
     return None
 
 
-def build_confirmation(classification: dict[str, Any], items: list[ParsedItem]) -> dict[str, Any]:
+def build_confirmation(
+    classification: dict[str, Any],
+    items: list[ParsedItem],
+    egg_collection: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if not classification["requires_confirmation"]:
         return {
             "required": False,
@@ -402,6 +415,17 @@ def build_confirmation(classification: dict[str, Any], items: list[ParsedItem]) 
                 "Confirmas que prepare este borrador de compra y el movimiento de "
                 f"stock propuesto para: {products}? No se registrara como hecho real "
                 "hasta que lo confirmes explicitamente."
+            ),
+        }
+    if classification["intent"] == "registrar_recoleccion_huevos" and egg_collection:
+        count = egg_collection.get("huevos_totales")
+        flock = egg_collection.get("plantel") or "plantel pendiente"
+        count_text = f"{count} huevos" if count is not None else "la cantidad pendiente de huevos"
+        return {
+            "required": True,
+            "question": (
+                f"Confirmas el borrador de postura de {count_text} para {flock}? "
+                "Todavia no se registrara como hecho operativo."
             ),
         }
     return {
@@ -429,6 +453,7 @@ def build_ui_response(
     purchase: dict[str, Any] | None,
     stock_movements: list[dict[str, Any]],
     confirmation: dict[str, Any],
+    egg_collection: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     components: list[dict[str, Any]] = [
         {
@@ -487,6 +512,17 @@ def build_ui_response(
                 "props": {
                     "title": "Movimientos de stock propuestos",
                     "rows": stock_movements,
+                },
+            }
+        )
+    if egg_collection:
+        components.append(
+            {
+                "component": "field_group",
+                "props": {
+                    "title": "Borrador de postura",
+                    "schema_id": "egg_collection.v1",
+                    "values": egg_collection,
                 },
             }
         )

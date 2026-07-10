@@ -200,6 +200,52 @@ def parse_purchase_date(text: str, today: str) -> str | None:
         return None
 
 
+def parse_egg_collection(text: str, today: str) -> dict[str, Any]:
+    normalized_text = normalize(text)
+    reference = date.fromisoformat(today)
+    collection_date: str | None = None
+    if re.search(r"\bhoy\b", normalized_text):
+        collection_date = reference.isoformat()
+    elif re.search(r"\bayer\b", normalized_text):
+        collection_date = (reference - timedelta(days=1)).isoformat()
+
+    egg_count = None
+    for pattern in (
+        r"\b(?P<count>\d+)\s+huevos?\b",
+        r"\bhuevos?\s*[:=-]?\s*(?P<count>\d+)\b",
+    ):
+        match = re.search(pattern, normalized_text)
+        if match:
+            egg_count = int(match.group("count"))
+            break
+
+    flock = None
+    for pattern in (
+        r"\bplantel(?:\s+de)?\s+(?P<flock>[a-z0-9][a-z0-9\s-]{1,60}?)(?=\s+(?:puso|pusieron|tuvo|produjo)|[,.]|$)",
+        r"\b(?:lote|grupo)(?:\s+de)?\s+(?P<flock>[a-z0-9][a-z0-9\s-]{1,60}?)(?=\s+(?:puso|pusieron|tuvo|produjo)|[,.]|$)",
+    ):
+        match = re.search(pattern, normalized_text)
+        if match:
+            flock = match.group("flock").strip()
+            break
+    if flock is None and "reproductores" in normalized_text:
+        flock = "reproductores"
+
+    return {
+        "estado": "draft",
+        "fecha": collection_date,
+        "plantel": flock,
+        "huevos_totales": egg_count,
+        "huevos_sanos": None,
+        "huevos_rotos": None,
+        "huevos_sucios": None,
+        "destino": None,
+        "observaciones": None,
+        "fuente": "conversacion",
+        "requiere_confirmacion": True,
+    }
+
+
 def infer_unit_price_after_match(normalized_text: str, end: int) -> Decimal | None:
     nearby = normalized_text[end : end + 90]
     match = re.search(

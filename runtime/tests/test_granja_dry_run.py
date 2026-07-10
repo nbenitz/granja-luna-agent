@@ -14,6 +14,34 @@ EXAMPLES_PATH = Path(__file__).resolve().parents[1] / "examples" / "dry-run-case
 
 
 class GranjaDryRunTests(unittest.TestCase):
+    def test_egg_collection_from_breeder_flock(self) -> None:
+        result = build_dry_run(
+            "El plantel de reproductores puso 42 huevos hoy",
+            today="2026-07-10",
+        )
+
+        self.assertEqual(result["classification"]["intent"], "registrar_recoleccion_huevos")
+        self.assertEqual(result["classification"]["primary_domain"], "produccion-postura")
+        self.assertEqual(result["classification"]["risk_level"], "medio")
+        self.assertTrue(result["classification"]["requires_confirmation"])
+        collection = result["drafts"]["egg_collection"]
+        self.assertEqual(collection["fecha"], "2026-07-10")
+        self.assertEqual(collection["plantel"], "reproductores")
+        self.assertEqual(collection["huevos_totales"], 42)
+        self.assertEqual(result["missing_data"], [])
+        self.assertEqual(result["side_effects"], [])
+
+    def test_egg_collection_correction_is_not_a_purchase(self) -> None:
+        result = build_dry_run(
+            "No es una compra, se trata de puesta de huevos, es un plantel de reproductores.",
+            today="2026-07-10",
+        )
+
+        self.assertEqual(result["classification"]["intent"], "registrar_recoleccion_huevos")
+        self.assertEqual(result["classification"]["primary_domain"], "produccion-postura")
+        self.assertIsNone(result["drafts"]["purchase"])
+        self.assertIn("cantidad total de huevos", result["missing_data"])
+
     def test_purchase_with_stock_proposal(self) -> None:
         result = build_dry_run(
             "Compre 2 bolsas de maiz a 95000 cada una",

@@ -13,6 +13,21 @@ from core.intent_forms import ensure_structured_data, update_structured_values, 
 
 
 class IntentFormTests(unittest.TestCase):
+    def test_egg_collection_form_is_structured_and_valid(self) -> None:
+        entry = build_inbox_entry(
+            build_dry_run(
+                "El plantel de reproductores puso 42 huevos hoy",
+                today="2026-07-10",
+            )
+        )
+
+        structured = entry["structured_data"]
+        self.assertEqual(structured["schema_id"], "egg_collection.v1")
+        self.assertEqual(structured["values"]["fecha"], "2026-07-10")
+        self.assertEqual(structured["values"]["plantel"], "reproductores")
+        self.assertEqual(structured["values"]["huevos_totales"], 42)
+        self.assertEqual(validate_structured_data(entry), [])
+
     def test_purchase_form_preserves_multiple_detected_items(self) -> None:
         entry = build_inbox_entry(
             build_dry_run(

@@ -14,6 +14,8 @@ def evaluate_risk(intent: str, domains: list[str], normalized_text: str) -> str:
         return "bajo"
     if intent == "registrar_bitacora_borrador" and is_medium_risk_incubation_log(normalized_text):
         return "medio"
+    if intent == "registrar_recoleccion_huevos":
+        return "medio"
     if "sanidad" in domains and has_critical_sanitary_marker(normalized_text):
         return "critico"
     if "sanidad" in domains:

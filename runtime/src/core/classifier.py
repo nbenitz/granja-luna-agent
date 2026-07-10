@@ -208,6 +208,18 @@ DOMAIN_SIGNALS: dict[str, tuple[str, ...]] = {
         "celestes",
         "azulados",
     ),
+    "produccion-postura": (
+        "postura",
+        "puesta",
+        "puso",
+        "pusieron",
+        "recoleccion de huevos",
+        "recolección de huevos",
+        "recolecte",
+        "recolecté",
+        "junte",
+        "junté",
+    ),
     "tareas-mantenimiento": (
         "hacer",
         "mejorar",
@@ -273,6 +285,11 @@ def signal_matches(normalized_text: str, signal: str) -> bool:
         return False
     if signal == "consumo" and re.search(r"\b(no consumo|no es para consumo|no para consumo)\b", normalized_text):
         return False
+    if signal in {"compra", "comprar"} and re.search(
+        r"\b(no es (?:una )?compra|no (?:se trata de )?comprar)\b",
+        normalized_text,
+    ):
+        return False
     pattern = rf"(?<!\w){re.escape(signal)}(?!\w)"
     return re.search(pattern, normalized_text) is not None
 
@@ -309,6 +326,8 @@ def detect_intent(normalized_text: str, domains: list[str]) -> str:
         return "crear_tarea_borrador"
     if is_egg_color_observation(normalized_text, domains):
         return "registrar_bitacora_borrador"
+    if is_egg_collection(normalized_text, domains):
+        return "registrar_recoleccion_huevos"
     if is_incubation_log(normalized_text, domains):
         return "registrar_bitacora_borrador"
     if is_infrastructure_task(normalized_text, domains):
@@ -510,6 +529,27 @@ def is_egg_color_observation(normalized_text: str, domains: list[str]) -> bool:
     )
 
 
+def is_egg_collection(normalized_text: str, domains: list[str]) -> bool:
+    if not any(domain in domains for domain in ("produccion-postura", "reproductores")):
+        return False
+    if not re.search(r"\bhuevos?\b", normalized_text):
+        return False
+    collection_markers = (
+        "postura",
+        "puesta",
+        "puso",
+        "pusieron",
+        "recoleccion",
+        "recolección",
+        "recolecte",
+        "recolecté",
+        "junte",
+        "junté",
+        "cantidad de huevos",
+    )
+    return any(marker in normalized_text for marker in collection_markers)
+
+
 def is_incubation_log(normalized_text: str, domains: list[str]) -> bool:
     if "incubacion" not in domains:
         return False
@@ -582,6 +622,9 @@ def classify(text: str) -> dict[str, Any]:
     if intent == "registrar_compra":
         primary_domain = "compras"
         secondary_domains = [domain for domain in domains if domain != "compras"]
+    if intent == "registrar_recoleccion_huevos":
+        primary_domain = "produccion-postura"
+        secondary_domains = [domain for domain in domains if domain != "produccion-postura"]
     if intent == "analizar_existencias_reposicion":
         primary_domain = "stock-insumos"
         secondary_domains = [domain for domain in domains if domain != "stock-insumos"]

@@ -71,8 +71,31 @@ PURCHASE_SCHEMA: dict[str, Any] = {
     ],
 }
 
+EGG_COLLECTION_SCHEMA: dict[str, Any] = {
+    "schema_id": "egg_collection.v1",
+    "intent": "registrar_recoleccion_huevos",
+    "title": "Postura diaria",
+    "fields": [
+        {"name": "fecha", "label": "Fecha", "type": "date", "required": True},
+        {"name": "plantel", "label": "Plantel o lote", "type": "text", "required": True},
+        {
+            "name": "huevos_totales",
+            "label": "Huevos totales",
+            "type": "number",
+            "required": True,
+        },
+        {"name": "huevos_sanos", "label": "Huevos sanos", "type": "number", "required": False},
+        {"name": "huevos_rotos", "label": "Huevos rotos", "type": "number", "required": False},
+        {"name": "huevos_sucios", "label": "Huevos sucios", "type": "number", "required": False},
+        {"name": "destino", "label": "Destino", "type": "text", "required": False},
+        {"name": "observaciones", "label": "Observaciones", "type": "text", "required": False},
+    ],
+    "collections": [],
+}
+
 INTENT_SCHEMAS: dict[str, dict[str, Any]] = {
     "registrar_compra": PURCHASE_SCHEMA,
+    "registrar_recoleccion_huevos": EGG_COLLECTION_SCHEMA,
 }
 
 
@@ -87,7 +110,29 @@ def build_structured_data(dry_run: dict[str, Any]) -> dict[str, Any] | None:
         return None
     if intent == "registrar_compra":
         return build_purchase_data(dry_run, schema)
+    if intent == "registrar_recoleccion_huevos":
+        return build_egg_collection_data(dry_run, schema)
     return None
+
+
+def build_egg_collection_data(dry_run: dict[str, Any], schema: dict[str, Any]) -> dict[str, Any]:
+    values = dry_run.get("drafts", {}).get("egg_collection") or {}
+    field_names = [field["name"] for field in schema["fields"]]
+    return {
+        "schema_id": schema["schema_id"],
+        "intent": schema["intent"],
+        "title": schema["title"],
+        "schema": schema,
+        "values": {name: values.get(name) for name in field_names},
+        "provenance": {
+            "fields": {
+                name: "extracted" if values.get(name) is not None else "missing"
+                for name in field_names
+            }
+        },
+        "suggestions": {},
+        "information_status": "pending_review",
+    }
 
 
 def build_purchase_data(dry_run: dict[str, Any], schema: dict[str, Any]) -> dict[str, Any]:
@@ -135,6 +180,8 @@ def ensure_structured_data(entry: dict[str, Any]) -> dict[str, Any] | None:
     if structured_data and structured_data.get("schema_id") == "purchase.v2":
         ensure_purchase_v2_shape(structured_data, entry)
         return structured_data
+    if structured_data and structured_data.get("schema_id") == "egg_collection.v1":
+        return structured_data
     if structured_data:
         return structured_data
     structured_data = build_structured_data(entry.get("dry_run", {}))
@@ -155,6 +202,14 @@ def update_structured_values(
         normalized = normalize_purchase_values(submitted)
         structured_data["values"] = normalized
         update_purchase_provenance(structured_data, previous, normalized, provenance_source)
+    elif structured_data["schema_id"] == "egg_collection.v1":
+        previous = structured_data.get("values", {})
+        normalized = normalize_egg_collection_values(submitted)
+        structured_data["values"] = normalized
+        fields = structured_data.setdefault("provenance", {}).setdefault("fields", {})
+        for field, value in normalized.items():
+            if previous.get(field) != value:
+                fields[field] = provenance_source
     return structured_data
 
 
@@ -192,7 +247,34 @@ def validate_structured_data(entry: dict[str, Any]) -> list[dict[str, str]]:
         return []
     if structured_data["schema_id"] == "purchase.v2":
         return validate_purchase_values(structured_data.get("values", {}))
+    if structured_data["schema_id"] == "egg_collection.v1":
+        return validate_egg_collection_values(structured_data.get("values", {}))
     return []
+
+
+def normalize_egg_collection_values(values: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "fecha": clean_text(values.get("fecha")),
+        "plantel": clean_text(values.get("plantel")),
+        "huevos_totales": normalize_number(values.get("huevos_totales")),
+        "huevos_sanos": normalize_number(values.get("huevos_sanos")),
+        "huevos_rotos": normalize_number(values.get("huevos_rotos")),
+        "huevos_sucios": normalize_number(values.get("huevos_sucios")),
+        "destino": clean_text(values.get("destino")),
+        "observaciones": clean_text(values.get("observaciones")),
+    }
+
+
+def validate_egg_collection_values(values: dict[str, Any]) -> list[dict[str, str]]:
+    missing: list[dict[str, str]] = []
+    if not clean_text(values.get("fecha")):
+        missing.append({"path": "fecha", "label": "Fecha"})
+    if not clean_text(values.get("plantel")):
+        missing.append({"path": "plantel", "label": "Plantel o lote"})
+    total = normalize_number(values.get("huevos_totales"))
+    if total is None or total < 0:
+        missing.append({"path": "huevos_totales", "label": "Huevos totales"})
+    return missing
 
 
 def validate_purchase_values(values: dict[str, Any]) -> list[dict[str, str]]:

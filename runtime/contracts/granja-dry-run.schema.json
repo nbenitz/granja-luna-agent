@@ -129,6 +129,10 @@
           "type": "array",
           "items": {"type": "object"}
         },
+        "egg_collection": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
         "log_entry": {
           "type": ["object", "null"],
           "additionalProperties": true

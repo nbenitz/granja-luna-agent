@@ -36,10 +36,11 @@ Ayudar a gestionar Granja Luna de forma progresiva y agéntica:
 Este repo debería vivir junto a otros repos especializados:
 
 ```text
-workspace-nestor/
-├── personal-agent-orchestrator/   # Orquestador principal
+dev/
+├── personal-agent-platform/       # Superorquestador y entrada móvil
 ├── granja-luna-agent/             # Este repo
-└── career-agent/                  # Subagente Carrera, futuro nombre recomendado
+├── nestor-career-repo/            # Dominio Carrera
+└── revelo/                         # Dominio Revelo
 ```
 
 `avicola-mbore` queda como **legacy descontinuado**. Puede ser usado como fuente inicial de aprendizaje, pero no como dependencia operativa.
