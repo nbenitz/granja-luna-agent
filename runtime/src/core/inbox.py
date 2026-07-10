@@ -8,11 +8,22 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from core.intent_forms import build_structured_data
+
 
 InboxEntry = dict[str, Any]
 
-DEFAULT_STATUS = "pending_review"
-STATUSES = {"pending_review", "needs_edit", "ready_to_apply", "cancelled", "archived"}
+DEFAULT_STATUS = "pending"
+REVIEW_STATUSES = {"pending", "validated", "needs_information", "needs_correction", "rejected"}
+OPERATION_STATUSES = {"draft", "awaiting_confirmation", "applied", "cancelled"}
+STATUSES = REVIEW_STATUSES
+LEGACY_STATUS_MAP = {
+    "pending_review": "pending",
+    "needs_edit": "needs_correction",
+    "ready_to_apply": "validated",
+    "cancelled": "rejected",
+    "archived": "rejected",
+}
 
 
 def build_inbox_entry(
@@ -20,18 +31,19 @@ def build_inbox_entry(
     created_at: str | None = None,
     status: str = DEFAULT_STATUS,
 ) -> InboxEntry:
-    if status not in STATUSES:
+    status = LEGACY_STATUS_MAP.get(status, status)
+    if status not in REVIEW_STATUSES:
         raise ValueError(f"Invalid inbox status: {status}")
     created_at = created_at or datetime.now().astimezone().isoformat(timespec="seconds")
     classification = dry_run["classification"]
     text = dry_run["input"]["text"]
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "id": build_entry_id(created_at, text),
         "created_at": created_at,
         "updated_at": created_at,
-        "status": status,
-        "information_status": "pending_review",
+        "review_status": status,
+        "operation_status": "draft",
         "source": dry_run["input"].get("source", "cli"),
         "message": text,
         "context": dry_run["input"].get("context"),
@@ -43,13 +55,22 @@ def build_inbox_entry(
             "requires_confirmation": classification["requires_confirmation"],
             "confidence": classification.get("confidence"),
         },
+        "classification_provenance": {
+            "intent": "predicted",
+            "primary_domain": "predicted",
+            "risk_level": "predicted",
+        },
         "missing_data": dry_run.get("missing_data", []),
         "next_actions": dry_run.get("next_actions", []),
         "review": {
-            "decision": None,
-            "notes": None,
+            "outcome": None,
+            "reason": None,
+            "note": None,
             "reviewed_at": None,
+            "correction_count": 0,
+            "last_correction_at": None,
         },
+        "structured_data": build_structured_data(dry_run),
         "side_effects": [],
         "dry_run": dry_run,
     }
@@ -95,10 +116,36 @@ def load_inbox_entries(path: Path) -> list[InboxEntry]:
         if not line.strip():
             continue
         try:
-            entries.append(json.loads(line))
+            entries.append(normalize_inbox_entry(json.loads(line)))
         except json.JSONDecodeError as exc:
             raise ValueError(f"Invalid JSONL at {path}:{line_number}: {exc}") from exc
     return entries
+
+
+def normalize_inbox_entry(entry: InboxEntry) -> InboxEntry:
+    legacy_status = entry.pop("status", None)
+    review_status = entry.get("review_status") or LEGACY_STATUS_MAP.get(legacy_status, "pending")
+    if review_status not in REVIEW_STATUSES:
+        review_status = "pending"
+    entry["schema_version"] = 2
+    entry["review_status"] = review_status
+    entry["operation_status"] = entry.get("operation_status", "draft")
+    entry["classification_provenance"] = entry.get("classification_provenance") or {
+        "intent": "predicted",
+        "primary_domain": "predicted",
+        "risk_level": "predicted",
+    }
+    entry.pop("information_status", None)
+    old_review = entry.get("review") or {}
+    entry["review"] = {
+        "outcome": old_review.get("outcome"),
+        "reason": old_review.get("reason"),
+        "note": old_review.get("note", old_review.get("notes")),
+        "reviewed_at": old_review.get("reviewed_at"),
+        "correction_count": old_review.get("correction_count", 0),
+        "last_correction_at": old_review.get("last_correction_at"),
+    }
+    return entry
 
 
 def find_inbox_entry(entries: list[InboxEntry], entry_id: str) -> InboxEntry:
@@ -109,17 +156,54 @@ def find_inbox_entry(entries: list[InboxEntry], entry_id: str) -> InboxEntry:
 
 
 def summarize_inbox(entries: list[InboxEntry]) -> dict[str, Any]:
-    status_counts = Counter(entry.get("status", "unknown") for entry in entries)
+    status_counts = Counter(entry.get("review_status", "unknown") for entry in entries)
+    operation_counts = Counter(entry.get("operation_status", "unknown") for entry in entries)
     risk_counts = Counter(entry.get("classification", {}).get("risk_level", "unknown") for entry in entries)
     domain_counts = Counter(entry.get("classification", {}).get("primary_domain", "unknown") for entry in entries)
     confirmation_count = sum(1 for entry in entries if entry.get("classification", {}).get("requires_confirmation"))
     return {
         "total": len(entries),
+        "by_review_status": dict(status_counts),
+        "by_operation_status": dict(operation_counts),
         "by_status": dict(status_counts),
         "by_risk": dict(risk_counts),
         "by_primary_domain": dict(domain_counts),
         "requires_confirmation": confirmation_count,
     }
+
+
+def update_inbox_entry_review(
+    entries: list[InboxEntry],
+    entry_id: str,
+    review_status: str,
+    outcome: str,
+    reason: str | None = None,
+    reviewed_at: str | None = None,
+    note: str | None = None,
+) -> InboxEntry:
+    if review_status not in REVIEW_STATUSES:
+        raise ValueError(f"Invalid inbox review status: {review_status}")
+    reviewed_at = reviewed_at or datetime.now().astimezone().isoformat(timespec="seconds")
+    entry = find_inbox_entry(entries, entry_id)
+    entry["review_status"] = review_status
+    entry["updated_at"] = reviewed_at
+    review = entry.get("review", {})
+    review.update({"outcome": outcome, "reason": reason, "note": note, "reviewed_at": reviewed_at})
+    entry["review"] = review
+    return entry
+
+
+def record_inbox_correction(entry: InboxEntry, corrected_at: str | None = None) -> InboxEntry:
+    corrected_at = corrected_at or datetime.now().astimezone().isoformat(timespec="seconds")
+    review = entry.get("review", {})
+    review["correction_count"] = int(review.get("correction_count", 0)) + 1
+    review["last_correction_at"] = corrected_at
+    review["outcome"] = None
+    review["reviewed_at"] = None
+    entry["review"] = review
+    entry["review_status"] = "pending"
+    entry["updated_at"] = corrected_at
+    return entry
 
 
 def update_inbox_entry_status(
@@ -129,26 +213,20 @@ def update_inbox_entry_status(
     reviewed_at: str | None = None,
     notes: str | None = None,
 ) -> InboxEntry:
-    if status not in STATUSES:
-        raise ValueError(f"Invalid inbox status: {status}")
-    reviewed_at = reviewed_at or datetime.now().astimezone().isoformat(timespec="seconds")
-    entry = find_inbox_entry(entries, entry_id)
-    entry["status"] = status
-    entry["updated_at"] = reviewed_at
-    entry["review"] = {
-        "decision": status,
-        "notes": notes,
-        "reviewed_at": reviewed_at,
-    }
-    return entry
+    mapped = LEGACY_STATUS_MAP.get(status, status)
+    outcome = "accepted" if mapped == "validated" else "deferred"
+    if mapped == "rejected":
+        outcome = "rejected"
+    return update_inbox_entry_review(entries, entry_id, mapped, outcome, reviewed_at=reviewed_at, note=notes)
 
 
 def filter_inbox_entries(entries: list[InboxEntry], status: str | None = None) -> list[InboxEntry]:
     if status is None:
         return entries
-    if status not in STATUSES:
+    status = LEGACY_STATUS_MAP.get(status, status)
+    if status not in REVIEW_STATUSES:
         raise ValueError(f"Invalid inbox status: {status}")
-    return [entry for entry in entries if entry.get("status") == status]
+    return [entry for entry in entries if entry.get("review_status") == status]
 
 
 def format_inbox_table(entries: list[InboxEntry]) -> str:
@@ -161,7 +239,7 @@ def format_inbox_table(entries: list[InboxEntry]) -> str:
             " | ".join(
                 [
                     entry.get("id", "-"),
-                    entry.get("status", "-"),
+                    entry.get("review_status", "-"),
                     classification.get("risk_level", "-"),
                     classification.get("primary_domain", "-"),
                     classification.get("intent", "-"),
@@ -178,7 +256,8 @@ def format_inbox_detail(entry: InboxEntry) -> str:
         "Granja Luna inbox",
         "",
         f"ID: {entry.get('id')}",
-        f"Estado: {entry.get('status')} ({entry.get('information_status')})",
+        f"Revision: {entry.get('review_status')}",
+        f"Operacion: {entry.get('operation_status')}",
         f"Creado: {entry.get('created_at')}",
         f"Intencion: {classification.get('intent')}",
         f"Dominio principal: {classification.get('primary_domain')}",
@@ -206,7 +285,7 @@ def format_inbox_detail(entry: InboxEntry) -> str:
         lines.append("")
         lines.append("Proximas acciones:")
         lines.extend(f"- {item}" for item in next_actions)
-    lines.extend(["", "Nota: entrada pendiente. No se aplicaron cambios operativos. side_effects: []"])
+    lines.extend(["", "Nota: la revision no aplico cambios operativos. side_effects: []"])
     return "\n".join(lines)
 
 

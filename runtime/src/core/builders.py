@@ -11,8 +11,7 @@ def purchase_missing_data(items: list[ParsedItem]) -> list[str]:
     missing = [
         "fecha real de compra",
         "proveedor",
-        "comprobante o evidencia",
-        "confirmacion de impacto en stock",
+        "comprobante o evidencia opcional",
     ]
     if any(item.unit_price is None for item in items):
         missing.append("precio unitario de cada item")
@@ -21,22 +20,43 @@ def purchase_missing_data(items: list[ParsedItem]) -> list[str]:
     return missing
 
 
-def build_purchase_draft(items: list[ParsedItem], today: str) -> dict[str, Any] | None:
+def build_purchase_draft(
+    items: list[ParsedItem],
+    today: str,
+    purchase_date: str | None = None,
+    adjustments: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
     if not items:
         return None
     total = sum((item.subtotal for item in items if item.subtotal is not None), Decimal("0"))
     has_full_total = all(item.subtotal is not None for item in items)
+    adjustments = adjustments or {}
+    discount = adjustments.get("descuento")
+    total_after_discount = apply_discount(total, discount) if has_full_total else None
     return {
         "estado": "draft",
         "fecha_inferida": today,
-        "fecha_real": None,
+        "fecha_real": purchase_date,
         "proveedor": None,
         "moneda": "PYG",
         "items": [item.to_dict() for item in items],
-        "total_inferido": number_to_json(total) if has_full_total else None,
+        "subtotal_calculado": number_to_json(total) if has_full_total else None,
+        "descuento": discount,
+        "total_calculado": number_to_json(total_after_discount) if total_after_discount is not None else None,
+        "total_declarado": adjustments.get("total_declarado"),
+        "total_inferido": number_to_json(total_after_discount) if total_after_discount is not None else None,
         "fuente": "conversacion",
         "requiere_confirmacion": True,
     }
+
+
+def apply_discount(total: Decimal, discount: dict[str, Any] | None) -> Decimal:
+    if not discount or discount.get("valor") is None:
+        return total
+    value = Decimal(str(discount["valor"]))
+    if discount.get("tipo") == "porcentaje":
+        return total * (Decimal("1") - value / Decimal("100"))
+    return total - value
 
 
 def build_stock_movements(items: list[ParsedItem], primary_domain: str) -> list[dict[str, Any]]:

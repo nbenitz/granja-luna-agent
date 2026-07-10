@@ -6,7 +6,10 @@ El runtime convierte la memoria y los workflows de Granja Luna en comportamiento
 
 No es todavia una app completa. Es la capa que recibe mensajes, clasifica intencion y dominio, evalua riesgo, prepara borradores, solicita confirmacion y devuelve respuestas estructuradas para una UI.
 
-El CLI `granja_dry_run.py` no escribe archivos. El CLI `granja_inbox.py` agrega una primera bandeja operativa local: guarda propuestas `pending_review` en `runtime/state/inbox.jsonl`, sin aplicar cambios reales.
+El CLI `granja_dry_run.py` no escribe archivos. El CLI `granja_inbox.py` agrega una primera bandeja operativa local: guarda propuestas con `review_status: pending` en `runtime/state/inbox.jsonl`, sin aplicar cambios reales.
+
+La web local en `runtime/src/web/` permite capturar y revisar esas propuestas desde un celular conectado a la misma red.
+Para compras, muestra una ficha `purchase.v2` de lectura con datos generales y productos. Las correcciones se habilitan por seccion y no modifican el estado operativo.
 
 ## Objetivo inicial
 
@@ -31,6 +34,8 @@ runtime/
     ui-response.schema.json
   state/
     inbox.jsonl
+    usage-events.jsonl
+    review-events.jsonl
   examples/
     dry-run-cases.json
     imported-cases-pending-review.json
@@ -40,6 +45,8 @@ runtime/
       README.md
       classifier.py
       parsing.py
+      intent_forms.py
+      review_log.py
       risk.py
       builders.py
       dry_run.py
@@ -48,6 +55,9 @@ runtime/
       granja_inbox.py
     ui/
       README.md
+    web/
+      app.py
+      static/
   tests/
     test_granja_dry_run.py
 ```
@@ -61,13 +71,18 @@ python3 runtime/src/cli/granja_dry_run.py "Quiero saber si puedo usar su huevo p
 python3 runtime/src/cli/granja_inbox.py capture "Compre 2 bolsas de maiz a 95000 cada una"
 python3 runtime/src/cli/granja_inbox.py list
 python3 runtime/src/cli/granja_inbox.py show inbox-id
-python3 runtime/src/cli/granja_inbox.py review inbox-id --status needs_edit --notes "Falta proveedor"
+python3 runtime/src/cli/granja_inbox.py review inbox-id --decision needs_correction --notes "Falta proveedor"
 python3 runtime/src/cli/granja_inbox.py summary
+python3 runtime/src/cli/curate_review_feedback.py review-event-id --primary-reason system_error --label extraction_miss --training-eligibility eligible --note-usage evidence --explanation "El dato estaba en el texto"
+uvicorn runtime.src.web.app:app --host 0.0.0.0 --port 8000
 python3 runtime/src/cli/review_imported_cases.py --list
 python3 runtime/src/cli/review_imported_cases.py --limit 3
 python3 runtime/src/cli/review_imported_cases.py --summary
 python3 -m unittest runtime/tests/test_granja_dry_run.py
+npm run test:e2e
 ```
+
+La prueba Playwright inicia un servidor aislado, recorre el flujo en telefono y escritorio, y verifica captura, deteccion multiple, inbox, validacion y revision de una compra sin tocar el estado local del usuario.
 
 ## Ejemplos de evaluacion
 
@@ -89,3 +104,9 @@ El runtime propone. No registra compras, ventas, stock, sanidad ni tareas como h
 El `context` de entrada ayuda a clasificar intencion, riesgo y datos faltantes. No confirma hechos operativos por si solo y no se usa para extraer compras, stock o tratamientos como registros reales.
 
 El inbox operativo guarda propuestas pendientes. Es estado local ignorado por git y no equivale a bitacora confirmada, stock confirmado, compra confirmada ni tarea activa.
+
+La web local registra eventos de uso en `runtime/state/usage-events.jsonl`. El log conserva tipo, fecha y referencias, pero no duplica el texto completo de las entradas.
+
+Las correcciones y decisiones humanas se guardan en `runtime/state/review-events.jsonl`. Cada correccion conserva un diff y un motivo estructurado para evaluacion futura, sin tratar automaticamente esos registros como un dataset confirmado.
+
+La curaduria agrega eventos `feedback_curated` sobre las revisiones originales. Permite separar errores de extraccion, enriquecimiento externo, ambiguedades, feedback de producto y ejemplos que deben excluirse.

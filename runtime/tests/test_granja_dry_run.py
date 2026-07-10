@@ -44,6 +44,37 @@ class GranjaDryRunTests(unittest.TestCase):
         self.assertEqual(purchase["total_inferido"], 190000)
         self.assertEqual(len(result["drafts"]["stock_movements"]), 1)
 
+    def test_purchase_detects_multiple_items(self) -> None:
+        result = build_dry_run(
+            "Compre dos bolsas de iniciador a 110 mil cada una, "
+            "una bolsa de maiz a 90 mil y 3 kg de vitaminas a 25000",
+            today="2026-06-20",
+        )
+
+        self.assertEqual(result["classification"]["intent"], "registrar_compra")
+        self.assertEqual(result["side_effects"], [])
+        items = result["detected_data"]["items"]
+        self.assertEqual([item["producto"] for item in items], ["iniciador", "maiz", "vitaminas"])
+        self.assertEqual([item["cantidad"] for item in items], [2, 1, 3])
+        self.assertEqual([item["precio_unitario"] for item in items], [110000, 90000, 25000])
+        self.assertEqual(result["drafts"]["purchase"]["total_inferido"], 385000)
+        self.assertEqual(len(result["drafts"]["stock_movements"]), 3)
+
+    def test_purchase_detects_date_discount_and_declared_total(self) -> None:
+        result = build_dry_run(
+            "El uno de junio compre 7 bolsas de cascarilla de arroz a 10mil c/u, "
+            "total 100mil, con 5mil de descuento.",
+            today="2026-06-20",
+        )
+
+        purchase = result["drafts"]["purchase"]
+        self.assertEqual(purchase["fecha_real"], "2026-06-01")
+        self.assertEqual(purchase["items"][0]["precio_unitario"], 10000)
+        self.assertEqual(purchase["subtotal_calculado"], 70000)
+        self.assertEqual(purchase["descuento"], {"tipo": "monto", "valor": 5000})
+        self.assertEqual(purchase["total_calculado"], 65000)
+        self.assertEqual(purchase["total_declarado"], 100000)
+
     def test_task_signal_creates_suggested_task(self) -> None:
         result = build_dry_run("Manana revisar el galpon", today="2026-06-14")
 

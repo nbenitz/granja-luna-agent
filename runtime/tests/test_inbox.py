@@ -17,7 +17,7 @@ from core.inbox import (
     format_inbox_detail,
     load_inbox_entries,
     summarize_inbox,
-    update_inbox_entry_status,
+    update_inbox_entry_review,
     write_inbox_entries,
 )
 
@@ -32,14 +32,17 @@ class InboxTests(unittest.TestCase):
         entry = build_inbox_entry(dry_run, created_at="2026-06-16T10:30:00-03:00")
 
         self.assertTrue(entry["id"].startswith("inbox-20260616T103000-"))
-        self.assertEqual(entry["status"], "pending_review")
-        self.assertEqual(entry["information_status"], "pending_review")
+        self.assertEqual(entry["schema_version"], 2)
+        self.assertEqual(entry["review_status"], "pending")
+        self.assertEqual(entry["operation_status"], "draft")
         self.assertEqual(entry["side_effects"], [])
         self.assertEqual(entry["classification"]["intent"], "registrar_compra")
         self.assertEqual(entry["classification"]["primary_domain"], "compras")
         self.assertTrue(entry["classification"]["requires_confirmation"])
         self.assertEqual(entry["dry_run"]["mode"], "dry_run")
         self.assertEqual(entry["dry_run"]["side_effects"], [])
+        self.assertEqual(entry["structured_data"]["schema_id"], "purchase.v2")
+        self.assertEqual(len(entry["structured_data"]["values"]["items"]), 1)
 
     def test_append_load_find_filter_and_summarize(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -58,11 +61,12 @@ class InboxTests(unittest.TestCase):
             entries = load_inbox_entries(inbox_path)
             self.assertEqual(len(entries), 2)
             self.assertEqual(find_inbox_entry(entries, purchase["id"])["message"], purchase["message"])
-            self.assertEqual(len(filter_inbox_entries(entries, "pending_review")), 2)
+            self.assertEqual(len(filter_inbox_entries(entries, "pending")), 2)
 
             summary = summarize_inbox(entries)
             self.assertEqual(summary["total"], 2)
-            self.assertEqual(summary["by_status"]["pending_review"], 2)
+            self.assertEqual(summary["by_review_status"]["pending"], 2)
+            self.assertEqual(summary["by_operation_status"]["draft"], 2)
             self.assertEqual(summary["requires_confirmation"], 1)
             self.assertEqual(summary["by_primary_domain"]["compras"], 1)
 
@@ -74,8 +78,9 @@ class InboxTests(unittest.TestCase):
 
         detail = format_inbox_detail(entry)
 
-        self.assertIn("Estado: pending_review", detail)
-        self.assertIn("No se aplicaron cambios operativos. side_effects: []", detail)
+        self.assertIn("Revision: pending", detail)
+        self.assertIn("Operacion: draft", detail)
+        self.assertIn("la revision no aplico cambios operativos. side_effects: []", detail)
 
     def test_update_status_keeps_entry_as_non_operational(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -87,20 +92,40 @@ class InboxTests(unittest.TestCase):
             append_inbox_entry(inbox_path, entry)
 
             entries = load_inbox_entries(inbox_path)
-            updated = update_inbox_entry_status(
+            updated = update_inbox_entry_review(
                 entries,
                 entry["id"],
-                "needs_edit",
+                "needs_correction",
+                "deferred",
+                reason="correction_deferred",
                 reviewed_at="2026-06-16T10:00:00-03:00",
-                notes="Falta responsable",
+                note="Falta responsable",
             )
             write_inbox_entries(inbox_path, entries)
 
             reloaded = load_inbox_entries(inbox_path)
             self.assertEqual(len(reloaded), 1)
-            self.assertEqual(updated["status"], "needs_edit")
-            self.assertEqual(reloaded[0]["review"]["notes"], "Falta responsable")
+            self.assertEqual(updated["review_status"], "needs_correction")
+            self.assertEqual(reloaded[0]["review"]["note"], "Falta responsable")
+            self.assertEqual(reloaded[0]["operation_status"], "draft")
             self.assertEqual(reloaded[0]["side_effects"], [])
+
+    def test_load_migrates_legacy_status_without_losing_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            inbox_path = Path(tmpdir) / "inbox.jsonl"
+            legacy = build_inbox_entry(build_dry_run("Manana revisar el galpon", today="2026-06-16"))
+            legacy["schema_version"] = 1
+            legacy["status"] = "ready_to_apply"
+            legacy.pop("review_status")
+            legacy.pop("operation_status")
+            inbox_path.write_text(__import__("json").dumps(legacy) + "\n", encoding="utf-8")
+
+            migrated = load_inbox_entries(inbox_path)[0]
+
+            self.assertEqual(migrated["schema_version"], 2)
+            self.assertEqual(migrated["review_status"], "validated")
+            self.assertEqual(migrated["operation_status"], "draft")
+            self.assertEqual(migrated["message"], legacy["message"])
 
 
 if __name__ == "__main__":

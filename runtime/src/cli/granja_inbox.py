@@ -16,12 +16,13 @@ import sys
 RUNTIME_DIR = Path(__file__).resolve().parents[2]
 SRC_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_INBOX = RUNTIME_DIR / "state" / "inbox.jsonl"
+DEFAULT_REVIEW_EVENTS = RUNTIME_DIR / "state" / "review-events.jsonl"
 
 sys.path.insert(0, str(SRC_DIR))
 
 from core.dry_run import build_dry_run  # noqa: E402
 from core.inbox import (  # noqa: E402
-    STATUSES,
+    REVIEW_STATUSES,
     append_inbox_entry,
     build_inbox_entry,
     filter_inbox_entries,
@@ -30,14 +31,22 @@ from core.inbox import (  # noqa: E402
     format_inbox_table,
     load_inbox_entries,
     summarize_inbox,
-    update_inbox_entry_status,
+    update_inbox_entry_review,
     write_inbox_entries,
 )
+from core.intent_forms import ensure_structured_data, validate_structured_data  # noqa: E402
+from core.review_log import append_review_event, build_review_event  # noqa: E402
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Granja Luna operational inbox")
     parser.add_argument("--inbox", type=Path, default=DEFAULT_INBOX, help="Ruta del inbox JSONL")
+    parser.add_argument(
+        "--review-events",
+        type=Path,
+        default=DEFAULT_REVIEW_EVENTS,
+        help="Ruta del historial de revisiones JSONL",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     capture = subparsers.add_parser("capture", help="Analiza un mensaje y lo guarda como pendiente")
@@ -53,7 +62,7 @@ def main() -> int:
     )
 
     list_parser = subparsers.add_parser("list", help="Lista entradas del inbox")
-    list_parser.add_argument("--status", choices=tuple(sorted(STATUSES)), help="Filtrar por estado")
+    list_parser.add_argument("--status", choices=tuple(sorted(REVIEW_STATUSES)), help="Filtrar por revision")
     list_parser.add_argument("--limit", type=int, help="Cantidad maxima de entradas a mostrar")
     list_parser.add_argument(
         "--format",
@@ -73,9 +82,15 @@ def main() -> int:
         help="Formato de salida. Por defecto: summary.",
     )
 
-    review = subparsers.add_parser("review", help="Marca una entrada revisada sin aplicar cambios reales")
+    review = subparsers.add_parser("review", help="Registra una decision de revision sin aplicar cambios reales")
     review.add_argument("entry_id", help="ID de entrada")
-    review.add_argument("--status", required=True, choices=tuple(sorted(STATUSES)), help="Nuevo estado")
+    review.add_argument(
+        "--decision",
+        required=True,
+        choices=("confirm", "needs_information", "needs_correction", "reject"),
+        help="Decision humana de revision",
+    )
+    review.add_argument("--reason", help="Motivo estructurado opcional")
     review.add_argument("--notes", help="Notas de revision")
     review.add_argument(
         "--format",
@@ -149,11 +164,50 @@ def show_entry(args: argparse.Namespace) -> int:
 def review_entry(args: argparse.Namespace) -> int:
     entries = load_inbox_entries(args.inbox)
     try:
-        entry = update_inbox_entry_status(entries, args.entry_id, args.status, notes=args.notes)
+        entry = find_inbox_entry(entries, args.entry_id)
     except KeyError as exc:
         print(str(exc), file=sys.stderr)
         return 1
+    ensure_structured_data(entry)
+    before_status = entry["review_status"]
+    if args.decision == "confirm":
+        missing = validate_structured_data(entry)
+        if missing:
+            print("No se puede confirmar; faltan: " + ", ".join(item["label"] for item in missing), file=sys.stderr)
+            return 2
+        correction_count = int(entry.get("review", {}).get("correction_count", 0))
+        status, outcome, reason = "validated", "corrected" if correction_count else "accepted", "human_validation"
+    elif args.decision == "needs_information":
+        status, outcome, reason = "needs_information", "deferred", args.reason or "source_information_missing"
+    elif args.decision == "needs_correction":
+        if not args.notes:
+            print("--notes es obligatorio para needs_correction", file=sys.stderr)
+            return 2
+        status, outcome, reason = "needs_correction", "deferred", args.reason or "correction_deferred"
+    else:
+        status, outcome, reason = "rejected", "rejected", args.reason or "not_relevant"
+    event = build_review_event(
+        "review_completed",
+        args.entry_id,
+        before={"review_status": before_status},
+        after={"review_status": status},
+        section="review",
+        reason=reason,
+        note=args.notes,
+        review_status_before=before_status,
+        review_status_after=status,
+    )
+    entry = update_inbox_entry_review(
+        entries,
+        args.entry_id,
+        status,
+        outcome,
+        reason=reason,
+        reviewed_at=event["occurred_at"],
+        note=args.notes,
+    )
     write_inbox_entries(args.inbox, entries)
+    append_review_event(args.review_events, event)
     if args.output_format == "json":
         print(json.dumps(entry, ensure_ascii=False, indent=2, sort_keys=True))
     else:

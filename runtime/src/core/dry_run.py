@@ -23,7 +23,7 @@ from core.builders import (
 )
 from core.classifier import classify
 from core.context import build_analysis_text, normalize_context
-from core.parsing import parse_items, parse_stock_observations
+from core.parsing import parse_items, parse_purchase_adjustments, parse_purchase_date, parse_stock_observations
 
 
 def build_dry_run(
@@ -36,6 +36,10 @@ def build_dry_run(
     analysis_text = build_analysis_text(text, context_payload)
     classification = classify(analysis_text)
     items = parse_items(text) if classification["intent"] == "registrar_compra" else []
+    purchase_date = parse_purchase_date(text, today) if classification["intent"] == "registrar_compra" else None
+    purchase_adjustments = (
+        parse_purchase_adjustments(text) if classification["intent"] == "registrar_compra" else {}
+    )
     stock_observations = (
         parse_stock_observations(text)
         if classification["intent"] in {"analizar_existencias_reposicion", "registrar_movimiento_stock_borrador"}
@@ -67,7 +71,7 @@ def build_dry_run(
         missing_data = task_missing_data(classification["primary_domain"])
     else:
         missing_data = []
-    purchase = build_purchase_draft(items, today)
+    purchase = build_purchase_draft(items, today, purchase_date, purchase_adjustments)
     stock_movements = build_stock_movements(items, classification["primary_domain"])
     log_entry = build_log_entry(text, classification, today)
     suggested_tasks = build_suggested_tasks(text, classification)
@@ -81,6 +85,10 @@ def build_dry_run(
     if purchase and purchase.get("total_inferido") is not None:
         detected_data["total_inferido"] = purchase["total_inferido"]
         detected_data["moneda"] = "PYG"
+    if purchase and purchase.get("descuento"):
+        detected_data["descuento"] = purchase["descuento"]
+    if purchase and purchase.get("total_declarado") is not None:
+        detected_data["total_declarado"] = purchase["total_declarado"]
 
     confirmation = build_confirmation(classification, items)
     input_payload: dict[str, Any] = {

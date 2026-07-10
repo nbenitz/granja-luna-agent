@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -45,6 +46,21 @@ FRACTION_WORDS: dict[str, Decimal] = {
     "cuarto": Decimal("0.25"),
 }
 
+MONTHS = {
+    "enero": 1,
+    "febrero": 2,
+    "marzo": 3,
+    "abril": 4,
+    "mayo": 5,
+    "junio": 6,
+    "julio": 7,
+    "agosto": 8,
+    "septiembre": 9,
+    "octubre": 10,
+    "noviembre": 11,
+    "diciembre": 12,
+}
+
 
 @dataclass(frozen=True)
 class ParsedItem:
@@ -74,8 +90,8 @@ class ParsedItem:
 def parse_decimal(raw_value: str) -> Decimal | None:
     value = raw_value.strip().lower()
     multiplier = Decimal("1")
-    if value.endswith(" mil"):
-        value = value.removesuffix(" mil").strip()
+    if value.endswith("mil"):
+        value = value.removesuffix("mil").strip()
         multiplier = Decimal("1000")
     if value in NUMBER_WORDS:
         return NUMBER_WORDS[value] * multiplier
@@ -101,7 +117,7 @@ def parse_items(text: str) -> list[ParsedItem]:
     unit_pattern = r"(?P<unit>bolsas?|kg|kilos?|litros?|lts|unidades?|unidad)"
     product_pattern = r"(?P<product>[a-z0-9\s]+?)"
     price_pattern = (
-        r"(?:\s+a\s+(?P<price>\d[\d.,]*(?:\s+mil)?)(?:\s+cada\s+(?:una|uno|bolsa|unidad))?)?"
+        r"(?:\s+a\s+(?P<price>\d[\d.,]*(?:\s*mil)?)(?:\s+(?:cada\s+(?:una|uno|bolsa|unidad)|c/u))?)?"
     )
     boundary = r"(?=\s+y\s+|\s*,|\.|$)"
     pattern = re.compile(
@@ -129,6 +145,59 @@ def parse_items(text: str) -> list[ParsedItem]:
             )
         )
     return items
+
+
+def parse_purchase_adjustments(text: str) -> dict[str, Any]:
+    normalized_text = normalize(text)
+    discount = parse_discount(normalized_text)
+    stated_total = parse_stated_total(normalized_text)
+    return {
+        "descuento": discount,
+        "total_declarado": number_to_json(stated_total),
+    }
+
+
+def parse_discount(normalized_text: str) -> dict[str, Any] | None:
+    percentage = re.search(
+        r"\b(?P<value>\d+(?:[.,]\d+)?)\s*%\s+de\s+descuento\b",
+        normalized_text,
+    )
+    if percentage:
+        value = parse_decimal(percentage.group("value"))
+        return {"tipo": "porcentaje", "valor": number_to_json(value)} if value is not None else None
+    amount = re.search(
+        r"\b(?:con\s+)?(?P<value>\d[\d.,]*(?:\s*mil)?)\s+de\s+descuento\b|"
+        r"\bdescuento\s+de\s+(?P<value_after>\d[\d.,]*(?:\s*mil)?)\b",
+        normalized_text,
+    )
+    if not amount:
+        return None
+    value = parse_decimal(amount.group("value") or amount.group("value_after"))
+    return {"tipo": "monto", "valor": number_to_json(value)} if value is not None else None
+
+
+def parse_stated_total(normalized_text: str) -> Decimal | None:
+    match = re.search(r"\btotal\s+(?:de\s+)?(?P<value>\d[\d.,]*(?:\s*mil)?)\b", normalized_text)
+    return parse_decimal(match.group("value")) if match else None
+
+
+def parse_purchase_date(text: str, today: str) -> str | None:
+    normalized_text = normalize(text)
+    reference = date.fromisoformat(today)
+    if re.search(r"\bayer\b", normalized_text):
+        return (reference - timedelta(days=1)).isoformat()
+    day_pattern = r"(?P<day>\d{1,2}|uno|un|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)"
+    month_pattern = "|".join(MONTHS)
+    match = re.search(rf"\b(?:el\s+)?{day_pattern}\s+de\s+(?P<month>{month_pattern})\b", normalized_text)
+    if not match:
+        return None
+    day_value = parse_decimal(match.group("day"))
+    if day_value is None:
+        return None
+    try:
+        return date(reference.year, MONTHS[match.group("month")], int(day_value)).isoformat()
+    except ValueError:
+        return None
 
 
 def infer_unit_price_after_match(normalized_text: str, end: int) -> Decimal | None:

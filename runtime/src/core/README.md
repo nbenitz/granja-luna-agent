@@ -18,6 +18,9 @@ El CLI, una futura API, una app web o una integracion con el Asistente Personal 
 | `builders.py` | Construccion de borradores, confirmacion, tareas y UI response. |
 | `dry_run.py` | Orquestacion del flujo completo `dry_run`. |
 | `inbox.py` | Persistencia JSONL de propuestas pendientes del inbox operativo. |
+| `intent_forms.py` | Esquemas, normalizacion y validacion de datos estructurados por intencion. |
+| `usage_log.py` | Registro append-only de eventos de uso de la app. |
+| `review_log.py` | Eventos append-only de correcciones, decisiones y diffs humanos. |
 | `summary.py` | Formato humano resumido para CLI u otras superficies simples. |
 | `case_review.py` | Carga, resumen y persistencia JSONL de feedback humano sobre casos importados. |
 
@@ -77,6 +80,14 @@ La sexta mejora agrega el primer inbox operativo:
 - `granja_inbox.py list/show/review/summary` permite revisar la bandeja desde terminal;
 - el storage local vive en `runtime/state/inbox.jsonl` y esta ignorado por git;
 - guardar en inbox no confirma hechos operativos ni aplica cambios reales.
+
+La primera ficha estructurada por intencion agrega compras `purchase.v2`:
+
+- conserva todos los productos detectados como una coleccion editable de items;
+- separa datos generales, productos, campos obligatorios y opcionales;
+- valida los datos antes de permitir `review_status: validated`;
+- separa revision (`review_status`) de ejecucion (`operation_status`);
+- una interpretacion validada todavia no produce efectos operativos.
 
 ## Regla
 
