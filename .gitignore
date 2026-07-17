@@ -39,3 +39,7 @@ runtime/state/*.jsonl
 runtime/state/*.json
 !runtime/state/README.md
 !runtime/state/.gitkeep
+
+# Local media library: originals can be large or contain private metadata.
+media/*
+!media/README.md
