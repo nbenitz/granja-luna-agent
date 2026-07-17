@@ -52,6 +52,7 @@ Dominios iniciales candidatos:
 - reportes;
 - finanzas simples;
 - clima futuro.
+- marca, marketing y comunidad.
 
 ### 4. Memoria Markdown
 

@@ -35,6 +35,7 @@ Transformar actividades reales de la granja en memoria, registros propuestos, ta
 - Tareas y mantenimiento
 - Reportes
 - IoT futuro
+- Marca, marketing y comunidad
 
 ## Límites
 
