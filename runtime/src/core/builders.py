@@ -455,6 +455,12 @@ def build_ui_response(
     confirmation: dict[str, Any],
     egg_collection: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    shared_risk_level = {
+        "bajo": "low",
+        "medio": "medium",
+        "alto": "high",
+        "critico": "critical",
+    }.get(classification["risk_level"], "medium")
     components: list[dict[str, Any]] = [
         {
             "component": "summary_card",
@@ -533,17 +539,17 @@ def build_ui_response(
                 "actions": [
                     {
                         "id": "confirm",
-                        "label": "Confirmar borrador",
+                        "label": "Validar interpretación",
                         "requires_confirmation": confirmation["required"],
                     },
                     {
                         "id": "edit",
-                        "label": "Corregir datos",
+                        "label": "Corregir en Granja Luna",
                         "requires_confirmation": False,
                     },
                     {
                         "id": "cancel",
-                        "label": "Cancelar",
+                        "label": "Descartar propuesta",
                         "requires_confirmation": False,
                     },
                 ]
@@ -551,18 +557,18 @@ def build_ui_response(
         }
     )
     return {
-        "schema_version": "0.1",
+        "schema_version": "1.0",
         "response_type": "review",
         "title": "Revision de Granja Luna",
         "summary": confirmation["question"],
-        "risk_level": classification["risk_level"],
+        "risk_level": shared_risk_level,
         "requires_confirmation": classification["requires_confirmation"],
         "rendering_mode": "host_native",
         "components": components,
         "information_status": {
-            "classification": "borrador",
-            "detected_data": "inferido",
-            "missing_data": "pendiente_validar",
-            "drafts": "borrador",
+            "classification": "draft",
+            "detected_data": "inferred",
+            "missing_data": "pending_review",
+            "drafts": "draft",
         },
     }

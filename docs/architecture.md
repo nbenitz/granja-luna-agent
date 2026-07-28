@@ -58,13 +58,23 @@ Dominios iniciales candidatos:
 
 Guarda contexto, procedimientos, bitácoras, fichas, decisiones, ideas y reglas en evolución.
 
-### 5. Datos estructurados futuros
+### 5. Datos estructurados
 
-BD/API para datos transaccionales: compras, ventas, stock, tratamientos, lotes, incubaciones, tareas y sensores.
+La primera API transaccional usa eventos JSONL append-only para recolección de huevos, compras,
+gastos, ventas y el inventario derivado de movimientos confirmados. Este almacenamiento pertenece
+a Granja Luna y valida el flujo antes de elegir una BD definitiva. Un segundo registro append-only
+conserva galpones y planteles confirmados, con una referencia opcional del plantel a su galpón
+actual. Un tercer registro append-only conserva incubadoras, lotes y eventos fechados, con validación de
+capacidad, orden de dependencias y descartes acumulados. Un cuarto registro conserva zonas y lotes
+de cría posteriores a la eclosión, vincula los pollitos recibidos con el cierre confirmado de
+incubación y calcula bajas y traslados. Las cancelaciones de borradores son eventos auditables, no
+borrados físicos. Tratamientos, tareas y sensores siguen pendientes.
 
-### 6. Herramientas / MCP futuro
+### 6. Herramientas / MCP
 
-MCP puede exponer herramientas como:
+Personal Agent expone la primera fachada MCP para estado, resumen diario, pendientes, inventario,
+galpones, planteles, incubación, borradores y confirmación explícita. Granja Luna conserva la lógica
+y los datos. Próximas herramientas posibles:
 
 - leer bitácora;
 - buscar fichas de medicamentos;
@@ -88,6 +98,11 @@ Su salida debe poder ser usada por:
 Para eso, el runtime emite una `ui_response` estructurada. El runtime define la semantica de la interaccion: datos, riesgo, acciones y confirmacion. El host define como se renderiza.
 
 La app de Granja Luna puede ofrecer una UI mas rica de dominio. La app del Asistente Personal puede renderizar componentes genericos o delegar/embeber una vista de Granja Luna cuando corresponda.
+
+La primera distribución Android conserva esa separación: `mobile/` contiene un shell Expo/React
+Native que carga la PWA mediante `WebView` y registra `granja-luna://open`. El APK no incorpora la
+base operativa ni duplica reglas; el runtime y sus ledgers append-only siguen siendo la fuente de
+verdad. Personal Agent puede abrir este cliente por enlace profundo o usar la URL web como fallback.
 
 ### 8. Modulos emergentes
 

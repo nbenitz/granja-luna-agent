@@ -1,0 +1,27 @@
+{
+  "name": "granja-luna-mobile",
+  "version": "0.2.0",
+  "private": true,
+  "main": "expo/AppEntry",
+  "scripts": {
+    "generate:icons": "node scripts/generate-icons.js",
+    "start": "expo start",
+    "android": "expo run:android",
+    "prebuild:android": "expo prebuild --clean --platform android",
+    "typecheck": "tsc --noEmit",
+    "ios": "expo run:ios"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "~54.0.36",
+    "expo-speech-recognition": "^3.1.3",
+    "expo-status-bar": "~3.0.8",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-webview": "13.15.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.10",
+    "typescript": "^5.3.3"
+  }
+}

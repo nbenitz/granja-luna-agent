@@ -1,7 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.local/granja-luna-agent/runtime/contracts/ui-response.schema.json",
-  "title": "GranjaRuntimeUiResponse",
+  "$id": "https://personal-agent.local/contracts/ui-response.v1.schema.json",
+  "title": "AgentUIResponseV1",
+  "description": "Contrato semántico compartido entre agentes de dominio y aplicaciones host.",
   "type": "object",
   "required": [
     "schema_version",
@@ -17,7 +18,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "0.1"
+      "const": "1.0"
     },
     "response_type": {
       "type": "string",
@@ -31,7 +32,7 @@
     },
     "risk_level": {
       "type": "string",
-      "enum": ["bajo", "medio", "alto", "critico"]
+      "enum": ["low", "medium", "high", "critical"]
     },
     "requires_confirmation": {
       "type": "boolean"
@@ -43,6 +44,7 @@
     "components": {
       "type": "array",
       "minItems": 1,
+      "maxItems": 64,
       "items": {
         "type": "object",
         "required": ["component", "props"],
@@ -59,9 +61,63 @@
           },
           "props": {
             "type": "object",
+            "maxProperties": 32,
             "additionalProperties": true
           }
         },
+        "allOf": [
+          {
+            "if": {"properties": {"component": {"const": "data_table"}}},
+            "then": {
+              "properties": {
+                "props": {
+                  "properties": {
+                    "rows": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {"type": "object"}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {"properties": {"component": {"const": "checklist"}}},
+            "then": {
+              "properties": {
+                "props": {
+                  "properties": {
+                    "items": {"type": "array", "maxItems": 50}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {"properties": {"component": {"const": "action_group"}}},
+            "then": {
+              "properties": {
+                "props": {
+                  "properties": {
+                    "actions": {
+                      "type": "array",
+                      "maxItems": 20,
+                      "items": {
+                        "type": "object",
+                        "required": ["id", "label"],
+                        "properties": {
+                          "id": {"type": "string", "minLength": 1},
+                          "label": {"type": "string", "minLength": 1}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
         "additionalProperties": false
       }
     },
@@ -70,7 +126,7 @@
       "minProperties": 1,
       "additionalProperties": {
         "type": "string",
-        "enum": ["confirmado", "inferido", "pendiente_validar", "borrador", "legacy"]
+        "enum": ["confirmed", "inferred", "pending_review", "draft", "legacy"]
       }
     }
   },
@@ -80,7 +136,7 @@
         "required": ["risk_level"],
         "properties": {
           "risk_level": {
-            "enum": ["medio", "alto", "critico"]
+            "enum": ["medium", "high", "critical"]
           }
         }
       },

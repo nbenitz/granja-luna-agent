@@ -23,6 +23,12 @@ tmp/
 __pycache__/
 *.pyc
 node_modules/
+mobile/.expo/
+mobile/android/
+mobile/ios/
+mobile/artifacts/*.apk
+mobile/*.jks
+mobile/*.keystore
 playwright-report/
 test-results/
 dist/

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#f5f7f3" />
+    <meta name="theme-color" content="#070b10" />
     <title>Granja Luna</title>
     <link rel="stylesheet" href="/static/styles.css" />
     <script src="/static/vendor/lucide.min.js" defer></script>
@@ -26,37 +26,39 @@
       </header>
 
       <main class="main-content">
-        <section class="view is-active" id="view-capture" data-view="capture">
-          <div class="view-heading">
+        <section class="view chat-view is-active" id="view-capture" data-view="capture">
+          <div class="chat-heading">
             <div>
               <p class="eyebrow" id="today-label"></p>
-              <h1>Nueva entrada</h1>
+              <h1>Conversación de campo</h1>
             </div>
-            <div class="pending-counter" title="Entradas pendientes">
+            <div class="pending-counter" title="Entradas pendientes" aria-label="Entradas pendientes">
               <i data-lucide="clock-3"></i>
               <span id="pending-count">0</span>
             </div>
           </div>
 
-          <form class="capture-form" id="capture-form">
-            <label for="message">¿Qué pasó en la granja?</label>
-            <div class="textarea-wrap">
-              <textarea
-                id="message"
-                name="message"
-                rows="8"
-                maxlength="12000"
-                lang="es"
-                enterkeyhint="done"
-                placeholder="Contá una compra, tarea, observación o decisión..."
-                required
-              ></textarea>
-              <span class="character-count" id="message-count">0</span>
-            </div>
+          <section class="chat-log capture-result" id="capture-result" aria-live="polite" aria-label="Conversación">
+            <article class="chat-message assistant-message welcome-message">
+              <span class="message-avatar" aria-hidden="true"><i data-lucide="sprout"></i></span>
+              <div class="assistant-content">
+                <div class="message-meta"><strong>Granja Luna</strong><span>Ahora</span></div>
+                <h2>¿Qué pasó en la granja?</h2>
+                <p>Podés contarme una recolección, compra, tarea u observación. Voy a interpretar los datos y mostrarte qué queda como borrador antes de cualquier confirmación.</p>
+                <div class="safety-note"><i data-lucide="shield-check"></i><span>Las operaciones sensibles siempre requieren una acción explícita.</span></div>
+              </div>
+            </article>
+          </section>
 
-            <details class="context-panel">
+          <div class="voice-status" id="voice-status" role="status" aria-live="polite" hidden>
+            <span class="voice-wave" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span id="voice-status-label">Escuchando…</span>
+          </div>
+
+          <form class="capture-form chat-composer" id="capture-form">
+            <details class="context-panel composer-context">
               <summary>
-                <span><i data-lucide="messages-square"></i> Contexto adicional</span>
+                <span><i data-lucide="messages-square"></i> Añadir contexto anterior</span>
                 <i class="summary-chevron" data-lucide="chevron-down"></i>
               </summary>
               <label class="sr-only" for="context">Contexto adicional</label>
@@ -65,17 +67,36 @@
                 name="context"
                 rows="3"
                 maxlength="12000"
-                placeholder="Información de una conversación anterior..."
+                placeholder="Información útil de una conversación anterior…"
               ></textarea>
             </details>
 
-            <button class="primary-button" id="capture-submit" type="submit">
-              <i data-lucide="send"></i>
-              <span>Analizar y guardar</span>
-            </button>
+            <div class="composer-shell">
+              <label class="sr-only" for="message">Mensaje para Granja Luna</label>
+              <textarea
+                id="message"
+                name="message"
+                rows="1"
+                maxlength="12000"
+                lang="es-PY"
+                enterkeyhint="send"
+                placeholder="Escribí o dictá lo que pasó…"
+                required
+              ></textarea>
+              <div class="composer-footer">
+                <span class="character-count" id="message-count">0</span>
+                <div class="composer-actions">
+                  <button class="voice-button" id="voice-button" type="button" aria-label="Iniciar dictado" aria-pressed="false" title="Dictar mensaje">
+                    <i data-lucide="mic"></i>
+                  </button>
+                  <button class="send-button" id="capture-submit" type="submit" aria-label="Analizar y guardar" title="Enviar mensaje" disabled>
+                    <i data-lucide="arrow-up"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p class="composer-hint">Revisá siempre los datos antes de confirmar una operación.</p>
           </form>
-
-          <section class="capture-result" id="capture-result" aria-live="polite" hidden></section>
         </section>
 
         <section class="view" id="view-inbox" data-view="inbox" hidden>
@@ -116,12 +137,95 @@
           <div class="activity-summary" id="activity-summary"></div>
           <div class="activity-list" id="activity-list" aria-live="polite"></div>
         </section>
+
+        <section class="view" id="view-operations" data-view="operations" hidden>
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">Operación confirmada</p>
+              <h1>Cría y borradores</h1>
+            </div>
+            <button class="icon-button" id="refresh-operations" type="button" title="Actualizar operación">
+              <i data-lucide="refresh-cw"></i>
+              <span class="sr-only">Actualizar operación</span>
+            </button>
+          </div>
+
+          <section class="operations-panel">
+            <div class="section-heading-row">
+              <h2>Lotes en cría</h2>
+              <span class="information-badge">Fuente de verdad</span>
+            </div>
+            <div id="brooding-summary" class="operation-metrics"></div>
+            <div id="brooding-batches" class="operation-list"></div>
+          </section>
+
+          <section class="operations-panel">
+            <div class="section-heading-row">
+              <h2>Huevos almacenados</h2>
+              <span class="information-badge">Antes de incubación</span>
+            </div>
+            <div id="egg-storage-summary" class="operation-metrics"></div>
+            <div id="egg-storage-lots" class="operation-list"></div>
+          </section>
+
+          <details class="operations-form-panel">
+            <summary>Nueva zona de cría</summary>
+            <form id="brooding-area-form" class="direct-operation-form">
+              <label>Nombre<input name="name" required placeholder="Zona de cría" /></label>
+              <label>Capacidad opcional<input name="capacity" type="number" min="1" /></label>
+              <label>Notas<textarea name="notes" rows="2"></textarea></label>
+              <button class="primary-button" type="submit">Preparar borrador</button>
+            </form>
+          </details>
+
+          <details class="operations-form-panel">
+            <summary>Nuevo lote de pollitos</summary>
+            <form id="brooding-batch-form" class="direct-operation-form">
+              <label>Zona<select name="area_id" id="brooding-area-select" required></select></label>
+              <label>Fecha de ingreso<input name="start_date" type="date" required /></label>
+              <label>Cantidad recibida<input name="chicks_received" type="number" min="1" required /></label>
+              <label>Lote de incubación de origen<select name="source_incubation_batch_id" id="brooding-source-select"><option value="">Sin vínculo</option></select></label>
+              <label>Descripción de origen<input name="source_description" required /></label>
+              <div class="direct-form-grid">
+                <label>Edad mínima (días)<input name="age_min_days" type="number" min="0" /></label>
+                <label>Edad máxima (días)<input name="age_max_days" type="number" min="0" /></label>
+              </div>
+              <label>Notas<textarea name="notes" rows="2"></textarea></label>
+              <button class="primary-button" type="submit">Preparar borrador</button>
+            </form>
+          </details>
+
+          <details class="operations-form-panel">
+            <summary>Evento de cría</summary>
+            <form id="brooding-event-form" class="direct-operation-form">
+              <label>Lote<select name="batch_id" id="brooding-batch-select" required></select></label>
+              <label>Fecha<input name="event_date" type="date" required /></label>
+              <label>Evento<select name="event_type" required><option value="observation">Observación</option><option value="mortality">Mortalidad</option><option value="transfer_out">Traslado de salida</option><option value="closure">Cierre</option></select></label>
+              <div class="direct-form-grid">
+                <label>Cantidad<input name="quantity" type="number" min="1" /></label>
+                <label>Conteo final<input name="final_count" type="number" min="0" /></label>
+              </div>
+              <label>Destino<input name="destination" /></label>
+              <label>Motivo<input name="reason" /></label>
+              <label>Notas<textarea name="notes" rows="2"></textarea></label>
+              <button class="primary-button" type="submit">Preparar borrador</button>
+            </form>
+          </details>
+
+          <section class="operations-panel">
+            <div class="section-heading-row">
+              <h2>Borradores pendientes</h2>
+              <span class="information-badge">Confirmar o cancelar</span>
+            </div>
+            <div id="farm-pending-list" class="operation-list"></div>
+          </section>
+        </section>
       </main>
 
       <nav class="app-nav" aria-label="Navegación principal">
         <button class="nav-button is-active" type="button" data-target="capture">
-          <i data-lucide="square-pen"></i>
-          <span>Registrar</span>
+          <i data-lucide="message-circle"></i>
+          <span>Chat</span>
         </button>
         <button class="nav-button" type="button" data-target="inbox">
           <span class="nav-icon-wrap">
@@ -133,6 +237,10 @@
         <button class="nav-button" type="button" data-target="activity">
           <i data-lucide="activity"></i>
           <span>Actividad</span>
+        </button>
+        <button class="nav-button" type="button" data-target="operations">
+          <i data-lucide="egg"></i>
+          <span>Cría</span>
         </button>
       </nav>
     </div>

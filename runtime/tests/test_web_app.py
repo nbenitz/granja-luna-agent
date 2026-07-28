@@ -173,7 +173,17 @@ class WebAppTests(unittest.TestCase):
         self.assertEqual(index.status_code, 200)
         self.assertIn("Granja Luna", index.text)
         self.assertIn("viewport-fit=cover", index.text)
+        self.assertIn("default-src 'self'", index.headers["content-security-policy"])
+        self.assertEqual(index.headers["permissions-policy"], "microphone=(self)")
+        self.assertEqual(index.headers["cache-control"], "no-store")
         self.assertEqual(self.client.get("/api/inbox/no-existe").status_code, 404)
+
+    def test_mobile_navigation_has_one_column_per_destination(self) -> None:
+        index = self.client.get("/")
+        styles = self.client.get("/static/styles.css")
+
+        self.assertEqual(index.text.count('class="nav-button'), 4)
+        self.assertIn("grid-template-columns: repeat(4, minmax(0, 1fr));", styles.text)
 
 
 if __name__ == "__main__":

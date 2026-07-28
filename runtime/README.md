@@ -105,6 +105,32 @@ El `context` de entrada ayuda a clasificar intencion, riesgo y datos faltantes. 
 
 El inbox operativo guarda propuestas pendientes. Es estado local ignorado por git y no equivale a bitacora confirmada, stock confirmado, compra confirmada ni tarea activa.
 
+## API de operaciones confirmadas
+
+La primera integración MCP agrega una API estructurada separada del inbox narrativo. Admite
+borradores de recolección de huevos, compras, gastos y ventas. Cada borrador queda en
+`awaiting_confirmation`; solo el endpoint de confirmación explícita lo convierte en `applied`.
+
+Los eventos viven en `runtime/state/operation-events.jsonl`, son append-only y pertenecen a Granja
+Luna. Inventario y resumen diario se derivan únicamente de esos movimientos confirmados y lo
+declaran en el campo `scope`. El contrato completo está en
+`runtime/contracts/operational-movements.md`.
+
+Galpones y planteles viven en `runtime/state/structure-events.jsonl`. Un galpón representa una
+ubicación física y un plantel representa un grupo de aves con una referencia opcional a su galpón
+actual. Las altas requieren borrador y confirmación explícita; traslados, bajas y edición quedan
+fuera de v1. El contrato está en `runtime/contracts/farm-structure.md`.
+
+Incubadoras, lotes y eventos de seguimiento viven en
+`runtime/state/incubation-events.jsonl`. También son append-only y requieren confirmación
+explícita. El detalle de un lote calcula descartes y unidades todavía sin resultado final. El
+contrato está en `runtime/contracts/incubation.md`.
+
+El seguimiento posterior a la eclosión vive en `runtime/state/brooding-events.jsonl`. Registra
+zonas de cría, lotes de pollitos y eventos de mortalidad, traslado, observación y cierre según
+`runtime/contracts/brooding.md`. La interfaz web permite preparar, confirmar y cancelar borradores
+sin borrar su historial.
+
 La web local registra eventos de uso en `runtime/state/usage-events.jsonl`. El log conserva tipo, fecha y referencias, pero no duplica el texto completo de las entradas.
 
 Las correcciones y decisiones humanas se guardan en `runtime/state/review-events.jsonl`. Cada correccion conserva un diff y un motivo estructurado para evaluacion futura, sin tratar automaticamente esos registros como un dataset confirmado.

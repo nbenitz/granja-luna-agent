@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Granja Luna",
+    "slug": "granja-luna",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#070b10"
+    },
+    "scheme": "granja-luna",
+    "plugins": [
+      "./plugins/withCleartextTraffic",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Granja Luna usa el micrófono solo mientras dictas un registro.",
+          "speechRecognitionPermission": "Granja Luna convierte tu voz en texto para completar el registro; no lo envía automáticamente."
+        }
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.nestorbenitez.granjaluna",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Granja Luna usa el micrófono solo mientras dictas un registro.",
+        "NSSpeechRecognitionUsageDescription": "Granja Luna convierte tu voz en texto para completar el registro; no lo envía automáticamente."
+      }
+    },
+    "android": {
+      "package": "com.nestorbenitez.granjaluna",
+      "versionCode": 2,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#070b10"
+      },
+      "permissions": [
+        "INTERNET",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.VIBRATE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#070b10",
+      "barStyle": "light-content",
+      "enforceContrast": false
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#070b10",
+      "barStyle": "light-content",
+      "translucent": false
+    }
+  }
+}
