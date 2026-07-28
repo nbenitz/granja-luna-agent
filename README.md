@@ -1,6 +1,10 @@
-# granja-luna-agent
+# Granja Luna Agent
 
-Repositorio inicial del **Subagente Granja Luna**, parte del futuro ecosistema de agente personal de Néstor Benítez.
+Sistema agéntico con supervisión humana para registrar y revisar la operación de una granja avícola. Convierte lenguaje natural en borradores estructurados, aplica reglas de riesgo y mantiene trazabilidad antes de modificar información operativa.
+
+El proyecto combina un runtime Python/FastAPI, una interfaz web responsive y una aplicación móvil Expo/React Native. Su diseño prioriza confirmaciones explícitas para acciones relacionadas con dinero, inventario, sanidad o movimientos de animales.
+
+> Estado: MVP local en evolución. No es un sistema productivo ni reemplaza criterio veterinario o administrativo.
 
 Este repo nace como un subagente limpio, no como continuación directa del sistema tradicional `avicola-mbore`. El código legacy puede aportar vocabulario, entidades, flujos y aprendizajes, pero no debe ensuciar la memoria operativa ni forzar una arquitectura clásica de ERP.
 
@@ -15,13 +19,46 @@ Ayudar a gestionar Granja Luna de forma progresiva y agéntica:
 - coordinarse con un Orquestador Personal;
 - decidir, con trazabilidad, qué debe vivir en Markdown, base de datos, API, MCP o código tradicional.
 
-## Qué es este repo
+## Qué funciona actualmente
 
-- Un repositorio de **subagente especializado**.
-- Una base de conocimiento operativa y evolutiva.
-- Un contrato de comunicación con el Orquestador Personal.
-- Un espacio para workflows, prompts, procedimientos, decisiones y memoria.
-- Una futura capa de diseño para herramientas, APIs y MCP.
+- Clasificación de mensajes operativos y extracción de datos.
+- Bandeja de borradores con revisión y correcciones trazables.
+- Movimientos de compras, gastos, ventas y recolección de huevos.
+- Estructura de galpones, planteles y áreas de almacenamiento.
+- Seguimiento de lotes de huevos, incubación y cría.
+- Contratos JSON versionados para UI y coordinación con otros agentes.
+- Interfaz web responsive y cliente móvil Android basado en Expo.
+- Pruebas unitarias, pruebas de API y flujo E2E con Playwright.
+
+## Arquitectura
+
+```text
+Mensaje natural / app móvil
+            |
+            v
+     Runtime FastAPI
+            |
+   clasificación + validación
+            |
+            v
+  borrador pendiente de revisión
+            |
+      confirmación humana
+            |
+            v
+      eventos append-only
+```
+
+La regla central es simple: **el agente interpreta y propone; el código valida, persiste y audita**. Las decisiones detalladas se encuentran en [`docs/architecture.md`](docs/architecture.md) y los contratos operativos en [`runtime/contracts/`](runtime/contracts/).
+
+## Tecnologías
+
+- Python y FastAPI.
+- React Native, Expo y TypeScript.
+- JavaScript, HTML y CSS para la UI web local.
+- JSON Schema para contratos versionados.
+- `unittest`, HTTPX2 y Playwright para validación.
+- Docker para ejecución reproducible.
 
 ## Qué NO es este repo
 
@@ -54,16 +91,40 @@ dev/
 5. Registrar decisiones en `memory/granja/decisiones.md`.
 6. Cuando un flujo se repita y sea estable, evaluar si debe pasar a BD/API/MCP/código.
 
-## Primer MVP
+## Ejecución local
 
-El primer MVP no debe ser una app completa. Debe ser una operación simple pero real:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r runtime/requirements-dev.txt
+uvicorn runtime.src.web.app:app --host 127.0.0.1 --port 8000
+```
 
-- bitácora diaria en Markdown;
-- fichas de medicamentos e insumos;
-- registro de tareas;
-- contrato Orquestador → Subagente;
-- propuesta de registros estructurados para compras, ventas, stock y sanidad;
-- niveles de riesgo y confirmación humana.
+La API queda disponible en `http://127.0.0.1:8000/api/docs` y la interfaz local en `http://127.0.0.1:8000`.
+
+### Validación
+
+```bash
+python3 -m unittest discover -s runtime/tests -p "test_*.py"
+npm ci --prefix mobile
+npm run typecheck --prefix mobile
+npm ci
+npm run test:e2e
+```
+
+## Desarrollo asistido por Codex
+
+Este repositorio se desarrolla con apoyo de OpenAI Codex para inspección, planificación, implementación inicial, refactorización, documentación y pruebas. Las reglas de [`AGENTS.md`](AGENTS.md) limitan la autonomía del agente y exigen revisión humana para decisiones sensibles.
+
+El proceso, las responsabilidades humanas y la evidencia técnica se explican en [`docs/codex-case-study.md`](docs/codex-case-study.md).
+
+## Documentación destacada
+
+- [`agent-card.md`](agent-card.md): rol, capacidades y límites del agente.
+- [`config/risk-levels.md`](config/risk-levels.md): clasificación del riesgo.
+- [`runtime/README.md`](runtime/README.md): comportamiento y comandos del runtime.
+- [`runtime/contracts/`](runtime/contracts/): contratos y esquemas operativos.
+- [`docs/codex-case-study.md`](docs/codex-case-study.md): ejemplo de colaboración con Codex.
 
 ## Estados de información
 
