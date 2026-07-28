@@ -10,8 +10,10 @@ Este directorio contiene el contexto que puede consultar el dominio de Marca, Ma
 4. `audiences-and-offer.md`: públicos y oferta actual/futura.
 5. `voice-and-tone.md`: propuesta de personalidad verbal.
 6. `visual-direction.md`: dirección visual candidata, todavía no aprobada.
-7. `open-decisions.md`: decisiones pendientes.
-8. `sources-and-provenance.md`: reglas de procedencia y curaduría.
+7. `photo-and-ai-policy.md`: uso de fotos reales, material histórico e IA visual.
+8. `facebook-launch-kit.md`: configuración propuesta para la primera página.
+9. `open-decisions.md`: decisiones pendientes.
+10. `sources-and-provenance.md`: reglas de procedencia y curaduría.
 
 ## Precedencia
 

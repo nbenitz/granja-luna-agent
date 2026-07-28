@@ -20,4 +20,6 @@ La primera UI de Granja Luna es una web responsive servida por FastAPI desde `ru
 
 La UI consume el mismo core que el CLI. Guardar o revisar una entrada no confirma compras, stock, sanidad ni tareas como hechos operativos.
 
-La grabacion directa con microfono y transcripcion local se agregara despues de habilitar HTTPS en la red local.
+El APK ofrece captura directa por micrófono mediante `agent.voice.v1`; el navegador puede usar Web Speech como respaldo cuando el contexto sea seguro. La transcripción queda editable y no se envía automáticamente. La app no guarda audio, aunque el reconocedor del sistema puede procesarlo mediante su proveedor.
+
+La respuesta por audio queda deliberadamente fuera de `UIResponse`: una fase posterior puede definir `agent.audio.v1` con reproducción iniciada por el usuario y coordinación explícita con el micrófono.

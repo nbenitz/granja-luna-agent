@@ -5,6 +5,13 @@ const state = {
   reviewEvents: [],
   editingSection: null,
   toastTimer: null,
+  voice: {
+    active: false,
+    recognition: null,
+    requestId: null,
+    baseText: "",
+    statusTimer: null,
+  },
 };
 
 const reviewStatusLabels = {
@@ -100,6 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindCaptureForm();
   bindInboxControls();
   bindActivityControls();
+  bindOperationsControls();
   bindSheetControls();
   checkConnection();
   refreshInboxSummary();
@@ -138,17 +146,166 @@ async function switchView(target) {
   });
   if (target === "inbox") await loadInbox();
   if (target === "activity") await loadActivity();
+  if (target === "operations") await loadOperations();
   window.scrollTo({ top: 0, behavior: "smooth" });
   refreshIcons();
+}
+
+function bindOperationsControls() {
+  document.querySelector("#refresh-operations").addEventListener("click", loadOperations);
+  document.querySelector("#brooding-area-form").addEventListener("submit", (event) => submitBroodingDraft(event, "area"));
+  document.querySelector("#brooding-batch-form").addEventListener("submit", (event) => submitBroodingDraft(event, "batch"));
+  document.querySelector("#brooding-event-form").addEventListener("submit", (event) => submitBroodingDraft(event, "event"));
+}
+
+async function loadOperations() {
+  const batchesContainer = document.querySelector("#brooding-batches");
+  const eggLotsContainer = document.querySelector("#egg-storage-lots");
+  const pendingContainer = document.querySelector("#farm-pending-list");
+  batchesContainer.innerHTML = loadingMarkup("Cargando lotes de cría");
+  eggLotsContainer.innerHTML = loadingMarkup("Cargando huevos almacenados");
+  pendingContainer.innerHTML = loadingMarkup("Cargando borradores");
+  refreshIcons();
+  try {
+    const [areas, batches, incubationBatches, eggStorageAreas, eggLots, movementDrafts, structureDrafts, incubationDrafts, broodingDrafts] = await Promise.all([
+      api("/api/operations/brooding/areas"),
+      api("/api/operations/brooding/batches"),
+      api("/api/operations/incubation/batches"),
+      api("/api/operations/egg-storage/areas"),
+      api("/api/operations/egg-storage/lots"),
+      api("/api/operations/movements?status=awaiting_confirmation&limit=100"),
+      api("/api/operations/structure/pending"),
+      api("/api/operations/incubation/pending"),
+      api("/api/operations/brooding/pending"),
+    ]);
+    const [batchDetails, incubationDetails] = await Promise.all([
+      Promise.all(batches.map((item) => api(`/api/operations/brooding/batches/${encodeURIComponent(item.id)}`))),
+      Promise.all(incubationBatches.map((item) => api(`/api/operations/incubation/batches/${encodeURIComponent(item.id)}`))),
+    ]);
+    renderBroodingOperation(areas, batchDetails, incubationDetails);
+    renderEggStorage(eggStorageAreas, eggLots);
+    renderFarmPending([
+      ...movementDrafts.map((item) => ({ ...item, namespace: "movements" })),
+      ...structureDrafts.map((item) => ({ ...item, namespace: "structure" })),
+      ...incubationDrafts.map((item) => ({ ...item, namespace: "incubation" })),
+      ...broodingDrafts.map((item) => ({ ...item, namespace: "brooding" })),
+    ]);
+  } catch (error) {
+    batchesContainer.innerHTML = errorMarkup(error.message);
+    eggLotsContainer.innerHTML = errorMarkup(error.message);
+    pendingContainer.innerHTML = errorMarkup(error.message);
+  }
+  refreshIcons();
+}
+
+function renderEggStorage(areas, lots) {
+  const available = lots.reduce((total, item) => total + Number(item.quantity_available || 0), 0);
+  document.querySelector("#egg-storage-summary").innerHTML = `
+    <div><span>Almacenes</span><strong>${areas.length}</strong></div>
+    <div><span>Lotes</span><strong>${lots.length}</strong></div>
+    <div><span>Disponibles</span><strong>${available}</strong></div>`;
+  document.querySelector("#egg-storage-lots").innerHTML = lots.length
+    ? lots.map((item) => `<article class="operation-card"><div class="entry-card-top"><span class="status-badge status-validated">${item.quantity_available} disponibles</span><time>${formatDateOnly(item.effective_date)}</time></div><h3>${escapeHtml(item.storage_area_name || item.storage_area_id)}</h3><p>${item.quantity_collected} recolectados · ${item.quantity_allocated} asignados · ${item.physical_separation ? "separados físicamente" : "almacenados juntos"}</p></article>`).join("")
+    : emptyMarkup("egg", "Todavía no hay huevos almacenados confirmados");
+}
+
+function renderBroodingOperation(areas, batches, incubationBatches) {
+  const active = batches.filter((item) => !item.summary.closed);
+  const chicks = active.reduce((total, item) => total + Number(item.summary.current_count || 0), 0);
+  document.querySelector("#brooding-summary").innerHTML = `
+    <div><span>Zonas</span><strong>${areas.length}</strong></div>
+    <div><span>Lotes activos</span><strong>${active.length}</strong></div>
+    <div><span>Pollitos actuales</span><strong>${chicks}</strong></div>`;
+  document.querySelector("#brooding-batches").innerHTML = batches.length
+    ? batches.map((item) => `<article class="operation-card"><div class="entry-card-top"><span class="status-badge status-${item.summary.closed ? "validated" : "pending"}">${item.summary.closed ? "Cerrado" : "Activo"}</span><time>${formatDateOnly(item.data.start_date)}</time></div><h3>${escapeHtml(item.data.source_description)}</h3><p>${item.summary.current_count} actuales · ${item.summary.mortality} bajas · ${item.summary.transferred_out} trasladados</p></article>`).join("")
+    : emptyMarkup("egg", "Todavía no hay lotes de cría confirmados");
+  document.querySelector("#brooding-area-select").innerHTML = areas.length
+    ? areas.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.data.name)}</option>`).join("")
+    : '<option value="">Primero crea una zona</option>';
+  document.querySelector("#brooding-batch-select").innerHTML = active.length
+    ? active.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.data.source_description)} · ${item.summary.current_count}</option>`).join("")
+    : '<option value="">No hay lotes activos</option>';
+  const closedIncubation = incubationBatches.filter((item) => item.summary.closed);
+  document.querySelector("#brooding-source-select").innerHTML = '<option value="">Sin vínculo</option>' + closedIncubation.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.data.source_description)} · ${item.summary.results?.hatched_alive ?? 0} nacidos</option>`).join("");
+}
+
+function renderFarmPending(items) {
+  const container = document.querySelector("#farm-pending-list");
+  if (!items.length) {
+    container.innerHTML = emptyMarkup("check-check", "No hay borradores pendientes");
+    return;
+  }
+  container.innerHTML = items.map((item) => `<article class="operation-card"><div class="entry-card-top"><span class="status-badge status-pending">${formatToken(item.namespace)}</span><code>${escapeHtml(item.confirmation.code)}</code></div><h3>${escapeHtml(item.confirmation.summary)}</h3><div class="operation-actions"><button type="button" data-draft-action="confirm" data-namespace="${escapeHtml(item.namespace)}" data-id="${escapeHtml(item.id)}" data-code="${escapeHtml(item.confirmation.code)}">Confirmar</button><button class="secondary-button" type="button" data-draft-action="cancel" data-namespace="${escapeHtml(item.namespace)}" data-id="${escapeHtml(item.id)}" data-code="${escapeHtml(item.confirmation.code)}">Cancelar borrador</button></div></article>`).join("");
+  container.querySelectorAll("[data-draft-action]").forEach((button) => button.addEventListener("click", () => actOnFarmDraft(button)));
+}
+
+async function actOnFarmDraft(button) {
+  const action = button.dataset.draftAction;
+  const card = button.closest(".operation-card");
+  const summary = card.querySelector("h3").textContent;
+  let reason = "";
+  if (action === "confirm" && !window.confirm(`Confirmar exactamente:\n${summary}`)) return;
+  if (action === "cancel") {
+    reason = window.prompt(`Motivo para cancelar:\n${summary}`)?.trim() || "";
+    if (!reason || !window.confirm("La cancelación quedará registrada en el historial. ¿Continuar?")) return;
+  }
+  button.disabled = true;
+  try {
+    await api(`/api/operations/${button.dataset.namespace}/${encodeURIComponent(button.dataset.id)}/${action}`, {
+      method: "POST",
+      body: JSON.stringify({
+        confirmation_code: button.dataset.code,
+        explicit_confirmation: true,
+        ...(reason ? { reason } : {}),
+      }),
+    });
+    showToast(action === "confirm" ? "Registro confirmado" : "Borrador cancelado");
+    await loadOperations();
+  } catch (error) {
+    button.disabled = false;
+    showToast(error.message);
+  }
+}
+
+async function submitBroodingDraft(event, recordType) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const submit = form.querySelector('button[type="submit"]');
+  const payload = Object.fromEntries(new FormData(form).entries());
+  ["capacity", "chicks_received", "age_min_days", "age_max_days", "quantity", "final_count"].forEach((field) => {
+    if (payload[field] !== undefined && payload[field] !== "") payload[field] = Number(payload[field]);
+  });
+  Object.keys(payload).forEach((field) => {
+    if (payload[field] === "") delete payload[field];
+  });
+  submit.disabled = true;
+  try {
+    const draft = await api(`/api/operations/brooding/${recordType}/drafts`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    showToast(`Borrador preparado: ${draft.confirmation.summary}`);
+    form.reset();
+    await loadOperations();
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    submit.disabled = false;
+  }
 }
 
 function bindCaptureForm() {
   const form = document.querySelector("#capture-form");
   const message = document.querySelector("#message");
-  message.addEventListener("input", () => {
-    document.querySelector("#message-count").textContent = message.value.length.toLocaleString("es-PY");
+  message.addEventListener("input", updateComposerState);
+  message.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+    event.preventDefault();
+    if (!document.querySelector("#capture-submit").disabled) form.requestSubmit();
   });
   form.addEventListener("submit", captureEntry);
+  bindVoiceInput();
+  updateComposerState();
 }
 
 async function captureEntry(event) {
@@ -156,51 +313,553 @@ async function captureEntry(event) {
   const message = document.querySelector("#message");
   const context = document.querySelector("#context");
   const submit = document.querySelector("#capture-submit");
-  const originalLabel = submit.innerHTML;
-  submit.disabled = true;
-  submit.innerHTML = '<i class="spin" data-lucide="loader-circle"></i><span>Procesando</span>';
+  const voiceButton = document.querySelector("#voice-button");
+  const originalMessage = message.value.trim();
+  const originalContext = context.value.trim();
+  if (!originalMessage) return;
+  if (state.voice.active) cancelVoiceInput();
+  appendUserMessage(originalMessage);
+  const pendingMessage = appendPendingAssistantMessage();
+  submit.dataset.busy = "true";
+  message.disabled = true;
+  voiceButton.disabled = true;
+  message.value = "";
+  updateComposerState();
   refreshIcons();
   try {
     const entry = await api("/api/inbox", {
       method: "POST",
-      body: JSON.stringify({ message: message.value, context: context.value || null }),
+      body: JSON.stringify({ message: originalMessage, context: originalContext || null }),
     });
-    renderCaptureResult(entry);
-    message.value = "";
+    renderCaptureResult(entry, pendingMessage);
     context.value = "";
-    document.querySelector("#message-count").textContent = "0";
-    document.querySelector(".context-panel").open = false;
+    document.querySelector(".composer-context").open = false;
     showToast("Entrada guardada en el inbox");
     await refreshInboxSummary();
   } catch (error) {
+    renderCaptureError(pendingMessage, error.message || "No se pudo guardar la entrada");
+    message.value = originalMessage;
     showToast(error.message || "No se pudo guardar la entrada");
   } finally {
-    submit.disabled = false;
-    submit.innerHTML = originalLabel;
+    delete submit.dataset.busy;
+    message.disabled = false;
+    voiceButton.disabled = false;
+    updateComposerState();
     refreshIcons();
+    message.focus();
+    scrollChatToEnd();
   }
 }
 
-function renderCaptureResult(entry) {
-  const result = document.querySelector("#capture-result");
+function updateComposerState() {
+  const message = document.querySelector("#message");
+  const submit = document.querySelector("#capture-submit");
+  document.querySelector("#message-count").textContent = message.value.length.toLocaleString("es-PY");
+  submit.disabled = !message.value.trim() || submit.dataset.busy === "true";
+  message.style.height = "auto";
+  message.style.height = `${Math.min(message.scrollHeight, 144)}px`;
+}
+
+function appendUserMessage(message) {
+  const log = document.querySelector("#capture-result");
+  log.insertAdjacentHTML("beforeend", `
+    <article class="chat-message user-message">
+      <div class="user-bubble"><p>${escapeHtml(message)}</p><time>${messageTime()}</time></div>
+    </article>`);
+  scrollChatToEnd();
+}
+
+function appendPendingAssistantMessage() {
+  const log = document.querySelector("#capture-result");
+  const element = document.createElement("article");
+  element.className = "chat-message assistant-message";
+  element.innerHTML = `
+    <span class="message-avatar" aria-hidden="true"><i data-lucide="sprout"></i></span>
+    <div class="assistant-content">
+      <div class="message-meta"><strong>Granja Luna</strong><span>${messageTime()}</span></div>
+      ${renderProcessTrace([
+        { title: "Entrada recibida", detail: "El mensaje ya está en el runtime.", state: "complete" },
+        { title: "Analizando", detail: "Interpretando datos y aplicando reglas operativas.", state: "active" },
+      ], true)}
+    </div>`;
+  log.appendChild(element);
+  refreshIcons();
+  scrollChatToEnd();
+  return element;
+}
+
+function renderCaptureResult(entry, target = null) {
+  const result = target || document.querySelector("#capture-result");
   const classification = entry.classification;
   const missing = entry.missing_data || [];
-  result.hidden = false;
-  result.innerHTML = `
-    <div class="result-header">
-      <div><p class="eyebrow">${reviewStatusLabel(entry)}</p><h2>Entrada guardada</h2></div>
-      <span class="result-check"><i data-lucide="check"></i></span>
+  const uiResponse = entry.dry_run?.ui_response;
+  if (!target) {
+    const wrapper = document.createElement("article");
+    wrapper.className = "chat-message assistant-message";
+    wrapper.innerHTML = '<span class="message-avatar" aria-hidden="true"><i data-lucide="sprout"></i></span><div class="assistant-content"></div>';
+    result.appendChild(wrapper);
+    target = wrapper;
+  }
+  target.dataset.chatEntry = entry.id;
+  target.innerHTML = `
+    <span class="message-avatar" aria-hidden="true"><i data-lucide="sprout"></i></span>
+    <div class="assistant-content">
+      <div class="message-meta"><strong>Granja Luna</strong><span>${messageTime()}</span></div>
+      ${renderProcessTrace([
+        { title: "Entrada recibida", detail: "El runtime recibió el relato.", state: "complete" },
+        { title: "Interpretación preparada", detail: `${formatPlainToken(classification.intent)} · ${formatPlainToken(classification.primary_domain)}`, state: "complete" },
+        { title: "Política evaluada", detail: `Riesgo ${classification.risk_level}; ${classification.requires_confirmation ? "requiere confirmación" : "no requiere confirmación"}.`, state: "complete" },
+        { title: "Entrada guardada en el inbox", detail: `${reviewStatusLabels[entry.review_status] || entry.review_status || "Pendiente"} para revisión.`, state: "complete" },
+      ])}
+      ${["1.0", "1.1"].includes(uiResponse?.schema_version) ? renderUIResponse(uiResponse) : renderCaptureFallback(entry, classification, missing)}
+    </div>`;
+  bindUIActions(target, entry);
+  refreshIcons();
+  scrollChatToEnd();
+}
+
+function renderCaptureFallback(entry, classification, missing) {
+  return `
+    <div class="response-intro">
+      <div class="response-title-row"><h2>Entrada guardada</h2><span class="risk-pill risk-${normalizedRisk(classification.risk_level)}">${escapeHtml(classification.risk_level)}</span></div>
+      <p>Preparé una interpretación para que la revises antes de avanzar.</p>
     </div>
     <div class="result-grid">
       <div class="result-metric"><span>Intención</span><strong>${formatToken(classification.intent)}</strong></div>
       <div class="result-metric"><span>Dominio</span><strong>${formatToken(classification.primary_domain)}</strong></div>
-      <div class="result-metric"><span>Riesgo</span><strong>${escapeHtml(classification.risk_level)}</strong></div>
       <div class="result-metric"><span>Confirmación</span><strong>${classification.requires_confirmation ? "Requerida" : "No requerida"}</strong></div>
+      <div class="result-metric"><span>Estado</span><strong>${reviewStatusLabel(entry)}</strong></div>
     </div>
     ${renderDetectedData(entry, true)}
-    ${missing.length ? `<div class="missing-block"><h3>Datos por completar o verificar</h3><ul>${missing.slice(0, 5).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>` : ""}
-  `;
+    ${missing.length ? `<div class="missing-block"><h3>Datos por completar o verificar</h3><ul>${missing.slice(0, 5).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>` : ""}`;
+}
+
+function renderCaptureError(target, message) {
+  target.innerHTML = `
+    <span class="message-avatar" aria-hidden="true"><i data-lucide="triangle-alert"></i></span>
+    <div class="assistant-content">
+      <div class="message-meta"><strong>Granja Luna</strong><span>${messageTime()}</span></div>
+      ${renderProcessTrace([
+        { title: "Entrada recibida", detail: "El mensaje se preparó para enviar.", state: "complete" },
+        { title: "No se pudo completar", detail: message, state: "error" },
+      ])}
+      <div class="assistant-error"><p>${escapeHtml(message)}. Dejé el texto en el compositor para que puedas reintentar.</p></div>
+    </div>`;
   refreshIcons();
+}
+
+function renderProcessTrace(steps, open = false) {
+  const complete = steps.every((step) => step.state === "complete");
+  return `<details class="agent-process" ${open ? "open" : ""}>
+    <summary><span class="process-summary-main">${complete ? '<i data-lucide="circle-check"></i>' : '<span class="process-pulse"></span>'}<span>${complete ? "Proceso completado" : "Procesando con Granja Luna"}</span></span><i data-lucide="chevron-down"></i></summary>
+    <ol class="process-list">${steps.map((step) => `<li class="process-step is-${escapeHtml(step.state)}"><span class="process-state-icon">${step.state === "complete" ? '<i data-lucide="check"></i>' : step.state === "error" ? '<i data-lucide="x"></i>' : '<i class="spin" data-lucide="loader-circle"></i>'}</span><div><strong>${escapeHtml(step.title)}</strong><span>${escapeHtml(step.detail)}</span></div></li>`).join("")}</ol>
+  </details>`;
+}
+
+function renderUIResponse(response) {
+  const components = Array.isArray(response.components) ? response.components.map(renderUIComponent).filter(Boolean).join("") : "";
+  return `
+    <div class="response-intro">
+      <div class="response-title-row"><h2>${escapeHtml(response.title || "Respuesta de Granja Luna")}</h2><span class="risk-pill risk-${normalizedRisk(response.risk_level)}">${escapeHtml(riskLabel(response.risk_level))}</span></div>
+      ${response.summary ? `<p>${escapeHtml(response.summary)}</p>` : ""}
+    </div>
+    <div class="ui-stack">${components || renderNoticeComponent({ title: "Respuesta preparada", body: response.summary || "Revisá la información antes de continuar." })}</div>`;
+}
+
+function renderUIComponent(component) {
+  if (!component || typeof component !== "object" || !component.props || typeof component.props !== "object") return "";
+  const props = component.props;
+  const renderers = {
+    summary_card: renderSummaryComponent,
+    data_table: renderDataTableComponent,
+    checklist: renderChecklistComponent,
+    field_group: renderFieldGroupComponent,
+    action_group: renderActionGroupComponent,
+    metric_grid: renderMetricGridComponent,
+    chart: renderBarChartComponent,
+    bar_chart: renderBarChartComponent,
+    timeline: renderTimelineComponent,
+    link_group: renderLinkGroupComponent,
+    notice: renderNoticeComponent,
+  };
+  try {
+    return renderers[component.component]?.(props) || "";
+  } catch (_error) {
+    return "";
+  }
+}
+
+function uiCard(title, body, classes = "") {
+  return `<section class="ui-card ${classes}">${title ? `<header class="ui-card-header"><h3>${escapeHtml(title)}</h3></header>` : ""}<div class="ui-card-body">${body}</div></section>`;
+}
+
+function renderSummaryComponent(props) {
+  const body = props.body || props.summary || "";
+  const data = props.data && typeof props.data === "object" && !Array.isArray(props.data) ? renderKeyValues(props.data) : "";
+  return uiCard(props.title || "Resumen", `${body ? `<p>${escapeHtml(body)}</p>` : ""}${data}`);
+}
+
+function renderDataTableComponent(props) {
+  const rows = Array.isArray(props.rows) ? props.rows.filter((row) => row && typeof row === "object").slice(0, 50) : [];
+  if (!rows.length) return uiCard(props.title || "Datos", '<p>No hay filas para mostrar.</p>');
+  const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))].slice(0, 10);
+  const detectedClass = String(props.title || "").toLocaleLowerCase("es").includes("items detectados") ? "detected-row" : "";
+  const table = `<div class="ui-table-wrap"><table class="ui-table"><thead><tr>${columns.map((column) => `<th scope="col">${escapeHtml(formatPlainToken(column))}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr class="${detectedClass}">${columns.map((column) => `<td data-label="${escapeHtml(formatPlainToken(column))}">${escapeHtml(formatDisplayValue(row[column]))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>${Array.isArray(props.rows) && props.rows.length > rows.length ? `<p>Se muestran ${rows.length} de ${props.rows.length} filas.</p>` : ""}`;
+  return uiCard(props.title || "Datos", table);
+}
+
+function renderChecklistComponent(props) {
+  const items = Array.isArray(props.items) ? props.items : [];
+  const list = `<ul class="ui-checklist">${items.map((item) => {
+    const label = typeof item === "object" && item ? item.label || item.title || item.text : item;
+    const checked = typeof item === "object" && item && (item.checked === true || item.status === "complete" || item.status === "confirmed");
+    return `<li><i data-lucide="${checked ? "circle-check" : "circle-dashed"}"></i><span>${escapeHtml(label)}</span></li>`;
+  }).join("")}</ul>`;
+  return uiCard(props.title || "Lista de revisión", list);
+}
+
+function renderFieldGroupComponent(props) {
+  const values = props.values && typeof props.values === "object" ? props.values : {};
+  const fields = Array.isArray(props.fields) ? Object.fromEntries(props.fields
+    .filter((field) => field && typeof field === "object")
+    .map((field) => [field.label || field.name || "Campo", field.value])) : values;
+  return uiCard(props.title || "Datos", renderKeyValues(fields));
+}
+
+function renderActionGroupComponent(props) {
+  const actions = Array.isArray(props.actions)
+    ? props.actions.filter((action) => action && typeof action === "object").slice(0, 20)
+    : [];
+  if (!actions.length) return "";
+  return `<section class="ui-card"><div class="ui-actions">${actions.map((action) => {
+    const icon = action.id === "confirm" ? "check" : action.id === "edit" ? "pencil" : action.href ? "arrow-up-right" : "x";
+    const safeHref = safeLink(action.app_url || action.url || action.href);
+    return `<button class="ui-action" type="button" data-ui-action="${escapeHtml(action.id || "open")}" ${safeHref ? `data-ui-href="${escapeHtml(safeHref)}"` : ""}><i data-lucide="${icon}"></i><span>${escapeHtml(action.label || "Abrir")}</span></button>`;
+  }).join("")}</div></section>`;
+}
+
+function renderMetricGridComponent(props) {
+  let metrics = Array.isArray(props.metrics) ? props.metrics : Array.isArray(props.items) ? props.items : null;
+  if (!metrics && props.values && typeof props.values === "object") metrics = Object.entries(props.values).map(([label, value]) => ({ label, value }));
+  metrics = metrics || [];
+  const body = `<div class="metric-grid">${metrics.map((metric, index) => {
+    const item = metric && typeof metric === "object" ? metric : { label: `Dato ${index + 1}`, value: metric };
+    return `<div class="metric-tile"><span>${escapeHtml(item.label || item.title || item.name || "Dato")}</span><strong>${escapeHtml(formatDisplayValue(item.value ?? item.amount ?? item.total ?? item.count))}</strong>${item.detail || item.trend ? `<small>${escapeHtml(item.detail || item.trend)}</small>` : ""}</div>`;
+  }).join("")}</div>`;
+  return uiCard(props.title || "Indicadores", body);
+}
+
+function renderBarChartComponent(props) {
+  const values = Array.isArray(props.items) ? props.items : Array.isArray(props.data) ? props.data : Array.isArray(props.series) ? props.series : [];
+  const points = values.map((item, index) => typeof item === "object" && item ? {
+    label: item.label || item.name || item.category || `Dato ${index + 1}`,
+    value: Number(item.value ?? item.amount ?? item.total ?? item.count ?? 0),
+  } : { label: `Dato ${index + 1}`, value: Number(item) }).filter((item) => Number.isFinite(item.value));
+  const configuredMax = Number(props.max);
+  const max = Number.isFinite(configuredMax) && configuredMax > 0 ? configuredMax : Math.max(...points.map((item) => Math.abs(item.value)), 1);
+  const body = `${props.description ? `<p>${escapeHtml(props.description)}</p>` : ""}${points.length ? `<div class="bar-chart" role="img" aria-label="${escapeHtml(props.title || "Gráfico de barras")}">${points.map((item) => `<div class="bar-row"><span class="bar-label" title="${escapeHtml(item.label)}">${escapeHtml(item.label)}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.min(100, Math.max(2, Math.round(Math.abs(item.value) / max * 100)))}%"></span></span><strong class="bar-value">${escapeHtml(formatDisplayValue(item.value))}</strong></div>`).join("")}</div>` : '<p>No hay datos para graficar.</p>'}`;
+  return uiCard(props.title || "Gráfico", body);
+}
+
+function renderTimelineComponent(props) {
+  const items = Array.isArray(props.items) ? props.items : Array.isArray(props.events) ? props.events : [];
+  const body = `<ol class="ui-timeline">${items.map((item) => {
+    const event = item && typeof item === "object" ? item : { title: item };
+    return `<li class="timeline-item"><span class="timeline-dot" aria-hidden="true"></span><div class="timeline-copy"><strong>${escapeHtml(event.title || event.label || event.event || "Evento")}</strong>${event.body || event.description || event.detail ? `<span>${escapeHtml(event.body || event.description || event.detail)}</span>` : ""}${event.date || event.time ? `<time>${escapeHtml(event.date || event.time)}</time>` : ""}</div></li>`;
+  }).join("")}</ol>`;
+  return uiCard(props.title || "Cronología", body);
+}
+
+function renderLinkGroupComponent(props) {
+  const links = Array.isArray(props.links) ? props.links : Array.isArray(props.items) ? props.items : [];
+  const safeLinks = links
+    .filter((link) => link && typeof link === "object")
+    .map((link) => {
+      const target = link.target;
+      if (target && typeof target === "object") {
+        if (target.kind === "internal_route") {
+          const route = internalView(target.value);
+          return route ? { ...link, route } : null;
+        }
+        const safeHref = safeTypedLink(target.kind, target.value);
+        return safeHref ? { ...link, safeHref } : null;
+      }
+      const safeHref = safeLink(link.app_url || link.url || link.href);
+      return safeHref ? { ...link, safeHref } : null;
+    })
+    .filter(Boolean)
+    .slice(0, 12);
+  if (!safeLinks.length) return "";
+  const body = `<div class="ui-links">${safeLinks.map((link) => {
+    const copy = `<span><strong>${escapeHtml(link.label || link.title || "Abrir enlace")}</strong>${link.description ? `<small>${escapeHtml(link.description)}</small>` : ""}</span>`;
+    if (link.route) return `<button class="ui-link" type="button" data-ui-route="${escapeHtml(link.route)}">${copy}<i data-lucide="arrow-right"></i></button>`;
+    return `<a class="ui-link" href="${escapeHtml(link.safeHref)}" ${isExternalWebLink(link.safeHref) ? 'target="_blank" rel="noopener noreferrer"' : ""}>${copy}<i data-lucide="arrow-up-right"></i></a>`;
+  }).join("")}</div>`;
+  return uiCard(props.title || "Enlaces", body);
+}
+
+function renderNoticeComponent(props) {
+  const tone = props.tone === "error" ? "danger" : ["warning", "danger", "success"].includes(props.tone) ? props.tone : "info";
+  return uiCard(props.title || "Información", `<p>${escapeHtml(props.body || props.message || "")}</p>`, `ui-notice tone-${tone}`);
+}
+
+function renderKeyValues(values) {
+  const entries = Object.entries(values || {}).slice(0, 12);
+  if (!entries.length) return "";
+  return `<div class="ui-kv-grid">${entries.map(([label, value]) => `<div class="ui-kv"><span>${escapeHtml(formatPlainToken(label))}</span><strong>${escapeHtml(formatDisplayValue(value))}</strong></div>`).join("")}</div>`;
+}
+
+function bindUIActions(container, entry) {
+  container.querySelectorAll("[data-ui-route]").forEach((button) => {
+    button.addEventListener("click", () => switchView(button.dataset.uiRoute));
+  });
+  container.querySelectorAll("[data-ui-action]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const href = safeLink(button.dataset.uiHref);
+      if (href) {
+        if (isExternalWebLink(href)) window.open(href, "_blank", "noopener,noreferrer");
+        else window.location.href = href;
+        return;
+      }
+      await switchView("inbox");
+      await openEntry(entry.id);
+      if (button.dataset.uiAction === "confirm") showToast("Revisá los datos y confirmá explícitamente en la ficha");
+    });
+  });
+}
+
+function internalView(value) {
+  const normalized = String(value || "").toLowerCase().replaceAll("-", "_");
+  return {
+    chat: "capture",
+    capture: "capture",
+    captura: "capture",
+    inbox: "inbox",
+    bandeja: "inbox",
+    activity: "activity",
+    actividad: "activity",
+    operations: "operations",
+    operaciones: "operations",
+    cria: "operations",
+    incubacion: "operations",
+  }[normalized] || "";
+}
+
+function safeTypedLink(kind, value) {
+  const safe = safeLink(value);
+  if (!safe) return null;
+  if (kind === "external_url") return isExternalWebLink(safe) ? safe : null;
+  if (kind === "domain_app") return /^(?:personal-agent|granja-luna):/i.test(safe) ? safe : null;
+  return null;
+}
+
+function safeLink(value) {
+  if (!value || typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed.startsWith("#") || (trimmed.startsWith("/") && !trimmed.startsWith("//"))) {
+    return trimmed;
+  }
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.username || parsed.password) return null;
+    return ["http:", "https:", "personal-agent:", "granja-luna:"].includes(parsed.protocol) ? trimmed : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function isExternalWebLink(value) {
+  return /^https?:/i.test(value || "");
+}
+
+function normalizedRisk(value) {
+  const risks = { bajo: "low", medio: "medium", alto: "high", critico: "critical" };
+  return risks[value] || ["low", "medium", "high", "critical"].includes(value) ? (risks[value] || value) : "medium";
+}
+
+function riskLabel(value) {
+  return { low: "Bajo", medium: "Medio", high: "Alto", critical: "Crítico", bajo: "Bajo", medio: "Medio", alto: "Alto", critico: "Crítico" }[value] || value || "Medio";
+}
+
+function formatDisplayValue(value) {
+  if (value == null || value === "") return "—";
+  if (typeof value === "boolean") return value ? "Sí" : "No";
+  if (Array.isArray(value)) {
+    if (value.some((item) => item && typeof item === "object")) return `${value.length} registro${value.length === 1 ? "" : "s"}`;
+    return value.join(", ");
+  }
+  if (typeof value === "object") {
+    const summary = Object.entries(value).slice(0, 4).map(([key, item]) => `${formatPlainToken(key)}: ${formatDisplayValue(item)}`).join(" · ");
+    return summary || "—";
+  }
+  return typeof value === "number" ? new Intl.NumberFormat("es-PY").format(value) : String(value);
+}
+
+function messageTime() {
+  return new Intl.DateTimeFormat("es-PY", { hour: "2-digit", minute: "2-digit" }).format(new Date());
+}
+
+function scrollChatToEnd() {
+  requestAnimationFrame(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" }));
+}
+
+function bindVoiceInput() {
+  document.querySelector("#voice-button").addEventListener("click", () => {
+    if (state.voice.active) stopVoiceInput();
+    else startVoiceInput();
+  });
+  window.addEventListener("agent:native-voice", (event) => handleNativeVoiceEvent(event.detail));
+  window.addEventListener("message", (event) => handleNativeVoiceEvent(event.data));
+  document.addEventListener("message", (event) => handleNativeVoiceEvent(event.data));
+}
+
+function startVoiceInput() {
+  const message = document.querySelector("#message");
+  state.voice.baseText = message.value.trimEnd();
+  state.voice.requestId = `voice-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  if (window.ReactNativeWebView?.postMessage) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      protocol: "agent.voice.v1",
+      type: "speech.start",
+      requestId: state.voice.requestId,
+      lang: "es-PY",
+    }));
+    setVoiceStatus(true, "Preparando el micrófono…");
+    return;
+  }
+  startBrowserSpeechRecognition();
+}
+
+function stopVoiceInput() {
+  if (window.ReactNativeWebView?.postMessage && state.voice.requestId) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({ protocol: "agent.voice.v1", type: "speech.stop", requestId: state.voice.requestId, lang: "es-PY" }));
+  }
+  state.voice.recognition?.stop();
+  setVoiceStatus(true, "Finalizando dictado…");
+}
+
+function cancelVoiceInput() {
+  const requestId = state.voice.requestId;
+  if (window.ReactNativeWebView?.postMessage && requestId) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      protocol: "agent.voice.v1",
+      type: "speech.stop",
+      requestId,
+      lang: "es-PY",
+    }));
+  }
+  if (state.voice.recognition) {
+    state.voice.recognition.onresult = null;
+    state.voice.recognition.onerror = null;
+    state.voice.recognition.onend = null;
+    state.voice.recognition.abort();
+  }
+  state.voice.recognition = null;
+  state.voice.requestId = null;
+  state.voice.baseText = "";
+  setVoiceStatus(false, "");
+  document.querySelector("#voice-status").hidden = true;
+}
+
+function startBrowserSpeechRecognition() {
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) {
+    finishVoiceInput("El dictado no está disponible en este navegador", true);
+    showToast("Este navegador no ofrece reconocimiento de voz");
+    return;
+  }
+  const recognition = new Recognition();
+  const requestId = state.voice.requestId;
+  state.voice.recognition = recognition;
+  recognition.lang = "es-PY";
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.onstart = () => setVoiceStatus(true, "Escuchando…");
+  recognition.onresult = (event) => {
+    if (!requestId || state.voice.requestId !== requestId) return;
+    let transcript = "";
+    for (let index = 0; index < event.results.length; index += 1) transcript += event.results[index][0]?.transcript || "";
+    applyVoiceTranscript(transcript);
+  };
+  recognition.onerror = (event) => {
+    if (state.voice.requestId === requestId) finishVoiceInput(voiceErrorLabel(event.error), true);
+  };
+  recognition.onend = () => {
+    if (state.voice.requestId !== requestId) return;
+    state.voice.recognition = null;
+    if (state.voice.active) finishVoiceInput("Dictado listo para editar");
+  };
+  try {
+    recognition.start();
+    setVoiceStatus(true, "Preparando el micrófono…");
+  } catch (error) {
+    finishVoiceInput(error.message || "No se pudo iniciar el micrófono", true);
+  }
+}
+
+function handleNativeVoiceEvent(payload) {
+  if (typeof payload === "string") {
+    try { payload = JSON.parse(payload); } catch (_error) { return; }
+  }
+  if (!payload || payload.protocol !== "agent.voice.v1") return;
+  if (!state.voice.requestId || payload.requestId !== state.voice.requestId) return;
+  if (payload.type === "speech.result") {
+    applyVoiceTranscript(payload.transcript || "");
+    if (payload.isFinal || payload.is_final) setVoiceStatus(true, "Finalizando dictado…");
+    return;
+  }
+  if (payload.type === "speech.error") {
+    finishVoiceInput(voiceErrorLabel(payload.error), true);
+    return;
+  }
+  if (payload.type === "speech.state") {
+    const labels = {
+      "requesting-permission": "Solicitando permiso…",
+      requesting_permission: "Solicitando permiso…",
+      starting: "Preparando el micrófono…",
+      ready: "Micrófono listo",
+      listening: "Escuchando…",
+      processing: "Transcribiendo…",
+      stopping: "Deteniendo el dictado…",
+    };
+    if (["end", "ended", "idle", "stopped"].includes(payload.state)) finishVoiceInput("Dictado listo para editar");
+    else setVoiceStatus(true, labels[payload.state] || "Escuchando…");
+  }
+}
+
+function applyVoiceTranscript(transcript) {
+  const message = document.querySelector("#message");
+  const separator = state.voice.baseText && transcript.trim() ? " " : "";
+  message.value = `${state.voice.baseText}${separator}${transcript.trimStart()}`;
+  updateComposerState();
+}
+
+function setVoiceStatus(active, label, isError = false) {
+  state.voice.active = active;
+  const button = document.querySelector("#voice-button");
+  const status = document.querySelector("#voice-status");
+  clearTimeout(state.voice.statusTimer);
+  button.setAttribute("aria-pressed", String(active));
+  button.setAttribute("aria-label", active ? "Detener dictado" : "Iniciar dictado");
+  button.disabled = active && label === "Finalizando dictado…";
+  status.hidden = false;
+  status.classList.toggle("is-error", isError);
+  document.querySelector("#voice-status-label").textContent = label;
+  refreshIcons();
+}
+
+function finishVoiceInput(label, isError = false) {
+  setVoiceStatus(false, label, isError);
+  state.voice.recognition = null;
+  state.voice.requestId = null;
+  state.voice.baseText = document.querySelector("#message").value;
+  state.voice.statusTimer = setTimeout(() => { document.querySelector("#voice-status").hidden = true; }, isError ? 4200 : 2200);
+  document.querySelector("#message").focus();
+}
+
+function voiceErrorLabel(error) {
+  const labels = { "not-allowed": "Permiso de micrófono denegado", "audio-capture": "No se encontró un micrófono", "no-speech": "No detecté voz", network: "Error de red al transcribir" };
+  return labels[error] || String(error || "No se pudo transcribir el audio");
 }
 
 function bindInboxControls() {

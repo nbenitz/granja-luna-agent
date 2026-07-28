@@ -36,4 +36,6 @@ Ambos archivos estan ignorados por git.
 
 ## Limite actual
 
-La UI acepta dictado desde el teclado del celular. La captura directa del microfono requiere HTTPS y no forma parte de este corte.
+La UI acepta dictado directo mediante el puente nativo `agent.voice.v1` del APK. En un navegador compatible también usa Web Speech como respaldo, sujeto a HTTPS y a las políticas del navegador. El texto transcrito queda editable y nunca se envía automáticamente. El audio no se persiste en la aplicación; el reconocedor del sistema puede usar servicios de red de su proveedor.
+
+La respuesta hablada no forma parte de este corte. Si se incorpora, usará un protocolo separado (`agent.audio.v1`), reproducción manual por defecto y exclusión mutua con el micrófono.

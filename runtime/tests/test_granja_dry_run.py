@@ -57,8 +57,15 @@ class GranjaDryRunTests(unittest.TestCase):
         self.assertEqual(result["classification"]["confidence"], "medium")
         self.assertIn("compras", result["classification"]["matched_signals"])
         self.assertNotIn("bolsa", result["classification"]["matched_signals"]["stock-insumos"])
+        self.assertEqual(result["ui_response"]["schema_version"], "1.0")
         self.assertEqual(result["ui_response"]["response_type"], "review")
+        self.assertEqual(result["ui_response"]["risk_level"], "medium")
+        self.assertEqual(result["ui_response"]["information_status"]["drafts"], "draft")
         self.assertTrue(result["ui_response"]["requires_confirmation"])
+        self.assertEqual(
+            {component["component"] for component in result["ui_response"]["components"]},
+            {"summary_card", "data_table", "checklist", "action_group"},
+        )
 
         item = result["detected_data"]["items"][0]
         self.assertEqual(item["producto"], "maiz")

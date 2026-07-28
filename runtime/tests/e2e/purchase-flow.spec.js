@@ -5,6 +5,33 @@ const MULTIPLE_PURCHASE =
   "Compre dos bolsas de iniciador a 110 mil cada una, " +
   "una bolsa de maiz a 90 mil y 3 kg de vitaminas a 25000";
 
+test("muestra los cuatro destinos en el patrón adecuado al viewport", async ({ page }) => {
+  await page.goto("/");
+  const buttons = page.locator(".app-nav .nav-button");
+
+  await expect(buttons).toHaveCount(4);
+  for (let index = 0; index < 4; index += 1) {
+    await expect(buttons.nth(index)).toBeVisible();
+  }
+
+  const positions = await buttons.evaluateAll((items) =>
+    items.map((item) => {
+      const rect = item.getBoundingClientRect();
+      return { left: Math.round(rect.left), top: Math.round(rect.top) };
+    }),
+  );
+  const viewportWidth = page.viewportSize()?.width || await page.evaluate(() => window.innerWidth);
+  if (viewportWidth < 860) {
+    expect(new Set(positions.map(({ top }) => top)).size).toBe(1);
+  } else {
+    expect(new Set(positions.map(({ left }) => left)).size).toBe(1);
+    expect(new Set(positions.map(({ top }) => top)).size).toBe(4);
+  }
+
+  await page.locator('.nav-button[data-target="operations"]').click();
+  await expect(page.locator('#view-operations')).toBeVisible();
+});
+
 test("revisa y corrige una compra con varios productos", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.locator("#message").fill(MULTIPLE_PURCHASE);
