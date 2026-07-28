@@ -67,6 +67,22 @@ La evidencia se puede recorrer desde:
 - [`runtime/tests/`](../runtime/tests/), para reglas y regresiones;
 - [`runtime/contracts/`](../runtime/contracts/), para contratos legibles y versionados.
 
+## Evidencia del proceso
+
+Una revisión local de las sesiones de Codex permitió reconstruir esta línea de trabajo sin
+publicar conversaciones ni datos privados:
+
+| Periodo | Necesidad y decisión humana | Trabajo asistido por Codex | Evidencia verificable |
+| --- | --- | --- | --- |
+| 14 de junio de 2026 | Definir un MVP fiel a la operación y confirmar el nombre Granja Luna | Leyó las instrucciones del repo antes de editar, revisó dominios y niveles de riesgo, preparó contratos y comprobó JSON y diffs | Commit [`5bc31c7`](https://github.com/nbenitz/granja-luna-agent/commit/5bc31c7) y [`AGENTS.md`](../AGENTS.md) |
+| 14–20 de junio de 2026 | Mantener un core independiente de frameworks y aprender de casos reales revisados por una persona | Implementó y refactorizó el dry-run, creó un flujo de revisión de casos, agregó contexto conversacional y un inbox operativo; ejecutó pruebas unitarias, compilación y recorridos CLI temporales | Commits [`9c57643`](https://github.com/nbenitz/granja-luna-agent/commit/9c57643), [`6fb1b20`](https://github.com/nbenitz/granja-luna-agent/commit/6fb1b20), [`76d7973`](https://github.com/nbenitz/granja-luna-agent/commit/76d7973) y [`dc301f0`](https://github.com/nbenitz/granja-luna-agent/commit/dc301f0) |
+| 9–17 de julio de 2026 | Recuperar Granja Luna como dominio activo y delegarle la interpretación avícola | Preservó la revisión móvil, separó el enrutamiento global de la interpretación de dominio, agregó el flujo de postura y validó ambos repositorios en contenedores | Commits [`c640e41`](https://github.com/nbenitz/granja-luna-agent/commit/c640e41) y [`ffce2d9`](https://github.com/nbenitz/granja-luna-agent/commit/ffce2d9) |
+| 21–22 de julio de 2026 | Operar desde el teléfono sin convertir una intención en un hecho por error | Diseñó el puente MCP, el ciclo borrador–confirmación, trazas append-only y pruebas de extremo a extremo con servicios aislados; los cambios quedaron sujetos a revisión antes de publicarse | [`runtime/src/core/operations.py`](../runtime/src/core/operations.py), [`runtime/tests/test_operations.py`](../runtime/tests/test_operations.py) y el historial del PR |
+
+Los identificadores y archivos de las sesiones se conservan localmente solo para auditoría. La
+evidencia pública es el código resultante, sus commits, las pruebas y las decisiones documentadas;
+no una transcripción seleccionada fuera de contexto.
+
 ## Validación
 
 Los cambios deben superar:
