@@ -44,15 +44,9 @@ class MobileAppTests(unittest.TestCase):
 
     def test_android_shell_has_editable_non_persistent_voice_bridge(self) -> None:
         app_source = (PROJECT_ROOT / "mobile" / "App.tsx").read_text(encoding="utf-8")
-        manifest = (
-            PROJECT_ROOT
-            / "mobile"
-            / "android"
-            / "app"
-            / "src"
-            / "main"
-            / "AndroidManifest.xml"
-        ).read_text(encoding="utf-8")
+        app_config = json.loads(
+            (PROJECT_ROOT / "mobile" / "app.json").read_text(encoding="utf-8")
+        )
 
         self.assertIn("ExpoSpeechRecognitionModule.requestPermissionsAsync()", app_source)
         self.assertIn('const VOICE_PROTOCOL = "agent.voice.v1"', app_source)
@@ -60,19 +54,16 @@ class MobileAppTests(unittest.TestCase):
         self.assertIn('new CustomEvent("agent:native-voice"', app_source)
         self.assertIn("onMessage={handleWebMessage}", app_source)
         self.assertNotIn("recordingOptions:", app_source)
-        self.assertIn("android.permission.RECORD_AUDIO", manifest)
+        self.assertIn(
+            "android.permission.RECORD_AUDIO",
+            app_config["expo"]["android"]["permissions"],
+        )
 
     def test_android_shell_reports_link_failures_and_supports_web_fallback(self) -> None:
         app_source = (PROJECT_ROOT / "mobile" / "App.tsx").read_text(encoding="utf-8")
-        manifest = (
-            PROJECT_ROOT
-            / "mobile"
-            / "android"
-            / "app"
-            / "src"
-            / "main"
-            / "AndroidManifest.xml"
-        ).read_text(encoding="utf-8")
+        app_config = json.loads(
+            (PROJECT_ROOT / "mobile" / "app.json").read_text(encoding="utf-8")
+        )
         config_plugin = (
             PROJECT_ROOT / "mobile" / "plugins" / "withCleartextTraffic.js"
         ).read_text(encoding="utf-8")
@@ -85,8 +76,8 @@ class MobileAppTests(unittest.TestCase):
         self.assertIn("No hay una app compatible", app_source)
         self.assertIn("Abrir versión web", app_source)
         self.assertNotIn("catch(() => undefined)", app_source)
+        self.assertIn("./plugins/withCleartextTraffic", app_config["expo"]["plugins"])
         for scheme in ("http", "https", "personal-agent", "granja-luna"):
-            self.assertIn(f'android:scheme="{scheme}"', manifest)
             self.assertIn(f'"{scheme}"', config_plugin)
 
     def test_pwa_renders_safe_typed_links_and_editable_voice_input(self) -> None:
