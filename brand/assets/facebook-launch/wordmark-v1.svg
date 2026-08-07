@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="520" viewBox="0 0 1600 520" role="img" aria-labelledby="title description">
+  <title id="title">Granja Luna</title>
+  <desc id="description">Símbolo de luna y pollito acompañado por el nombre Granja Luna.</desc>
+  <defs>
+    <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F2D47A"/>
+      <stop offset="1" stop-color="#E8B84A"/>
+    </linearGradient>
+    <mask id="crescent">
+      <rect width="520" height="520" fill="black"/>
+      <circle cx="215" cy="260" r="164" fill="white"/>
+      <circle cx="286" cy="203" r="156" fill="black"/>
+    </mask>
+  </defs>
+  <rect width="1600" height="520" rx="72" fill="#F5F0E6"/>
+  <circle cx="215" cy="260" r="164" fill="url(#moon)" mask="url(#crescent)"/>
+  <ellipse cx="316" cy="330" rx="77" ry="96" transform="rotate(-13 316 330)" fill="#FFFFFF"/>
+  <circle cx="344" cy="244" r="56" fill="#FFFFFF"/>
+  <ellipse cx="296" cy="340" rx="38" ry="52" transform="rotate(23 296 340)" fill="#E8B84A" opacity="0.34"/>
+  <path d="M396 246 L437 264 L394 278 Z" fill="#A66A3F"/>
+  <circle cx="360" cy="232" r="8" fill="#17233B"/>
+  <circle cx="385" cy="137" r="13" fill="#E8B84A"/>
+  <text x="500" y="285" fill="#17233B" font-family="Noto Sans, Arial, sans-serif" font-size="150" font-weight="700" letter-spacing="-4">Granja Luna</text>
+  <text x="510" y="365" fill="#68734A" font-family="Noto Sans, Arial, sans-serif" font-size="34" font-weight="600" letter-spacing="3">CRIANZA · APRENDIZAJE · VIDA EN LA GRANJA</text>
+</svg>

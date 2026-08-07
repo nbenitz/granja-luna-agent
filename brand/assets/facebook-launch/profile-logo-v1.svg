@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">Símbolo de Granja Luna</title>
+  <desc id="description">Una luna creciente dorada abraza la silueta clara de un pollito.</desc>
+  <defs>
+    <radialGradient id="night" cx="42%" cy="35%" r="75%">
+      <stop offset="0" stop-color="#223250"/>
+      <stop offset="1" stop-color="#111A2D"/>
+    </radialGradient>
+    <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F2D47A"/>
+      <stop offset="1" stop-color="#E8B84A"/>
+    </linearGradient>
+    <mask id="crescent">
+      <rect width="1024" height="1024" fill="black"/>
+      <circle cx="430" cy="480" r="292" fill="white"/>
+      <circle cx="555" cy="378" r="278" fill="black"/>
+    </mask>
+    <filter id="soft-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#08101F" flood-opacity="0.34"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="184" fill="url(#night)"/>
+  <circle cx="430" cy="480" r="292" fill="url(#moon)" mask="url(#crescent)" filter="url(#soft-shadow)"/>
+
+  <g filter="url(#soft-shadow)">
+    <ellipse cx="609" cy="608" rx="142" ry="176" transform="rotate(-13 609 608)" fill="#F5F0E6"/>
+    <circle cx="661" cy="451" r="102" fill="#F5F0E6"/>
+    <ellipse cx="572" cy="626" rx="69" ry="94" transform="rotate(23 572 626)" fill="#E8B84A" opacity="0.34"/>
+    <path d="M756 454 L829 486 L753 512 Z" fill="#A66A3F"/>
+    <circle cx="691" cy="430" r="14" fill="#17233B"/>
+    <circle cx="696" cy="425" r="4" fill="#F5F0E6"/>
+  </g>
+
+  <circle cx="736" cy="267" r="24" fill="#F2D47A" opacity="0.95"/>
+  <circle cx="793" cy="326" r="10" fill="#F2D47A" opacity="0.75"/>
+</svg>

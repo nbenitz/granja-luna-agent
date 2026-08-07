@@ -7,7 +7,8 @@ Estado: `pending_review`
 - Aprobar misión, visión y manifiesto públicos.
 - Definir si “Granja Paraíso” se comunica públicamente o permanece como visión interna.
 - Elegir eslogan o decidir operar inicialmente sin uno.
-- Diseñar y aprobar logo, paleta, tipografías y sistema visual.
+- Aprobar, ajustar o reemplazar el logo provisional de lanzamiento y luego ampliar paleta,
+  tipografías y sistema visual.
 - Definir el protagonismo visual de la luna, las aves, la naturaleza y la tecnología.
 
 ## Comercial
@@ -28,7 +29,8 @@ Estado: `pending_review`
 
 ## Canales
 
-- Crear y configurar la página oficial de Facebook.
+- Crear y configurar la página oficial de Facebook con el paquete preparado en
+  `brand/facebook-launch-ready.md`.
 - Reservar nombre de usuario coherente en Instagram.
 - Definir WhatsApp Business, información pública y horario de atención.
 - Evaluar YouTube, TikTok y sitio web después de validar el flujo inicial.

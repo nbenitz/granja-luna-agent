@@ -13,6 +13,7 @@ real antes de considerarse definitivo.
 - Honesta sobre pruebas, errores y aprendizajes.
 - Precisa cuando comunica datos productivos, sanitarios o genéticos.
 - Optimista sin exagerar resultados.
+- Capaz de usar humor cotidiano y familiar sin ridiculizar a los animales ni perder credibilidad.
 
 Granja Luna debe sonar como alguien que vive, observa y cuida la granja; no como una agencia de
 publicidad ni como una empresa industrial consolidada.
@@ -25,6 +26,8 @@ publicidad ni como una empresa industrial consolidada.
 4. Verificar disponibilidad, edad y precio antes de vender.
 5. Diferenciar el cariño por los animales de las promesas de bienestar certificadas.
 6. Invitar a conversar sin presionar la compra.
+7. Describir condiciones observables —por ejemplo, acceso al patio o aves pastoreando— en lugar de
+   convertirlas automáticamente en “felicidad”, bienestar certificado o rusticidad heredable.
 
 ## Vocabulario recomendado
 
