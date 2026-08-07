@@ -27,3 +27,18 @@ media/
 Ejemplo:
 
 `2026-07-17_brahma_pollitos_corral_telefono-nestor.jpg`
+
+## Inventario local
+
+Desde la raiz del repositorio:
+
+```bash
+python3 runtime/src/cli/media_library.py scan
+python3 runtime/src/cli/media_library.py summary
+python3 runtime/src/cli/media_library.py clusters --type temporal_burst --limit 10
+```
+
+El inventario se guarda en `runtime/state/media-library.sqlite3`. No copia binarios ni extrae
+coordenadas GPS: solo registra si el bloque GPS esta presente para bloquear derivados inseguros.
+Volver a ejecutar el escaneo no modifica los medios y reutiliza metadatos cuando el archivo no
+cambio.

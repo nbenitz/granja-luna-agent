@@ -44,8 +44,11 @@ Leer, como mínimo:
 
 ## Seguridad y privacidad
 
-- No leer ni exponer secretos.
-- No crear `.env` con credenciales reales.
+- No imprimir, registrar, versionar ni exponer secretos.
+- Néstor puede mantener credenciales reales en un `.env` local ignorado por Git.
+- Los agentes pueden cargar una credencial local únicamente para una integración solicitada
+  explícitamente, sin mostrar su valor ni copiarlo a documentación, resultados o logs.
+- `.env.example` solo contiene nombres de variables y valores vacíos o ficticios.
 - No guardar datos sensibles innecesarios.
 - No publicar información de ventas, proveedores o sanidad sin aprobación.
 - Las fichas sanitarias son apoyo operativo, no sustituyen asesoramiento veterinario.

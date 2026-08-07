@@ -220,6 +220,26 @@
             <div id="farm-pending-list" class="operation-list"></div>
           </section>
         </section>
+
+        <section class="view" id="view-media" data-view="media" hidden>
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">Marca y comunidad</p>
+              <h1>Curaduría</h1>
+            </div>
+            <button class="icon-button" id="refresh-media" type="button" title="Actualizar biblioteca">
+              <i data-lucide="refresh-cw"></i>
+              <span class="sr-only">Actualizar biblioteca</span>
+            </button>
+          </div>
+
+          <div class="media-privacy-note">
+            <i data-lucide="shield-check"></i>
+            <p><strong>Tu contexto primero.</strong> Las vistas y señales locales no salen del equipo. Gemini sólo revisa calidad, encuadre y usos cuando presionás el botón y confirmás el envío.</p>
+          </div>
+          <div class="media-cluster-strip" id="media-cluster-list" aria-label="Grupos de fotos"></div>
+          <div id="media-curation-workspace" aria-live="polite"></div>
+        </section>
       </main>
 
       <nav class="app-nav" aria-label="Navegación principal">
@@ -241,6 +261,10 @@
         <button class="nav-button" type="button" data-target="operations">
           <i data-lucide="egg"></i>
           <span>Cría</span>
+        </button>
+        <button class="nav-button" type="button" data-target="media">
+          <i data-lucide="images"></i>
+          <span>Contenido</span>
         </button>
       </nav>
     </div>

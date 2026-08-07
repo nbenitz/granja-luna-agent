@@ -13,10 +13,13 @@ Este directorio guarda estado local generado por herramientas del runtime.
 - `structure-events.jsonl`: altas append-only de galpones, planteles y almacenes de huevos.
 - `incubation-events.jsonl`: incubadoras, lotes y eventos de seguimiento confirmados.
 - `brooding-events.jsonl`: zonas, lotes de pollitos y eventos de cría, con borradores y auditoría.
+- `media-library/`: inventario SQLite, derivados sanitizados, huellas, grupos, contexto, decisiones
+  humanas y análisis versionados; los originales permanecen en `media/inbox`.
 
 ## Regla
 
-Los archivos JSON/JSONL de este directorio son estado operativo local y estan ignorados por git.
+Los archivos JSON/JSONL y SQLite de este directorio son estado operativo local y estan ignorados
+por git. Los archivos auxiliares WAL/SHM de SQLite tampoco deben versionarse.
 
 Una entrada del inbox representa una propuesta pendiente. No confirma compras, ventas, tratamientos,
 stock, tareas ni decisiones como hechos reales. Un evento de `operation-events.jsonl` con estado

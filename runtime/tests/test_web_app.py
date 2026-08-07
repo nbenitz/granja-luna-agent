@@ -181,9 +181,12 @@ class WebAppTests(unittest.TestCase):
     def test_mobile_navigation_has_one_column_per_destination(self) -> None:
         index = self.client.get("/")
         styles = self.client.get("/static/styles.css")
+        script = self.client.get("/static/app.js")
 
-        self.assertEqual(index.text.count('class="nav-button'), 4)
-        self.assertIn("grid-template-columns: repeat(4, minmax(0, 1fr));", styles.text)
+        self.assertEqual(index.text.count('class="nav-button'), 5)
+        self.assertIn("grid-template-columns: repeat(5, minmax(0, 1fr));", styles.text)
+        self.assertIn('data-target="media"', index.text)
+        self.assertIn("Analizar con Gemini", script.text)
 
 
 if __name__ == "__main__":

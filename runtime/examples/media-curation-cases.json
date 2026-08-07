@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "status": "confirmed_by_user",
+  "updated_at": "2026-08-02",
+  "cases": [
+    {
+      "id": "burst-chicks-20260731",
+      "cluster_id": "cluster-26e425881d1ed09c",
+      "subject": "pollitos bajo fuente de calor",
+      "candidates_in_display_order": [
+        "Granja Luna/20260731_034949.jpg",
+        "Granja Luna/20260731_034957.jpg",
+        "Granja Luna/20260731_035012.jpg",
+        "Granja Luna/20260731_035020.jpg",
+        "Granja Luna/20260731_035023.jpg"
+      ],
+      "model_selections": {
+        "qwen3_vl_4b_contact_sheet": "Granja Luna/20260731_035023.jpg",
+        "gemini_3_5_flash_general": "Granja Luna/20260731_035020.jpg",
+        "gemini_3_5_flash_with_user_intent": "Granja Luna/20260731_035020.jpg"
+      },
+      "gemini_multi_favorite_validation": {
+        "primary": "Granja Luna/20260731_035020.jpg",
+        "secondary": "Granja Luna/20260731_034949.jpg",
+        "review": "El modelo respeto la intencion panoramica principal y produjo dos selecciones validas, pero no coincidio con la eleccion humana de la foto 2 como detalle secundario."
+      },
+      "group_editorial_intent": "panoramica_del_manejo",
+      "human_favorites": [
+        {
+          "file": "Granja Luna/20260731_035020.jpg",
+          "display_number": 4,
+          "priority": "primary",
+          "editorial_intent": "panoramica_del_manejo",
+          "reason": "Obedece mejor al objetivo panoramico original de la rafaga y muestra el manejo general del conjunto."
+        },
+        {
+          "file": "Granja Luna/20260731_034957.jpg",
+          "display_number": 2,
+          "priority": "secondary",
+          "editorial_intent": "detalle_de_pollitos",
+          "reason": "Se aparta del objetivo panoramico, pero aporta un acercamiento valido para ver caras e interaccion alrededor del bebedero."
+        }
+      ],
+      "human_note_on_gemini_selection": "Gemini acerto la favorita principal al elegir la foto 4. La foto 2 debe conservarse como favorita secundaria por aportar otro angulo e intencion, aunque la prueba multiseleccion del modelo haya preferido la foto 1 como detalle.",
+      "qwen_model_selection_review": {
+        "display_number": 5,
+        "strengths": [
+          "Buen angulo.",
+          "Vista panoramica clara del conjunto."
+        ],
+        "limitations": [
+          "La luz de la fuente de calor perturba parte de la imagen.",
+          "Debe evitarse contenido donde la fuente de calor parezca demasiado cerca de los pollitos a su altura."
+        ]
+      },
+      "safety_review": {
+        "visual_signal": "aparente_proximidad_de_fuente_de_calor",
+        "requires_human_review": true,
+        "numeric_clearance_confirmed": false,
+        "note": "La fotografia no demuestra por si sola la distancia real. Falta registrar la medida minima de la norma o procedimiento aplicable."
+      },
+      "label_status": "confirmed_by_user"
+    },
+    {
+      "id": "burst-rainbow-20260801",
+      "cluster_id": "cluster-1f64cac41838502d",
+      "subject": "arcoiris sobre los arboles",
+      "candidates_in_display_order": [
+        "Granja Luna/20260801_181032.jpg",
+        "Granja Luna/20260801_181036.jpg",
+        "Granja Luna/20260801_181046.jpg",
+        "Granja Luna/20260801_181101.jpg",
+        "Granja Luna/20260801_181103.jpg"
+      ],
+      "model_selections": {
+        "qwen3_vl_4b_contact_sheet": "Granja Luna/20260801_181032.jpg",
+        "gemini_3_5_flash_general": "Granja Luna/20260801_181032.jpg"
+      },
+      "group_editorial_intent": "entorno_natural",
+      "human_favorites": [
+        {
+          "file": "Granja Luna/20260801_181032.jpg",
+          "display_number": 1,
+          "priority": "primary",
+          "editorial_intent": "entorno_natural",
+          "reason": "Es una eleccion valida dentro de una rafaga con diferencias minimas."
+        }
+      ],
+      "human_reasons": [
+        "Las tomas son practicamente iguales.",
+        "La primera es una eleccion valida dentro de una rafaga sin diferencias decisivas."
+      ],
+      "selection_margin": "low",
+      "label_status": "confirmed_by_user"
+    }
+  ]
+}

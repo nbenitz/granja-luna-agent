@@ -5,7 +5,7 @@ import sys
 from copy import deepcopy
 from pathlib import Path
 from threading import Lock
-from typing import Literal
+from typing import Callable, Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
@@ -34,6 +34,22 @@ DEFAULT_INCUBATION_PATH = Path(
 DEFAULT_BROODING_PATH = Path(
     os.getenv("GRANJA_BROODING_PATH", RUNTIME_DIR / "state" / "brooding-events.jsonl")
 )
+DEFAULT_MEDIA_DATABASE_PATH = Path(
+    os.getenv(
+        "GRANJA_MEDIA_DATABASE_PATH",
+        RUNTIME_DIR / "state" / "media-library" / "library.sqlite3",
+    )
+)
+DEFAULT_MEDIA_ROOT = Path(
+    os.getenv("GRANJA_MEDIA_ROOT", RUNTIME_DIR.parent / "media" / "inbox")
+)
+DEFAULT_MEDIA_DERIVATIVES_PATH = Path(
+    os.getenv(
+        "GRANJA_MEDIA_DERIVATIVES_PATH",
+        RUNTIME_DIR / "state" / "media-library" / "derivatives",
+    )
+)
+DEFAULT_ENV_FILE = RUNTIME_DIR.parent / ".env"
 
 sys.path.insert(0, str(SRC_DIR))
 
@@ -80,6 +96,25 @@ from core.incubation import (  # noqa: E402
     list_incubation_records,
     load_incubation_records,
 )
+from core.local_env import get_local_secret  # noqa: E402
+from core.media_curation import (  # noqa: E402
+    CONTENT_PILLARS,
+    EDITORIAL_INTENTS,
+    EXTERNAL_ANALYSIS_BLOCKED_DECISIONS,
+    FACEBOOK_LAUNCH_SLOTS,
+    SHOT_TYPES,
+    SUBJECT_TAGS,
+    MediaCurationError,
+    analyze_cluster_locally,
+    derivative_path,
+    get_cluster,
+    list_curation_clusters,
+    prepare_asset_derivatives,
+    save_cluster_curation,
+    save_gemini_analysis,
+    validate_gemini_burst_result,
+)
+from core.media_library import connect_media_library  # noqa: E402
 from core.intent_forms import (  # noqa: E402
     ensure_structured_data,
     update_structured_values,
@@ -255,6 +290,67 @@ class DraftCancelRequest(BaseModel):
     request_id: str | None = Field(default=None, max_length=200)
 
 
+EditorialIntent = Literal["panoramica", "detalle", "portada", "proceso", "archivo"]
+ShotType = Literal[
+    "panoramica_paisaje", "escena_general", "grupo_aves", "retrato_detalle",
+    "accion_proceso",
+]
+ContentPillar = Literal[
+    "animales_y_personalidad", "crianza_responsable", "vida_libre_y_naturaleza",
+    "trabajo_y_profesionalismo", "aprendizaje_y_educacion",
+    "razas_genetica_y_produccion", "productos_y_disponibilidad",
+    "comunidad_y_humor", "fe_gratitud_y_proposito",
+]
+SubjectTag = Literal[
+    "pollitos", "gallinas_caseras", "gallos", "brahma", "rhode_island_red",
+    "plymouth_rock_barred", "black_star", "pastoreo", "comportamiento_natural",
+    "alimentacion", "cuidado", "sanidad_con_contexto", "limpieza_e_infraestructura",
+    "incubacion_y_cria", "naturaleza_y_paisaje", "trabajo_diario",
+]
+CurationDecision = Literal["keep", "reserve", "needs_context", "private", "no_usable"]
+SelectionReason = Literal[
+    "mejor_encuadre", "sujeto_mas_claro", "cuenta_mejor_la_historia", "mejor_luz",
+    "mejor_gesto_o_comportamiento", "muestra_mejor_el_entorno",
+    "representa_mejor_el_objetivo", "aporta_otro_angulo", "mayor_valor_emocional",
+]
+
+
+class MediaCurationRequest(BaseModel):
+    editorial_intents: list[EditorialIntent] = Field(default_factory=list, max_length=5)
+    shot_types: list[ShotType] = Field(default_factory=list, max_length=5)
+    content_pillars: list[ContentPillar] = Field(default_factory=list, max_length=9)
+    subject_tags: list[SubjectTag] = Field(default_factory=list, max_length=16)
+    group_decision: CurationDecision = "keep"
+    campaign_slots: list[Literal[
+        "facebook_portada", "facebook_bienvenida", "facebook_pollitos_caseros",
+        "facebook_brahma", "facebook_black_star", "facebook_vida_natural",
+        "facebook_comunidad",
+    ]] = Field(default_factory=list, max_length=7)
+    primary_asset_id: str | None = Field(default=None, max_length=100)
+    primary_intent: EditorialIntent | None = None
+    primary_shot_type: ShotType | None = None
+    primary_reasons: list[SelectionReason] = Field(default_factory=list, max_length=9)
+    primary_campaign_slots: list[str] = Field(default_factory=list, max_length=7)
+    secondary_asset_id: str | None = Field(default=None, max_length=100)
+    secondary_intent: EditorialIntent | None = None
+    secondary_shot_type: ShotType | None = None
+    secondary_reasons: list[SelectionReason] = Field(default_factory=list, max_length=9)
+    secondary_campaign_slots: list[str] = Field(default_factory=list, max_length=7)
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class MediaGeminiRequest(BaseModel):
+    editorial_intents: list[EditorialIntent] = Field(default_factory=list, max_length=5)
+    shot_types: list[ShotType] = Field(default_factory=list, max_length=5)
+    content_pillars: list[ContentPillar] = Field(default_factory=list, max_length=9)
+    subject_tags: list[SubjectTag] = Field(default_factory=list, max_length=16)
+    campaign_slots: list[str] = Field(default_factory=list, max_length=7)
+    context: str | None = Field(default=None, max_length=2000)
+    confirm_external_processing: bool
+    confirm_privacy_review: bool
+    model: str = Field(default="gemini-3.5-flash", min_length=1, max_length=100)
+
+
 def validate_egg_collection_references(
     data: dict[str, object], structure_records: list[dict[str, object]]
 ) -> None:
@@ -322,6 +418,11 @@ def create_app(
     structure_path: Path = DEFAULT_STRUCTURE_PATH,
     incubation_path: Path = DEFAULT_INCUBATION_PATH,
     brooding_path: Path = DEFAULT_BROODING_PATH,
+    media_database_path: Path = DEFAULT_MEDIA_DATABASE_PATH,
+    media_root: Path = DEFAULT_MEDIA_ROOT,
+    media_derivatives_path: Path = DEFAULT_MEDIA_DERIVATIVES_PATH,
+    env_file: Path = DEFAULT_ENV_FILE,
+    gemini_image_analyzer: Callable[..., dict[str, object]] | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Granja Luna", version="0.1.0", docs_url="/api/docs", redoc_url=None)
     state_lock = Lock()
@@ -361,6 +462,279 @@ def create_app(
     @app.get("/api/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "mode": "local_lan"}
+
+    @app.get("/api/media/clusters")
+    def media_clusters(
+        limit: int = Query(default=30, ge=1, le=100),
+    ) -> list[dict[str, object]]:
+        with state_lock, connect_media_library(media_database_path) as connection:
+            return list_curation_clusters(connection, limit=limit)
+
+    @app.get("/api/media/clusters/{cluster_id}")
+    def media_cluster(cluster_id: str) -> dict[str, object]:
+        with state_lock, connect_media_library(media_database_path) as connection:
+            try:
+                return get_cluster(connection, cluster_id)
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail="Grupo de medios no encontrado.") from exc
+
+    @app.post("/api/media/clusters/{cluster_id}/technical-analysis")
+    def technical_media_analysis(cluster_id: str) -> dict[str, object]:
+        with state_lock, connect_media_library(media_database_path) as connection:
+            try:
+                cluster = analyze_cluster_locally(
+                    connection,
+                    cluster_id,
+                    media_root=media_root,
+                    derivative_root=media_derivatives_path,
+                )
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail="Grupo de medios no encontrado.") from exc
+            except (FileNotFoundError, MediaCurationError, RuntimeError) as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+            log_event(
+                "media_technical_analysis_completed",
+                related_entry_id=cluster_id,
+                details={"asset_count": len(cluster["members"])},
+            )
+            return cluster
+
+    @app.get("/api/media/assets/{asset_id}/thumbnail")
+    def media_thumbnail(asset_id: str) -> FileResponse:
+        with state_lock, connect_media_library(media_database_path) as connection:
+            try:
+                asset = next(
+                    member
+                    for cluster in list_curation_clusters(connection, limit=100)
+                    for member in cluster["members"]
+                    if member["id"] == asset_id
+                )
+                if not asset.get("thumbnail_path"):
+                    prepare_asset_derivatives(
+                        connection,
+                        asset_id,
+                        media_root=media_root,
+                        derivative_root=media_derivatives_path,
+                    )
+                    connection.commit()
+                    cluster_id = connection.execute(
+                        "SELECT cluster_id FROM media_cluster_members WHERE asset_id = ? LIMIT 1",
+                        (asset_id,),
+                    ).fetchone()[0]
+                    asset = next(
+                        item for item in get_cluster(connection, cluster_id)["members"]
+                        if item["id"] == asset_id
+                    )
+                path = derivative_path(media_derivatives_path, str(asset["thumbnail_path"]))
+            except (KeyError, StopIteration, TypeError) as exc:
+                raise HTTPException(status_code=404, detail="Medio no encontrado.") from exc
+            except (FileNotFoundError, MediaCurationError, RuntimeError) as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return FileResponse(
+            path,
+            media_type="image/jpeg",
+            headers={"Cache-Control": "private, max-age=3600"},
+        )
+
+    @app.get("/api/media/assets/{asset_id}/preview")
+    def media_preview(asset_id: str) -> FileResponse:
+        with state_lock, connect_media_library(media_database_path) as connection:
+            row = connection.execute(
+                """
+                SELECT x.analysis_path
+                FROM media_assets a
+                LEFT JOIN media_asset_analysis x ON x.asset_id = a.id
+                WHERE a.id = ? AND a.is_missing = 0
+                """,
+                (asset_id,),
+            ).fetchone()
+            if row is None:
+                raise HTTPException(status_code=404, detail="Medio no encontrado.")
+            if not row["analysis_path"]:
+                try:
+                    prepare_asset_derivatives(
+                        connection,
+                        asset_id,
+                        media_root=media_root,
+                        derivative_root=media_derivatives_path,
+                    )
+                    connection.commit()
+                except (KeyError, FileNotFoundError, MediaCurationError, RuntimeError) as exc:
+                    raise HTTPException(status_code=422, detail=str(exc)) from exc
+                row = connection.execute(
+                    "SELECT analysis_path FROM media_asset_analysis WHERE asset_id = ?",
+                    (asset_id,),
+                ).fetchone()
+            try:
+                path = derivative_path(media_derivatives_path, str(row["analysis_path"]))
+            except (TypeError, FileNotFoundError, MediaCurationError) as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return FileResponse(
+            path,
+            media_type="image/jpeg",
+            headers={"Cache-Control": "private, max-age=3600"},
+        )
+
+    @app.patch("/api/media/clusters/{cluster_id}/curation")
+    def curate_media_cluster(
+        cluster_id: str, payload: MediaCurationRequest
+    ) -> dict[str, object]:
+        with state_lock, connect_media_library(media_database_path) as connection:
+            try:
+                curation = save_cluster_curation(
+                    connection,
+                    cluster_id,
+                    editorial_intents=list(payload.editorial_intents),
+                    campaign_slots=list(payload.campaign_slots),
+                    shot_types=list(payload.shot_types),
+                    content_pillars=list(payload.content_pillars),
+                    subject_tags=list(payload.subject_tags),
+                    group_decision=payload.group_decision,
+                    primary_asset_id=payload.primary_asset_id,
+                    primary_intent=payload.primary_shot_type or payload.primary_intent,
+                    primary_reasons=list(payload.primary_reasons),
+                    primary_campaign_slots=list(
+                        payload.primary_campaign_slots or payload.campaign_slots
+                    ),
+                    secondary_asset_id=payload.secondary_asset_id,
+                    secondary_intent=payload.secondary_shot_type or payload.secondary_intent,
+                    secondary_reasons=list(payload.secondary_reasons),
+                    secondary_campaign_slots=list(payload.secondary_campaign_slots),
+                    note=payload.note,
+                )
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail="Grupo de medios no encontrado.") from exc
+            except MediaCurationError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+            log_event(
+                "media_curation_saved",
+                related_entry_id=cluster_id,
+                details={
+                    "decision": payload.group_decision,
+                    "context_tag_count": len(payload.content_pillars) + len(payload.subject_tags),
+                    "favorites": bool(payload.primary_asset_id) + bool(payload.secondary_asset_id),
+                },
+            )
+            return curation
+
+    @app.post("/api/media/clusters/{cluster_id}/gemini")
+    def analyze_media_with_gemini(
+        cluster_id: str, payload: MediaGeminiRequest
+    ) -> dict[str, object]:
+        if not payload.confirm_external_processing:
+            raise HTTPException(
+                status_code=422,
+                detail="Confirma explícitamente el envío de derivados sin EXIF a Gemini.",
+            )
+        if not payload.confirm_privacy_review:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Confirma que revisaste personas y datos sensibles antes del envío externo."
+                ),
+            )
+        if set(payload.editorial_intents) - EDITORIAL_INTENTS:
+            raise HTTPException(status_code=422, detail="Intención editorial no soportada.")
+        if set(payload.shot_types) - SHOT_TYPES:
+            raise HTTPException(status_code=422, detail="Tipo de toma no soportado.")
+        if set(payload.content_pillars) - CONTENT_PILLARS:
+            raise HTTPException(status_code=422, detail="Pilar de contenido no soportado.")
+        if set(payload.subject_tags) - SUBJECT_TAGS:
+            raise HTTPException(status_code=422, detail="Etiqueta de tema no soportada.")
+        if set(payload.campaign_slots) - FACEBOOK_LAUNCH_SLOTS:
+            raise HTTPException(status_code=422, detail="Uso de campaña no soportado.")
+        with state_lock, connect_media_library(media_database_path) as connection:
+            try:
+                existing = get_cluster(connection, cluster_id)
+                decision = (existing.get("curation") or {}).get("group_decision")
+                if decision in EXTERNAL_ANALYSIS_BLOCKED_DECISIONS:
+                    if decision == "private":
+                        raise MediaCurationError(
+                            "Este grupo es privado y no puede enviarse a un proveedor externo."
+                        )
+                    raise MediaCurationError(
+                        "Este grupo fue descartado y no se incluirá en el análisis externo."
+                    )
+                cluster = analyze_cluster_locally(
+                    connection,
+                    cluster_id,
+                    media_root=media_root,
+                    derivative_root=media_derivatives_path,
+                )
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail="Grupo de medios no encontrado.") from exc
+            except (FileNotFoundError, MediaCurationError, RuntimeError) as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+            image_members = [item for item in cluster["members"] if item["media_kind"] == "image"]
+            if not image_members:
+                raise HTTPException(status_code=422, detail="Este grupo no contiene fotos analizables.")
+            images = [
+                derivative_path(media_derivatives_path, str(item["analysis_path"]))
+                for item in image_members
+            ]
+            names = [str(item["relative_path"]) for item in image_members]
+
+        context_parts = []
+        if payload.shot_types:
+            context_parts.append("Tipos de toma que el usuario considera posibles: " + ", ".join(payload.shot_types))
+        elif payload.editorial_intents:
+            context_parts.append("Etiquetas heredadas de composición: " + ", ".join(payload.editorial_intents))
+        if payload.subject_tags:
+            context_parts.append("Temas confirmados o propuestos por el usuario: " + ", ".join(payload.subject_tags))
+        if payload.content_pillars:
+            context_parts.append("Pilares de marca relevantes: " + ", ".join(payload.content_pillars))
+        editorial_context = ". ".join(context_parts) or "El usuario todavía no agregó contexto estructurado."
+        editorial_context += "."
+        if payload.campaign_slots:
+            editorial_context += (
+                " Objetivos concretos del lanzamiento de Facebook: "
+                + ", ".join(payload.campaign_slots)
+                + "."
+            )
+        if payload.context and payload.context.strip():
+            editorial_context += f" Contexto adicional: {payload.context.strip()}"
+        try:
+            if gemini_image_analyzer is None:
+                from runtime.src.cli.media_gemini_benchmark import analyze_images
+
+                analyzer = analyze_images
+                api_key = get_local_secret("GEMINI_API_KEY", env_file)
+            else:
+                analyzer = gemini_image_analyzer
+                api_key = "provided-by-test-adapter"
+            result = analyzer(
+                api_key=api_key,
+                images=images,
+                prompt_type="burst",
+                candidate_names=names,
+                editorial_intent=editorial_context,
+                model=payload.model,
+                timeout=180,
+            )
+        except (FileNotFoundError, RuntimeError, TimeoutError) as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+        result["external_processing"] = {
+            "explicitly_confirmed": True,
+            "privacy_review_confirmed": True,
+            "sanitized_derivatives_only": True,
+            "originals_sent": False,
+        }
+        result["semantic_validation"] = validate_gemini_burst_result(result, names)
+        with state_lock, connect_media_library(media_database_path) as connection:
+            stored = save_gemini_analysis(
+                connection, cluster_id, model=payload.model, result=result
+            )
+            log_event(
+                "media_gemini_analysis_completed",
+                related_entry_id=cluster_id,
+                details={
+                    "model": payload.model,
+                    "asset_count": len(images),
+                    "semantic_validation_valid": result["semantic_validation"]["valid"],
+                },
+            )
+        return stored
 
     @app.post("/api/inbox", status_code=201)
     def capture(payload: CaptureRequest) -> dict[str, object]:

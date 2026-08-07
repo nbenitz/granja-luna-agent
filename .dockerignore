@@ -1,6 +1,14 @@
 .git
 .venv
+.env
+.env.*
+.agent-scratch
+node_modules
+mobile/node_modules
 **/__pycache__
-runtime/state/*.jsonl
+runtime/state/**
+!runtime/state/README.md
+!runtime/state/.gitkeep
+media/**
 test-results
 playwright-report
