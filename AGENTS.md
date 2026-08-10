@@ -22,6 +22,10 @@ Leer, como mínimo:
 5. `config/risk-levels.md`
 6. El archivo de dominio relacionado con la tarea.
 
+Si la tarea toca la arquitectura global o el trabajo actual de redes sociales, leer además
+`docs/session-handoff-2026-08-10.md`, que enlaza las fuentes canónicas y el siguiente punto de
+reanudación.
+
 ## Acciones permitidas sin confirmación especial
 
 - Crear borradores Markdown.

@@ -8,6 +8,10 @@ Construir una presencia pública auténtica para Granja Luna que ayude a consegu
 documentar el proyecto y formar una comunidad educativa, sin inventar resultados ni exponer datos
 privados.
 
+La función se denomina **Agente de Marca y Comunidad** y se presenta dentro de
+`Contenido` → `Estudio de contenido`. Continúa como dominio interno de Granja Luna, no como otro
+repositorio. Su modelo operativo y de crecimiento vive en `brand/social-media-operating-model.md`.
+
 ## Responsabilidades
 
 - Consultar los documentos curados de `brand/`.

@@ -29,8 +29,7 @@ Estado: `pending_review`
 
 ## Canales
 
-- Crear y configurar la página oficial de Facebook con el paquete preparado en
-  `brand/facebook-launch-ready.md`.
+- Mantener y medir la página oficial de Facebook `@GranjaLunaPy`, creada y activa.
 - Reservar nombre de usuario coherente en Instagram.
 - Definir WhatsApp Business, información pública y horario de atención.
 - Evaluar YouTube, TikTok y sitio web después de validar el flujo inicial.

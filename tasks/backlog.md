@@ -16,7 +16,7 @@ Formato sugerido:
   - Estado: confirmed_by_user
   - Riesgo: medio
   - Fuente: `docs/content-media-library-plan.md`
-  - Próximo paso: validar la curaduría general v2 y agregar luego carga múltiple desde el teléfono
+  - Próximo paso: la carga múltiple y el intake ya funcionan; crear una Biblioteca que incluya videos y fotos aisladas y estabilizar la reconciliación de grupos
 
 - [ ] 2026-08-01 — Calibrar el análisis asistido de fotos y videos
   - Dominio: Marca, marketing y comunidad
@@ -46,12 +46,12 @@ Formato sugerido:
   - Fuente: `brand/facebook-launch-ready.md`
   - Próximo paso: fotografiar los pollitos realmente disponibles y confirmar edad, cantidad, precio, entrega y contacto el día de publicación
 
-- [ ] 2026-08-07 — Preparar el segundo reel de Facebook
+- [x] 2026-08-07 — Preparar el segundo reel de Facebook
   - Dominio: Marca, marketing y comunidad
   - Estado: draft
   - Riesgo: medio
   - Fuente: `brand/reports/2026-08-07-facebook-reel-01-preliminary.md`
-  - Próximo paso: seleccionar un clip de pollitos con acción desde el primer fotograma y preparar una versión de 12 a 15 segundos para aprobación
+  - Próximo paso: documentado en `brand/reports/2026-08-08-facebook-reel-02.md`; continuar con la línea base del 10 de agosto
 
 - [ ] 2026-08-07 — Completar la configuración comercial de Facebook
   - Dominio: Marca, marketing y comunidad

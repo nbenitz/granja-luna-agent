@@ -1,0 +1,198 @@
+# Modelo operativo de redes sociales — Granja Luna
+
+Estado: `draft_validated_by_use`
+
+Fecha de corte: 2026-08-10
+
+## Nombre y ubicación
+
+Para mantener un vocabulario estable:
+
+- **Dominio:** Marca, marketing y comunidad.
+- **Función agéntica:** Agente de Marca y Comunidad.
+- **Interfaz:** `Contenido` → `Estudio de contenido`, dentro de la app de Granja Luna.
+- **Funciones internas:** Estratega, Creador/Community Manager, Guardián de marca y Analista.
+
+Estas funciones son etapas lógicas de un mismo flujo. No justifican todavía cuatro procesos, cuatro
+agentes autónomos ni otro repositorio. Granja Luna conserva los hechos, la identidad, los medios y
+las reglas; el Agente Personal sólo enruta o presenta el resultado.
+
+## Objetivo actual
+
+La primera etapa busca construir una comunidad y una reputación auténtica antes de convertir la
+página en un catálogo. Los objetivos conviven, pero no tienen el mismo peso:
+
+1. atraer a familias, amantes de animales, aves y naturaleza;
+2. mostrar cuidado cotidiano, trabajo real y aprendizaje;
+3. construir confianza en Granja Luna y en sus futuros productos;
+4. generar consultas y ventas verificables sin forzar una llamada comercial en cada pieza;
+5. aprender qué formatos, temas y públicos justifican automatización.
+
+## Flujo canónico
+
+```text
+idea o hecho real
+  → carga de fotos o videos con contexto
+  → inventario y análisis técnico local
+  → contexto humano y curaduría
+  → brief con objetivo, audiencia, canal y evidencia
+  → propuesta de guion, edición, copy y miniatura
+  → revisión de marca, privacidad, bienestar y datos comerciales
+  → aprobación explícita de la versión y del canal
+  → publicación o programación
+  → QA público de audio, texto, portada, visibilidad e historia
+  → métricas a 24 h, 72 h y 7 días
+  → hipótesis documentada para la siguiente pieza
+```
+
+El chat sirve para iniciar y explicar el trabajo. La fuente de verdad debe ser un caso trazable con
+medios, artefactos versionados, aprobación, URL y métricas. Una aprobación de texto no autoriza a
+publicar otra versión ni a responder desde la cuenta oficial.
+
+## Responsabilidades
+
+### Néstor
+
+- aporta el contexto que una imagen no puede revelar;
+- confirma hechos, parentescos, razas, disponibilidad y objetivos;
+- decide qué representa el espíritu de Granja Luna;
+- aprueba publicación, edición posterior, respuesta oficial y cualquier uso de personas;
+- corrige preferencias editoriales sin tener que justificar cada descarte técnico.
+
+### Agente de Marca y Comunidad
+
+- organiza la solicitud y detecta faltantes;
+- propone objetivo, gancho, relato, copy, miniatura y distribución;
+- compara variantes mediante criterios explícitos;
+- controla coherencia, evidencia, privacidad, bienestar percibido y riesgo comercial;
+- registra publicación, incidentes, métricas y aprendizajes;
+- nunca inventa stock, salud, parentesco, desempeño genético o condiciones de entrega.
+
+### Código y herramientas
+
+- validan formatos, versiones, estados, hashes y permisos;
+- generan derivados reproducibles y conservan auditoría;
+- ejecutan sólo la acción exacta que fue aprobada;
+- no delegan reglas críticas ni transiciones de estado a un LLM.
+
+## Ciclo editorial exploratorio
+
+Todavía no existe evidencia para fijar un calendario definitivo. Durante las próximas 6–10 piezas
+se trabajará con una cadencia orientativa de 2 o 3 reels por semana, historias vinculadas cuando
+aporten contexto y publicaciones estáticas sólo cuando el material lo justifique. La frecuencia se
+reduce si no hay una pieza suficientemente buena o si la operación de la granja no permite revisar.
+
+El equilibrio inicial debe rotar entre:
+
+- animales y personalidad;
+- crianza responsable y mejoras reales;
+- vida libre, pastoreo y naturaleza;
+- razas, reproductores y genética explicada sin promesas;
+- trabajo, infraestructura y profesionalismo;
+- humor y comportamiento natural;
+- educación y curiosidades respaldadas;
+- producto y disponibilidad confirmada.
+
+No se considera saturación mostrar pollitos varias veces si cada pieza cuenta algo distinto. Sí se
+considera repetición cuando se reutilizan el mismo plano, emoción, estructura y llamada a la acción
+sin una nueva observación.
+
+## Aprendizajes de las primeras piezas
+
+- El primer fotograma debe mostrar un sujeto o una acción reconocible.
+- El principal abandono ocurre alrededor del segundo 3; el gancho debe estar activo antes.
+- El reel de la mañana fría funcionó como descubrimiento y logró 11 compartidos.
+- El reel del cierre del día tuvo menos distribución, pero mejor retención y otros 10 compartidos.
+- Los primeros planos y el cuidado emocional equilibraron la audiencia: el reel nocturno terminó
+  cerca de 46 % mujeres y 54 % hombres, con Paraguay como país principal.
+- El audio ambiente aporta identidad, pero debe escucharse localmente y verificarse de nuevo en la
+  URL pública.
+- El editor `contenteditable` de Meta no es confiable con autocompletado; el copy se pega como texto
+  plano y se valida visualmente antes de publicar.
+- Reel e Historia requieren una zona segura común y una revisión real desde el teléfono.
+
+Las cifras completas y sus límites están en `brand/reports/`.
+
+## Proyección de crecimiento
+
+Con tres reels no es responsable prometer una cantidad mensual de seguidores o ventas. La primera
+proyección es un plan de aprendizaje con umbrales de decisión:
+
+### Próximas 4 semanas
+
+- alcanzar una muestra de 8–12 reels revisados;
+- probar 3–5 series editoriales distintas;
+- sostener descubrimiento mayoritariamente orgánico y medir cuánto público es local;
+- elevar el promedio de reproducción desde la línea base de 6 segundos;
+- mejorar la retención final de piezas de 15–22 segundos hacia 25 % cuando el material lo permita;
+- conservar compartidos como señal principal de afinidad;
+- introducir una primera llamada comercial suave con disponibilidad real;
+- atribuir consultas manualmente a una publicación concreta.
+
+### Semanas 5–8
+
+- conservar sólo las series que repitan buenos resultados;
+- probar Facebook e Instagram sin duplicar trabajo manual innecesario;
+- definir WhatsApp Business y un flujo de respuesta/aprobación;
+- comparar contenido de descubrimiento, confianza y conversión;
+- comenzar un catálogo mínimo leído desde Ventas, sin copiar stock dentro de Marketing.
+
+### Semanas 9–12
+
+- decidir una cadencia sostenible con datos propios;
+- automatizar captura de métricas y artefactos repetitivos;
+- conectar consulta → lead → borrador de venta con aprobación;
+- evaluar anuncios pagos únicamente después de identificar una pieza y una oferta orgánicamente
+  válidas.
+
+La previsión numérica de crecimiento se hará recién después de 8–12 reels, separando seguidores
+orgánicos, invitaciones, alcance local, consultas y ventas. Las visualizaciones por sí solas no son
+una proyección comercial.
+
+## Métricas y cortes
+
+- **5–15 minutos:** QA de entrega; no evaluación editorial.
+- **24 horas:** distribución inicial, audio, retención temprana e interacción.
+- **72 horas:** comparación principal entre piezas.
+- **7 días:** consolidado, audiencia, visitas, seguidores, consultas y aprendizaje.
+
+Conservar valores crudos y fecha de captura para: visualizaciones, espectadores, alcance cuando
+Meta lo muestre, 3 segundos, 15 segundos, promedio, curva de retención, reacciones, comentarios,
+compartidos, guardados, visitas, seguidores, países/regiones, mensajes e incidentes.
+
+## Próxima hipótesis editorial
+
+Después de dos piezas consecutivas de pollitos, conviene cambiar el sujeto visual a aves adultas
+sin abandonar la historia:
+
+> Los pollitos no son el comienzo de la historia.
+
+El material debe abrir con un gallo o una gallina completamente reconocible, mostrar conducta o
+personalidad y cerrar con el cuidado de los reproductores o del plantel. Sólo se afirmará que son
+progenitores de determinados pollitos si está confirmado. La alternativa humorística se elegirá si
+el video contiene una conducta suficientemente clara.
+
+## Automatización gradual
+
+1. **Actual:** Codex ayuda a analizar, editar, operar el navegador y documentar; Néstor aprueba.
+2. **Siguiente:** el Estudio conserva briefs, artefactos, revisiones, preflight y métricas.
+3. **Luego:** un router asigna tareas acotadas a modelos locales o remotos y registra costo,
+   proveedor, versión y resultado.
+4. **Después:** integración oficial con Meta para programar y leer métricas; publicar sigue
+   requiriendo aprobación.
+5. **Más adelante:** respuestas y campañas semiautomáticas vinculadas con clientes y ventas.
+
+No se automatizará la publicación mediante control frágil del navegador como mecanismo de
+producción. Las pruebas de navegador seguirán siendo una herramienta supervisada hasta contar con
+API oficial, idempotencia, autenticación y auditoría.
+
+## Decisiones abiertas
+
+- frecuencia definitiva y horario por tipo de pieza;
+- criterios de apertura de Instagram y WhatsApp Business;
+- identidad visual definitiva y eslogan;
+- tratamiento de menores y familiares en contenido;
+- catálogo, reserva, entrega y atención posventa;
+- métricas objetivo después de completar la primera muestra;
+- proveedor o modelo por tarea y presupuesto mensual;
+- alcance exacto de la futura automatización de Meta.
