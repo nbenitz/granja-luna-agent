@@ -187,6 +187,10 @@ class WebAppTests(unittest.TestCase):
         self.assertIn("grid-template-columns: repeat(5, minmax(0, 1fr));", styles.text)
         self.assertIn('data-target="media"', index.text)
         self.assertIn("Analizar con Gemini", script.text)
+        self.assertIn('id="media-upload-input"', index.text)
+        self.assertIn('id="content-request-form"', index.text)
+        self.assertIn("uploadMediaFile", script.text)
+        self.assertIn("Estudio de contenido", index.text)
 
 
 if __name__ == "__main__":

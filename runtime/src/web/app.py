@@ -34,6 +34,12 @@ DEFAULT_INCUBATION_PATH = Path(
 DEFAULT_BROODING_PATH = Path(
     os.getenv("GRANJA_BROODING_PATH", RUNTIME_DIR / "state" / "brooding-events.jsonl")
 )
+DEFAULT_CONTENT_REQUESTS_PATH = Path(
+    os.getenv(
+        "GRANJA_CONTENT_REQUESTS_PATH",
+        RUNTIME_DIR / "state" / "content-requests.jsonl",
+    )
+)
 DEFAULT_MEDIA_DATABASE_PATH = Path(
     os.getenv(
         "GRANJA_MEDIA_DATABASE_PATH",
@@ -147,6 +153,7 @@ from core.usage_log import (  # noqa: E402
     load_usage_events,
     summarize_usage,
 )
+from web.content_api import build_content_router  # noqa: E402
 
 ReviewStatus = Literal["pending", "validated", "needs_information", "needs_correction", "rejected"]
 CorrectionSection = Literal["purchase_general", "purchase_items", "classification"]
@@ -418,6 +425,7 @@ def create_app(
     structure_path: Path = DEFAULT_STRUCTURE_PATH,
     incubation_path: Path = DEFAULT_INCUBATION_PATH,
     brooding_path: Path = DEFAULT_BROODING_PATH,
+    content_requests_path: Path = DEFAULT_CONTENT_REQUESTS_PATH,
     media_database_path: Path = DEFAULT_MEDIA_DATABASE_PATH,
     media_root: Path = DEFAULT_MEDIA_ROOT,
     media_derivatives_path: Path = DEFAULT_MEDIA_DERIVATIVES_PATH,
@@ -453,6 +461,26 @@ def create_app(
     ) -> None:
         event = build_usage_event(event_type, related_entry_id=related_entry_id, details=details)
         append_usage_event(usage_path, event)
+
+    app.include_router(
+        build_content_router(
+            media_database_path=media_database_path,
+            media_root=media_root,
+            content_requests_path=content_requests_path,
+            state_lock=state_lock,
+            log_event=log_event,
+            max_files=int(os.getenv("GRANJA_MEDIA_UPLOAD_MAX_FILES", "100")),
+            max_file_bytes=int(
+                os.getenv("GRANJA_MEDIA_UPLOAD_MAX_FILE_BYTES", str(1024 * 1024 * 1024))
+            ),
+            max_batch_bytes=int(
+                os.getenv("GRANJA_MEDIA_UPLOAD_MAX_BATCH_BYTES", str(4 * 1024 * 1024 * 1024))
+            ),
+            reserve_bytes=int(
+                os.getenv("GRANJA_MEDIA_UPLOAD_RESERVE_BYTES", str(512 * 1024 * 1024))
+            ),
+        )
+    )
 
     @app.get("/", include_in_schema=False)
     def index() -> FileResponse:
@@ -503,13 +531,18 @@ def create_app(
     def media_thumbnail(asset_id: str) -> FileResponse:
         with state_lock, connect_media_library(media_database_path) as connection:
             try:
-                asset = next(
-                    member
-                    for cluster in list_curation_clusters(connection, limit=100)
-                    for member in cluster["members"]
-                    if member["id"] == asset_id
-                )
-                if not asset.get("thumbnail_path"):
+                row = connection.execute(
+                    """
+                    SELECT a.id, x.thumbnail_path
+                    FROM media_assets a
+                    LEFT JOIN media_asset_analysis x ON x.asset_id = a.id
+                    WHERE a.id = ? AND a.is_missing = 0
+                    """,
+                    (asset_id,),
+                ).fetchone()
+                if row is None:
+                    raise KeyError(asset_id)
+                if not row["thumbnail_path"]:
                     prepare_asset_derivatives(
                         connection,
                         asset_id,
@@ -517,16 +550,12 @@ def create_app(
                         derivative_root=media_derivatives_path,
                     )
                     connection.commit()
-                    cluster_id = connection.execute(
-                        "SELECT cluster_id FROM media_cluster_members WHERE asset_id = ? LIMIT 1",
+                    row = connection.execute(
+                        "SELECT thumbnail_path FROM media_asset_analysis WHERE asset_id = ?",
                         (asset_id,),
-                    ).fetchone()[0]
-                    asset = next(
-                        item for item in get_cluster(connection, cluster_id)["members"]
-                        if item["id"] == asset_id
-                    )
-                path = derivative_path(media_derivatives_path, str(asset["thumbnail_path"]))
-            except (KeyError, StopIteration, TypeError) as exc:
+                    ).fetchone()
+                path = derivative_path(media_derivatives_path, str(row["thumbnail_path"]))
+            except (KeyError, TypeError) as exc:
                 raise HTTPException(status_code=404, detail="Medio no encontrado.") from exc
             except (FileNotFoundError, MediaCurationError, RuntimeError) as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc

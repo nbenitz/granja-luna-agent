@@ -14,7 +14,7 @@ from typing import Any
 from uuid import uuid4
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 SUPPORTED_EXTENSIONS = {".jpeg", ".jpg", ".mp4"}
 IMAGE_EXTENSIONS = {".jpeg", ".jpg"}
 FILENAME_CAPTURE_PATTERN = re.compile(
@@ -150,6 +150,49 @@ def ensure_media_schema(connection: sqlite3.Connection) -> None:
 
         CREATE INDEX IF NOT EXISTS idx_media_gemini_cluster
             ON media_gemini_analyses(cluster_id, requested_at);
+
+        CREATE TABLE IF NOT EXISTS media_upload_batches (
+            id TEXT PRIMARY KEY,
+            status TEXT NOT NULL CHECK (
+                status IN ('pending', 'uploading', 'completed', 'completed_with_errors')
+            ),
+            context TEXT,
+            source TEXT NOT NULL,
+            expected_count INTEGER NOT NULL,
+            expected_bytes INTEGER NOT NULL,
+            uploaded_count INTEGER NOT NULL DEFAULT 0,
+            uploaded_bytes INTEGER NOT NULL DEFAULT 0,
+            duplicate_count INTEGER NOT NULL DEFAULT 0,
+            error_count INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            completed_at TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS media_upload_items (
+            id TEXT PRIMARY KEY,
+            batch_id TEXT NOT NULL REFERENCES media_upload_batches(id) ON DELETE CASCADE,
+            position INTEGER NOT NULL,
+            original_name TEXT NOT NULL,
+            stored_relative_path TEXT NOT NULL UNIQUE,
+            claimed_mime TEXT NOT NULL,
+            detected_mime TEXT,
+            expected_size INTEGER NOT NULL,
+            actual_size INTEGER,
+            sha256 TEXT,
+            status TEXT NOT NULL CHECK (
+                status IN ('pending', 'uploading', 'uploaded', 'duplicate', 'failed')
+            ),
+            error TEXT,
+            asset_id TEXT REFERENCES media_assets(id),
+            created_at TEXT NOT NULL,
+            uploaded_at TEXT,
+            UNIQUE(batch_id, position)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_media_upload_batches_created
+            ON media_upload_batches(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_media_upload_items_batch
+            ON media_upload_items(batch_id, position);
         """
     )
     curation_columns = {

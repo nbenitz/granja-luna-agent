@@ -113,6 +113,18 @@ La API de curaduría incluye:
 - `POST /api/media/clusters/{id}/gemini`: comparación externa únicamente con confirmación explícita;
 - `GET /api/media/assets/{id}/thumbnail`: derivado privado, nunca el original.
 
+La carga supervisada agrega:
+
+- `POST /api/media/upload-batches`: crea una tanda y valida nombres, cantidades, tamaños y espacio;
+- `PUT /api/media/upload-batches/{batch}/items/{item}`: sube un archivo crudo con progreso desde la
+  UI, valida firma e integridad y lo mueve atómicamente;
+- `POST /api/media/upload-batches/{batch}/complete`: inventaría únicamente los nuevos recursos;
+- `GET /api/media/upload-batches`: conserva recibos y contexto sin exponer los originales;
+- `POST /api/content/requests`: registra el intake trazable del Estudio de contenido.
+
+El corte incremental no reconstruye ráfagas: el algoritmo global actual todavía debe estabilizar
+la identidad de grupos para garantizar que una nueva foto no invalide curaduría humana existente.
+
 La pantalla mantiene visible la misión `Lanzamiento de Facebook` y la cobertura mínima definida en
 `campaigns/facebook-launch/media-selection.md`. El flujo técnico y sus límites se documentan en
 `docs/media-curation-mvp.md`.

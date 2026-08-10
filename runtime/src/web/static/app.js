@@ -17,6 +17,10 @@ const state = {
     current: null,
     draft: null,
     busy: false,
+    uploadQueue: [],
+    uploadBusy: false,
+    uploadBatches: [],
+    contentRequests: [],
   },
 };
 
@@ -236,13 +240,292 @@ async function switchView(target) {
   if (target === "inbox") await loadInbox();
   if (target === "activity") await loadActivity();
   if (target === "operations") await loadOperations();
-  if (target === "media") await loadMediaClusters();
+  if (target === "media") await loadContentWorkspace();
   window.scrollTo({ top: 0, behavior: "smooth" });
   refreshIcons();
 }
 
 function bindMediaControls() {
-  document.querySelector("#refresh-media").addEventListener("click", loadMediaClusters);
+  document.querySelector("#refresh-media").addEventListener("click", loadContentWorkspace);
+  document.querySelector("#media-upload-input").addEventListener("change", queueSelectedMedia);
+  document.querySelector("#media-upload-form").addEventListener("submit", submitMediaUpload);
+  document.querySelector("#content-request-form").addEventListener("submit", submitContentRequest);
+}
+
+async function loadContentWorkspace() {
+  await Promise.all([loadRecentUploads(), loadContentRequests(), loadMediaClusters()]);
+}
+
+function queueSelectedMedia(event) {
+  const selected = [...(event.target.files || [])];
+  const accepted = [];
+  const rejected = [];
+  selected.forEach((file) => {
+    const extensionOk = /\.(jpe?g|mp4)$/i.test(file.name);
+    if (!extensionOk) {
+      rejected.push(`${file.name}: tipo no admitido`);
+      return;
+    }
+    if (!file.size) {
+      rejected.push(`${file.name}: archivo vacío`);
+      return;
+    }
+    if (file.size > 1024 * 1024 * 1024) {
+      rejected.push(`${file.name}: supera 1 GB`);
+      return;
+    }
+    const key = `${file.name}|${file.size}|${file.lastModified}`;
+    if (!state.media.uploadQueue.some((item) => item.key === key)) {
+      accepted.push({ key, file, status: "pending", progress: 0, error: null });
+    }
+  });
+  state.media.uploadQueue.push(...accepted);
+  if (state.media.uploadQueue.length > 100) {
+    state.media.uploadQueue = state.media.uploadQueue.slice(0, 100);
+    rejected.push("La tanda admite hasta 100 archivos.");
+  }
+  event.target.value = "";
+  renderMediaUploadQueue();
+  if (rejected.length) showToast(rejected[0]);
+}
+
+function renderMediaUploadQueue() {
+  const container = document.querySelector("#media-upload-queue");
+  const submit = document.querySelector("#media-upload-submit");
+  const queue = state.media.uploadQueue;
+  submit.disabled = !queue.length || state.media.uploadBusy;
+  if (!queue.length) {
+    container.innerHTML = "";
+    return;
+  }
+  const total = queue.reduce((sum, item) => sum + item.file.size, 0);
+  container.innerHTML = `<div class="media-upload-summary">${queue.length} archivo${queue.length === 1 ? "" : "s"} · ${formatFileSize(total)}</div>${queue.map((item, index) => `
+    <div class="media-upload-row">
+      <i data-lucide="${/\.mp4$/i.test(item.file.name) ? "video" : "image"}"></i>
+      <div><strong>${escapeHtml(item.file.name)}</strong><small>${formatFileSize(item.file.size)} · ${mediaUploadStatusLabel(item.status)}${item.error ? ` · ${escapeHtml(item.error)}` : ""}</small></div>
+      <button class="media-upload-remove" type="button" data-remove-upload="${index}" ${state.media.uploadBusy ? "disabled" : ""} aria-label="Quitar ${escapeHtml(item.file.name)}"><i data-lucide="x"></i></button>
+    </div>`).join("")}`;
+  container.querySelectorAll("[data-remove-upload]").forEach((button) => button.addEventListener("click", () => {
+    state.media.uploadQueue.splice(Number(button.dataset.removeUpload), 1);
+    renderMediaUploadQueue();
+  }));
+  refreshIcons();
+}
+
+async function submitMediaUpload(event) {
+  event.preventDefault();
+  if (!state.media.uploadQueue.length || state.media.uploadBusy) return;
+  state.media.uploadBusy = true;
+  state.media.uploadQueue.forEach((item) => { item.status = "pending"; item.error = null; item.progress = 0; });
+  renderMediaUploadQueue();
+  updateMediaUploadProgress(0, "Preparando la tanda…", false);
+  const totalBytes = state.media.uploadQueue.reduce((sum, item) => sum + item.file.size, 0);
+  let completedBytes = 0;
+  let batch;
+  try {
+    batch = await api("/api/media/upload-batches", {
+      method: "POST",
+      body: JSON.stringify({
+        context: document.querySelector("#media-upload-context").value.trim() || null,
+        files: state.media.uploadQueue.map((item) => ({
+          name: item.file.name,
+          size: item.file.size,
+          type: item.file.type || "application/octet-stream",
+          last_modified: item.file.lastModified,
+        })),
+      }),
+    });
+    for (let index = 0; index < state.media.uploadQueue.length; index += 1) {
+      const queued = state.media.uploadQueue[index];
+      const serverItem = batch.items[index];
+      queued.status = "uploading";
+      renderMediaUploadQueue();
+      try {
+        const saved = await uploadMediaFile(batch.id, serverItem.id, queued.file, (loaded) => {
+          queued.progress = loaded;
+          const percent = totalBytes ? ((completedBytes + loaded) / totalBytes) * 100 : 0;
+          updateMediaUploadProgress(percent, `Subiendo ${index + 1} de ${state.media.uploadQueue.length}…`, false);
+        });
+        queued.status = saved.status;
+      } catch (error) {
+        queued.status = "failed";
+        queued.error = error.message;
+      }
+      completedBytes += queued.file.size;
+      renderMediaUploadQueue();
+    }
+    updateMediaUploadProgress(100, "Inventariando el material…", false);
+    const completed = await api(`/api/media/upload-batches/${encodeURIComponent(batch.id)}/complete`, { method: "POST" });
+    renderMediaUploadReceipt(completed);
+    const hasErrors = completed.error_count > 0;
+    if (!hasErrors) {
+      state.media.uploadQueue = [];
+      document.querySelector("#media-upload-context").value = "";
+    }
+    showToast(hasErrors ? "La tanda terminó con archivos para revisar" : "Material guardado en la biblioteca");
+    await Promise.all([loadRecentUploads(), loadMediaClusters()]);
+  } catch (error) {
+    renderMediaUploadReceipt(null, error.message);
+    showToast(error.message || "No se pudo completar la carga");
+  } finally {
+    state.media.uploadBusy = false;
+    updateMediaUploadProgress(100, "Carga finalizada", true);
+    renderMediaUploadQueue();
+  }
+}
+
+function uploadMediaFile(batchId, itemId, file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("PUT", `/api/media/upload-batches/${encodeURIComponent(batchId)}/items/${encodeURIComponent(itemId)}`);
+    request.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    request.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) onProgress(Math.min(event.loaded, file.size));
+    });
+    request.addEventListener("load", () => {
+      let payload = null;
+      try { payload = JSON.parse(request.responseText); } catch (_error) { payload = null; }
+      if (request.status >= 200 && request.status < 300) {
+        resolve(payload);
+        return;
+      }
+      const detail = payload?.detail;
+      reject(new Error(typeof detail === "string" ? detail : detail?.message || `Error ${request.status}`));
+    });
+    request.addEventListener("error", () => reject(new Error("Se perdió la conexión durante la carga.")));
+    request.addEventListener("abort", () => reject(new Error("Carga cancelada.")));
+    request.send(file);
+  });
+}
+
+function updateMediaUploadProgress(value, label, hide) {
+  const panel = document.querySelector("#media-upload-progress");
+  panel.hidden = hide;
+  document.querySelector("#media-upload-progress-label").textContent = label;
+  document.querySelector("#media-upload-progress-value").textContent = `${Math.round(value)}%`;
+  document.querySelector("#media-upload-progress-bar").value = Math.max(0, Math.min(100, value));
+}
+
+function renderMediaUploadReceipt(batch, error = null) {
+  const container = document.querySelector("#media-upload-receipt");
+  if (error) {
+    container.innerHTML = `<article class="media-upload-receipt"><h3>No se completó la tanda</h3><p>${escapeHtml(error)}</p></article>`;
+    return;
+  }
+  if (!batch) {
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = `<article class="media-upload-receipt is-success"><h3>Material recibido</h3><p>${batch.uploaded_count} guardado${batch.uploaded_count === 1 ? "" : "s"}, ${batch.duplicate_count} duplicado${batch.duplicate_count === 1 ? "" : "s"} y ${batch.error_count} con error. El lote quedó identificado como ${escapeHtml(batch.id)}.</p></article>`;
+}
+
+async function loadRecentUploads() {
+  const container = document.querySelector("#media-recent-uploads");
+  try {
+    state.media.uploadBatches = await api("/api/media/upload-batches?limit=6");
+    renderRecentUploads();
+    updateContentMediaOptions();
+  } catch (error) {
+    container.innerHTML = `<p class="media-help">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function renderRecentUploads() {
+  const container = document.querySelector("#media-recent-uploads");
+  if (!state.media.uploadBatches.length) {
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = `<p class="eyebrow">Subidas recientes</p>${state.media.uploadBatches.map((batch) => `
+    <article class="recent-upload-card">
+      <header><h3>${batch.expected_count} archivo${batch.expected_count === 1 ? "" : "s"} · ${formatFileSize(batch.expected_bytes)}</h3><span class="content-status-pill">${mediaUploadStatusLabel(batch.status)}</span></header>
+      ${batch.context ? `<p>${escapeHtml(batch.context)}</p>` : ""}
+      <ul class="recent-upload-files">${batch.items.slice(0, 5).map((item) => `<li>${escapeHtml(item.original_name)} · ${mediaUploadStatusLabel(item.status)}</li>`).join("")}${batch.items.length > 5 ? `<li>y ${batch.items.length - 5} más…</li>` : ""}</ul>
+      <p>${formatDate(batch.created_at, true)} · ${escapeHtml(batch.id)}</p>
+    </article>`).join("")}`;
+}
+
+function updateContentMediaOptions() {
+  const select = document.querySelector("#content-request-media");
+  const current = select.value;
+  const completed = state.media.uploadBatches.filter((batch) => ["completed", "completed_with_errors"].includes(batch.status));
+  select.innerHTML = '<option value="">Sin tanda vinculada</option>' + completed.map((batch) => `<option value="${escapeHtml(batch.id)}">${formatDate(batch.created_at, true)} · ${batch.expected_count} archivo${batch.expected_count === 1 ? "" : "s"}</option>`).join("");
+  if (completed.some((batch) => batch.id === current)) select.value = current;
+}
+
+async function submitContentRequest(event) {
+  event.preventDefault();
+  const submit = document.querySelector("#content-request-submit");
+  const instruction = document.querySelector("#content-request-instruction").value.trim();
+  if (!instruction) return;
+  submit.disabled = true;
+  const mediaBatchId = document.querySelector("#content-request-media").value;
+  try {
+    const request = await api("/api/content/requests", {
+      method: "POST",
+      body: JSON.stringify({
+        instruction,
+        content_type: document.querySelector("#content-request-type").value,
+        channels: [document.querySelector("#content-request-channel").value].filter(Boolean),
+        media_batch_ids: [mediaBatchId].filter(Boolean),
+        objective: document.querySelector("#content-request-objective").value.trim() || null,
+        audience: document.querySelector("#content-request-audience").value.trim() || null,
+        source_stage: document.querySelector("#content-request-stage").value,
+        call_to_action: document.querySelector("#content-request-cta").value.trim() || null,
+      }),
+    });
+    document.querySelector("#content-request-result").innerHTML = renderContentRequestCard(request, true);
+    document.querySelector("#content-request-instruction").value = "";
+    state.media.contentRequests.unshift(request);
+    renderContentRequests();
+    showToast("Solicitud guardada en el Estudio");
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    submit.disabled = false;
+    refreshIcons();
+  }
+}
+
+async function loadContentRequests() {
+  try {
+    state.media.contentRequests = await api("/api/content/requests?limit=8");
+    renderContentRequests();
+  } catch (error) {
+    document.querySelector("#content-request-list").innerHTML = `<p class="media-help">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function renderContentRequests() {
+  const container = document.querySelector("#content-request-list");
+  if (!state.media.contentRequests.length) {
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = `<p class="eyebrow">Solicitudes recientes</p>${state.media.contentRequests.map((item) => renderContentRequestCard(item)).join("")}`;
+}
+
+function renderContentRequestCard(item, highlighted = false) {
+  const questions = item.questions_to_resolve || [];
+  return `<article class="content-request-card ${highlighted ? "is-highlighted" : ""}">
+    <header><h3>${escapeHtml(item.instruction)}</h3><span class="content-status-pill">Idea registrada</span></header>
+    <div class="content-request-meta"><span>${escapeHtml(item.content_type)}</span>${(item.channels || []).map((channel) => `<span>${escapeHtml(channel)}</span>`).join("")}<span>${item.media_batch_ids?.length || 0} tanda vinculada</span></div>
+    <p>El agente todavía no generó una pieza: esta solicitud será la referencia trazable para brief, borrador y revisión.</p>
+    ${questions.length ? `<ul class="content-question-list">${questions.slice(0, 5).map((question) => `<li>${escapeHtml(question.question)}</li>`).join("")}</ul>` : ""}
+    <p>${formatDate(item.created_at, true)} · ${escapeHtml(item.id)}</p>
+  </article>`;
+}
+
+function mediaUploadStatusLabel(status) {
+  return ({ pending: "Pendiente", uploading: "Subiendo", uploaded: "Guardado", duplicate: "Duplicado", failed: "Error", completed: "Completada", completed_with_errors: "Con errores" })[status] || status;
+}
+
+function formatFileSize(bytes) {
+  const value = Number(bytes || 0);
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 ** 2) return `${(value / 1024).toFixed(1)} KB`;
+  if (value < 1024 ** 3) return `${(value / 1024 ** 2).toFixed(1)} MB`;
+  return `${(value / 1024 ** 3).toFixed(2)} GB`;
 }
 
 async function loadMediaClusters() {
@@ -255,7 +538,7 @@ async function loadMediaClusters() {
     state.media.clusters = await api("/api/media/clusters?limit=100");
     if (!state.media.clusters.length) {
       list.innerHTML = "";
-      workspace.innerHTML = emptyMarkup("images", "No hay ráfagas inventariadas. Ejecutá primero el escaneo de media/inbox.");
+      workspace.innerHTML = emptyMarkup("images", "Todavía no hay ráfagas para curar. Las cargas nuevas aparecen en el recibo de Subir material.");
       refreshIcons();
       return;
     }

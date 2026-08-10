@@ -7,7 +7,9 @@ Fecha de decision: 2026-08-01
 Implementacion: inventario SQLite y rafagas temporales disponibles desde 2026-08-01; desde
 2026-08-02 tambien existen API y pantalla movil de curaduria, miniaturas y vistas ampliadas sin
 EXIF, hash perceptual, contexto editorial, selección principal/secundaria o ninguna, motivos rápidos
-y análisis explícito con Gemini. La carga movil, video y la agrupación por distancia perceptual
+y análisis explícito con Gemini. Desde 2026-08-08 existe carga múltiple JPG/MP4 por tandas con
+contexto, progreso, validación, deduplicación, inventario incremental y recibos persistentes. La
+curaduría completa de video, la Biblioteca de activos y la agrupación por distancia perceptual
 siguen pendientes.
 
 ## Objetivo
