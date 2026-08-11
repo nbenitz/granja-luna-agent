@@ -20,8 +20,9 @@ Este directorio contiene el contexto que puede consultar el dominio de Marca, Ma
 12. `open-decisions.md`: decisiones pendientes.
 13. `social-media-operating-model.md`: flujo real, roles, métricas, proyección y automatización
     gradual de redes sociales.
-14. `sources-and-provenance.md`: reglas de procedencia y curaduría.
-15. `reports/`: instantáneas de rendimiento y aprendizajes de publicaciones reales.
+14. `video-editing-guidance.md`: criterios vivos aprendidos de la revisión humana de montajes.
+15. `sources-and-provenance.md`: reglas de procedencia y curaduría.
+16. `reports/`: instantáneas de rendimiento y aprendizajes de publicaciones reales.
 
 ## Precedencia
 

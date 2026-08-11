@@ -49,6 +49,42 @@ El chat sirve para iniciar y explicar el trabajo. La fuente de verdad debe ser u
 medios, artefactos versionados, aprobación, URL y métricas. Una aprobación de texto no autoriza a
 publicar otra versión ni a responder desde la cuenta oficial.
 
+### Puente de carga supervisada hacia Meta
+
+Chrome DevTools no puede seleccionar archivos desde todas las carpetas internas del repositorio,
+aunque Codex sí pueda leerlas. Para evitar repetir intentos fallidos, toda carga supervisada a Meta
+desde el navegador sigue este procedimiento:
+
+1. conservar el MP4 aprobado como fuente maestra en `runtime/state/content-studio/social-drafts/`
+   y su copia local en `media/selected/social-drafts/`;
+2. calcular el SHA-256 de la fuente maestra;
+3. copiar exactamente ese archivo a `/tmp/` con el mismo nombre y verificar que ambos hashes sean
+   idénticos;
+4. entregar a Chrome DevTools únicamente la ruta temporal `/tmp/<archivo>.mp4`;
+5. esperar carga al 100 %, procesamiento, dimensiones y control de derechos de Meta;
+6. eliminar sólo la copia temporal después de confirmar la carga; nunca borrar la fuente maestra;
+7. no improvisar un servidor HTTP sin autenticación para exponer originales como alternativa.
+
+La copia temporal es un transporte local, no una nueva versión editorial. La aprobación continúa
+atada al hash, versión, canal, copy, miniatura y horario exactos.
+
+### Descripción en el editor de Meta
+
+Para que la descripción de un reel quede guardada como copy de la publicación y no como texto
+superpuesto en el video:
+
+1. abrir el reel programado desde `Contenido > Programadas > Acciones > Editar publicación`;
+2. enfocar el campo **Texto** y pegar o escribir allí el copy como entrada real de usuario;
+3. no usar **Editar video** para introducir la descripción: esa ruta modifica el contenido visual,
+   puede superponer texto y vuelve a involucrar el procesamiento del video;
+4. esperar hasta que la descripción aparezca también en la vista previa del feed;
+5. programar/guardar sin cambiar el archivo ni el horario aprobados;
+6. volver a `Contenido > Programadas` y confirmar que la fila muestra el copy completo; si dice
+   `Tu reel`, la descripción no persistió y el preflight no está completo.
+
+No basta con que una automatización asigne un valor al control: Meta puede mostrarlo temporalmente
+sin registrarlo. La comprobación posterior a la reapertura es obligatoria.
+
 ## Responsabilidades
 
 ### Néstor
@@ -99,6 +135,10 @@ sin una nueva observación.
 
 ## Aprendizajes de las primeras piezas
 
+Los criterios detallados para montaje audiovisual se mantienen en
+[`video-editing-guidance.md`](video-editing-guidance.md). Son heurísticas vivas: orientan la primera
+versión y hacen explícitos los compromisos, pero no sustituyen la revisión de cada historia.
+
 - El primer fotograma debe mostrar un sujeto o una acción reconocible.
 - El principal abandono ocurre alrededor del segundo 3; el gancho debe estar activo antes.
 - El reel de la mañana fría funcionó como descubrimiento y logró 11 compartidos.
@@ -107,9 +147,17 @@ sin una nueva observación.
   cerca de 46 % mujeres y 54 % hombres, con Paraguay como país principal.
 - El audio ambiente aporta identidad, pero debe escucharse localmente y verificarse de nuevo en la
   URL pública.
-- El editor `contenteditable` de Meta no es confiable con autocompletado; el copy se pega como texto
-  plano y se valida visualmente antes de publicar.
+- El editor `contenteditable` de Meta no es confiable con autocompletado ni asignación directa del
+  control; el copy se pega o escribe como entrada real, se espera su aparición en la vista previa y
+  se comprueba de nuevo en `Contenido > Programadas` después de guardar.
 - Reel e Historia requieren una zona segura común y una revisión real desde el teléfono.
+- La edición debe permitir tres acciones sin hacerlas competir: entender la historia, leer el texto
+  y observar a los animales. En general, la escena se estabiliza, el texto se lee y luego queda una
+  respiración visual antes del siguiente corte.
+- La limpieza del fondo no debe eliminar una acción emocional claramente superior; las
+  imperfecciones menores se evalúan contra la función narrativa, la privacidad y el protagonismo.
+- No se ralentizan ni repiten tomas sólo para alcanzar una duración. Un reel más corto es válido si
+  cuenta mejor la historia.
 
 Las cifras completas y sus límites están en `brand/reports/`.
 

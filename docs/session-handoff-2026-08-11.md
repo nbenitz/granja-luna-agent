@@ -150,3 +150,16 @@ privacidad, declaraciones de datos, ficha de tienda, acceso para revisión y pru
 6. Validar cargas remotas grandes antes de abandonar la LAN para material pesado.
 7. Para Marca y Comunidad, continuar desde el handoff anterior y no publicar sin preflight y
    aprobación humana.
+
+## Continuidad del flujo de publicación en Meta
+
+Chrome DevTools rechaza rutas internas del repositorio al seleccionar archivos. No volver a probar
+la carga directamente desde `runtime/state/` o `media/selected/`: verificar el hash de la versión
+aprobada, copiarla a `/tmp/`, cargar esa copia y retirarla después de que Meta confirme el 100 %.
+La fuente canónica permanece en el repositorio. El procedimiento completo está en
+[`../brand/social-media-operating-model.md`](../brand/social-media-operating-model.md).
+
+La descripción debe pegarse en el campo **Texto** de `Editar publicación`, nunca mediante
+**Editar video**. Antes de guardar debe verse en la vista previa y, después, debe reaparecer como
+título/copy en `Contenido > Programadas`; ver el valor sólo dentro del control no demuestra que
+Meta lo haya persistido.
