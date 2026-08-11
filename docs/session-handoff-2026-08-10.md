@@ -1,6 +1,9 @@
 # Continuidad de trabajo — 10 de agosto de 2026
 
-Estado: `current_handoff`
+Estado: `superseded_by_session-handoff-2026-08-11`
+
+La continuidad vigente está en [`session-handoff-2026-08-11.md`](session-handoff-2026-08-11.md).
+Este documento se conserva como referencia detallada del trabajo de Marca y Comunidad.
 
 Este documento permite retomar el proyecto en una sesión nueva sin reconstruir la conversación
 completa. Los documentos de dominio siguen siendo la fuente detallada; este archivo orienta.

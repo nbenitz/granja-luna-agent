@@ -15,7 +15,7 @@ class MobileAppTests(unittest.TestCase):
 
         self.assertEqual(expo["name"], "Granja Luna")
         self.assertEqual(expo["scheme"], "granja-luna")
-        self.assertEqual(expo["version"], "0.2.0")
+        self.assertEqual(expo["version"], "0.3.1")
         self.assertEqual(expo["android"]["package"], "com.nestorbenitez.granjaluna")
         self.assertEqual(
             set(expo["android"]["permissions"]),

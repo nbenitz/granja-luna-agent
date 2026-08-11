@@ -1,8 +1,10 @@
 # Web local
 
-Estado: `mvp_local`
+Estado: `mvp_remote_pwa`
 
-Aplicacion responsive para usar Granja Luna desde un celular conectado a la misma red que la computadora.
+Aplicación responsive disponible por LAN y, detrás de Cloudflare Access, en
+`https://granja.nodaluna.com`. Incluye manifiesto y service worker para instalarla como PWA desde
+Chrome y conservar el flujo de identidad del navegador.
 
 ## Desarrollo
 

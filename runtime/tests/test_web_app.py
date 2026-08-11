@@ -173,9 +173,17 @@ class WebAppTests(unittest.TestCase):
         self.assertEqual(index.status_code, 200)
         self.assertIn("Granja Luna", index.text)
         self.assertIn("viewport-fit=cover", index.text)
+        self.assertIn('rel="manifest"', index.text)
+        self.assertIn('crossorigin="use-credentials"', index.text)
         self.assertIn("default-src 'self'", index.headers["content-security-policy"])
         self.assertEqual(index.headers["permissions-policy"], "microphone=(self)")
         self.assertEqual(index.headers["cache-control"], "no-store")
+        manifest = self.client.get("/static/manifest.webmanifest")
+        self.assertEqual(manifest.status_code, 200)
+        self.assertEqual(manifest.json()["display"], "standalone")
+        worker = self.client.get("/service-worker.js")
+        self.assertEqual(worker.status_code, 200)
+        self.assertEqual(worker.headers["service-worker-allowed"], "/")
         self.assertEqual(self.client.get("/api/inbox/no-existe").status_code, 404)
 
     def test_mobile_navigation_has_one_column_per_destination(self) -> None:

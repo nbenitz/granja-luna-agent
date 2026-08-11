@@ -487,6 +487,14 @@ def create_app(
         log_event("app_opened")
         return FileResponse(STATIC_DIR / "index.html")
 
+    @app.get("/service-worker.js", include_in_schema=False)
+    def service_worker() -> FileResponse:
+        return FileResponse(
+            STATIC_DIR / "service-worker.js",
+            media_type="application/javascript",
+            headers={"Service-Worker-Allowed": "/"},
+        )
+
     @app.get("/api/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "mode": "local_lan"}

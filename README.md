@@ -127,7 +127,7 @@ El proceso, las responsabilidades humanas y la evidencia técnica se explican en
 - [`docs/codex-case-study.md`](docs/codex-case-study.md): ejemplo de colaboración con Codex.
 - [`brand/social-media-operating-model.md`](brand/social-media-operating-model.md): flujo de Marca,
   Comunidad y redes sociales aprendido con publicaciones reales.
-- [`docs/session-handoff-2026-08-10.md`](docs/session-handoff-2026-08-10.md): estado y punto exacto
+- [`docs/session-handoff-2026-08-11.md`](docs/session-handoff-2026-08-11.md): estado y punto exacto
   para continuar el trabajo entre sesiones.
 
 ## Estados de información

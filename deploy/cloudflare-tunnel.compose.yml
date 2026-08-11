@@ -1,0 +1,12 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Define CLOUDFLARE_TUNNEL_TOKEN in the local env file}
+    depends_on:
+      granja:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    restart: unless-stopped

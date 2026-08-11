@@ -26,7 +26,8 @@ import {
 } from "react-native-webview";
 
 const DEFAULT_SERVER_URL =
-  process.env.EXPO_PUBLIC_GRANJA_LUNA_URL ?? "http://192.168.18.15:8011";
+  process.env.EXPO_PUBLIC_GRANJA_LUNA_URL ?? "https://granja.nodaluna.com";
+const LEGACY_DEFAULT_SERVER_URL = "http://192.168.18.15:8011";
 const SERVER_URL_KEY = "granja-luna.server-url";
 const VOICE_PROTOCOL = "agent.voice.v1";
 const LINK_PROTOCOL = "agent.link.v1";
@@ -34,6 +35,11 @@ const DEFAULT_SPEECH_LANGUAGE = "es-PY";
 const ALLOWED_APP_PROTOCOLS = new Set(["personal-agent:", "granja-luna:"]);
 const NATIVE_SHELL_SCRIPT =
   'document.documentElement.dataset.nativeShell="true";true;';
+const CLOUDFLARE_ACCESS_HOSTS = new Set([
+  "dash.cloudflare.com",
+  "oidc.iam.cfapi.net",
+  "oauth-callbacks.cloudflareaccess.com",
+]);
 
 type VoiceEventType = "speech.state" | "speech.result" | "speech.error";
 
@@ -106,6 +112,22 @@ function originOf(value: string): string | null {
       : null;
   } catch {
     return null;
+  }
+}
+
+function isCloudflareAccessNavigation(requestedUrl: URL, serverUrl: string): boolean {
+  try {
+    const server = new URL(serverUrl);
+    if (server.protocol !== "https:" || !server.hostname.endsWith("nodaluna.com")) {
+      return false;
+    }
+    return (
+      requestedUrl.protocol === "https:" &&
+      (requestedUrl.hostname.endsWith(".cloudflareaccess.com") ||
+        CLOUDFLARE_ACCESS_HOSTS.has(requestedUrl.hostname))
+    );
+  } catch {
+    return false;
   }
 }
 
@@ -297,11 +319,18 @@ export default function App() {
 
   useEffect(() => {
     AsyncStorage.getItem(SERVER_URL_KEY)
-      .then((savedUrl) => {
+      .then(async (savedUrl) => {
         if (savedUrl) {
           const normalized = normalizeServerUrl(savedUrl);
-          setServerUrl(normalized);
-          setDraftUrl(normalized);
+          const selectedUrl =
+            normalized === LEGACY_DEFAULT_SERVER_URL
+              ? DEFAULT_SERVER_URL
+              : normalized;
+          if (selectedUrl !== normalized) {
+            await AsyncStorage.setItem(SERVER_URL_KEY, selectedUrl);
+          }
+          setServerUrl(selectedUrl);
+          setDraftUrl(selectedUrl);
         }
       })
       .finally(() => setReady(true));
@@ -602,7 +631,12 @@ export default function App() {
       }
 
       if (["http:", "https:"].includes(requestedUrl.protocol)) {
-        if (requestedUrl.origin === originOf(serverUrl)) return true;
+        if (
+          requestedUrl.origin === originOf(serverUrl) ||
+          isCloudflareAccessNavigation(requestedUrl, serverUrl)
+        ) {
+          return true;
+        }
         const url = safeWebUrl(request.url);
         if (url) {
           void openExternalLink({
@@ -705,6 +739,8 @@ export default function App() {
           injectedJavaScript={NATIVE_SHELL_SCRIPT}
           javaScriptEnabled
           domStorageEnabled
+          thirdPartyCookiesEnabled
+          sharedCookiesEnabled
           cacheEnabled={false}
           pullToRefreshEnabled
           setSupportMultipleWindows={false}
@@ -714,6 +750,9 @@ export default function App() {
           mixedContentMode="never"
           originWhitelist={[
             ...(allowedWebOrigin ? [allowedWebOrigin] : []),
+            "https://*.cloudflareaccess.com",
+            "https://dash.cloudflare.com",
+            "https://oidc.iam.cfapi.net",
             "personal-agent://*",
             "granja-luna://*",
           ]}
@@ -748,7 +787,7 @@ export default function App() {
             </View>
             <Text style={styles.errorTitle}>No pudimos conectar</Text>
             <Text style={styles.errorCopy}>
-              Verifica que Granja Luna esté encendida y que el teléfono esté en la misma red.
+              Verifica tu conexión a Internet y que el servidor de Granja Luna esté encendido.
             </Text>
             <Text selectable style={styles.serverAddress}>{serverUrl}</Text>
             <Pressable onPress={reload} style={styles.primaryButton}>
@@ -845,7 +884,7 @@ export default function App() {
               autoCorrect={false}
               keyboardType="url"
               onChangeText={setDraftUrl}
-              placeholder="http://192.168.1.10:8011"
+              placeholder="https://granja.nodaluna.com"
               placeholderTextColor="#89958d"
               selectTextOnFocus
               style={styles.input}

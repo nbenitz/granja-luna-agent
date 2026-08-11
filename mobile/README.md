@@ -1,4 +1,4 @@
-# Granja Luna Mobile 0.2.0
+# Granja Luna Mobile 0.3.1
 
 Cliente Android de Granja Luna construido con Expo/React Native. Es un shell nativo deliberadamente
 pequeño: carga la PWA del runtime en un `WebView`, permite cambiar la URL del servidor y registra el
@@ -26,8 +26,18 @@ cd android
 ./gradlew app:assembleRelease
 ```
 
-La URL predeterminada es `http://192.168.18.15:8011`. Puede cambiarse desde el botón de configuración
-o al compilar con `EXPO_PUBLIC_GRANJA_LUNA_URL=http://IP_DEL_SERVIDOR:8011`.
+La URL predeterminada es `https://granja.nodaluna.com`, protegida por Cloudflare Access. El WebView
+permite solamente el origen configurado y los dominios HTTPS oficiales que participan en ese flujo
+de autenticación. Una instalación anterior que todavía conserve la dirección local predeterminada
+se migra automáticamente; las URLs personalizadas se respetan.
 
-El artefacto local para pruebas queda en `mobile/artifacts/Granja-Luna-0.2.0.apk`. El build actual
+Con el perímetro actual, Google completa el login en Chrome y la cookie no vuelve automáticamente al
+WebView. Por eso la PWA instalada desde Chrome es el cliente remoto recomendado por ahora; este APK
+continúa siendo útil para desarrollo, enlaces profundos y futuras capacidades nativas. El diseño
+objetivo para una publicación formal es OAuth/OIDC con Authorization Code y PKCE.
+
+Puede cambiarse desde el botón de configuración o al compilar con
+`EXPO_PUBLIC_GRANJA_LUNA_URL=http://IP_DEL_SERVIDOR:8011` para una prueba LAN.
+
+El artefacto local para pruebas queda en `mobile/artifacts/Granja-Luna-0.3.1.apk`. El build actual
 usa el certificado Android Debug; para publicar se debe configurar una clave de release privada.
