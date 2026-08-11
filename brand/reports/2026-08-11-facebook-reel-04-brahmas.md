@@ -341,6 +341,11 @@ Estado: `approved_and_verified_in_meta`
 - Control de derechos previo a la programación: sin problemas informados por Meta.
 - Descripción: aprobada por Néstor y verificada después de guardar; aparece completa en
   `Contenido > Programadas`.
+- Distribución complementaria: Néstor autorizó una ejecución única para compartir este reel en la
+  historia de Granja Luna a las 06:45, sin música, texto, stickers ni una nueva carga del MP4. La
+  ejecución debe comprobar identidad, audio, ausencia de duplicado, zona segura y resultado.
+- Temporizador activado: `granja-luna-story-20260811.timer`, con disparo confirmado por `systemd`
+  para `2026-08-11 06:45:00 -03`.
 
 Incidente resuelto: la primera programación quedó sin descripción. Asignar el valor al control de
 Meta hizo que se viera en el formulario, pero no persistió. Se corrigió enfocando el campo **Texto**,
