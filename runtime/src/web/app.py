@@ -3,11 +3,13 @@ from __future__ import annotations
 import os
 import sys
 from copy import deepcopy
+from ipaddress import ip_address
 from pathlib import Path
 from threading import Lock
 from typing import Callable, Literal
+from urllib.parse import urlsplit
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -56,6 +58,10 @@ DEFAULT_MEDIA_DERIVATIVES_PATH = Path(
     )
 )
 DEFAULT_ENV_FILE = RUNTIME_DIR.parent / ".env"
+DEFAULT_LAN_APP_URL = os.getenv("GRANJA_LUNA_LAN_URL", "http://192.168.18.15:8011")
+DEFAULT_REMOTE_APP_URL = os.getenv(
+    "GRANJA_LUNA_REMOTE_URL", "https://granja.nodaluna.com"
+)
 
 sys.path.insert(0, str(SRC_DIR))
 
@@ -430,6 +436,8 @@ def create_app(
     media_root: Path = DEFAULT_MEDIA_ROOT,
     media_derivatives_path: Path = DEFAULT_MEDIA_DERIVATIVES_PATH,
     env_file: Path = DEFAULT_ENV_FILE,
+    lan_app_url: str = DEFAULT_LAN_APP_URL,
+    remote_app_url: str = DEFAULT_REMOTE_APP_URL,
     gemini_image_analyzer: Callable[..., dict[str, object]] | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Granja Luna", version="0.1.0", docs_url="/api/docs", redoc_url=None)
@@ -498,6 +506,25 @@ def create_app(
     @app.get("/api/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "mode": "local_lan"}
+
+    @app.get("/api/connection-options")
+    def connection_options(request: Request) -> dict[str, str]:
+        hostname = (request.url.hostname or "").lower()
+        remote_hostname = (urlsplit(remote_app_url).hostname or "").lower()
+        mode = "internet" if hostname == remote_hostname else "custom"
+        if hostname in {"localhost", "host.docker.internal"}:
+            mode = "lan"
+        else:
+            try:
+                if ip_address(hostname).is_private:
+                    mode = "lan"
+            except ValueError:
+                pass
+        return {
+            "mode": mode,
+            "lan_url": lan_app_url.rstrip("/"),
+            "internet_url": remote_app_url.rstrip("/"),
+        }
 
     @app.get("/api/media/clusters")
     def media_clusters(

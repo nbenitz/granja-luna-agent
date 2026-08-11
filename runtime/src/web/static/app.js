@@ -5,6 +5,11 @@ const state = {
   reviewEvents: [],
   editingSection: null,
   toastTimer: null,
+  connection: {
+    mode: "unknown",
+    lanUrl: null,
+    internetUrl: null,
+  },
   voice: {
     active: false,
     recognition: null,
@@ -20,6 +25,7 @@ const state = {
     uploadQueue: [],
     uploadBusy: false,
     uploadBatches: [],
+    resumeBatch: null,
     contentRequests: [],
   },
 };
@@ -212,6 +218,10 @@ document.addEventListener("DOMContentLoaded", () => {
   bindSheetControls();
   checkConnection();
   refreshInboxSummary();
+  const requestedView = new URLSearchParams(window.location.search).get("view");
+  if (["capture", "inbox", "activity", "operations", "media"].includes(requestedView) && requestedView !== "capture") {
+    void switchView(requestedView);
+  }
 });
 
 function refreshIcons() {
@@ -258,6 +268,64 @@ function bindMediaControls() {
   document.querySelector("#media-upload-input").addEventListener("change", queueSelectedMedia);
   document.querySelector("#media-upload-form").addEventListener("submit", submitMediaUpload);
   document.querySelector("#content-request-form").addEventListener("submit", submitContentRequest);
+  document.querySelectorAll("[data-connection-mode]").forEach((button) => {
+    button.addEventListener("click", () => switchConnection(button.dataset.connectionMode));
+  });
+}
+
+function renderConnectionSelector() {
+  const { mode } = state.connection;
+  const description = document.querySelector("#upload-connection-description");
+  const note = document.querySelector("#upload-connection-note");
+  if (!description || !note) return;
+  if (mode === "lan") {
+    description.textContent = "Directo a esta PC por Wi-Fi";
+    note.textContent = "Ruta recomendada para fotos y videos grandes. No consume el túnel de Cloudflare.";
+  } else if (mode === "internet") {
+    description.textContent = "Vía Cloudflare Tunnel";
+    note.textContent = "Funciona fuera de casa, pero las cargas grandes recorren Internet y pueden tardar más.";
+  } else {
+    description.textContent = "Ruta personalizada";
+    note.textContent = "Podés elegir LAN para cargas locales o Internet para acceso remoto.";
+  }
+  if (document.documentElement.dataset.nativeShell === "true") {
+    note.textContent += " En el APK, el cambio permanente también puede hacerse desde el botón de configuración.";
+  }
+  document.querySelectorAll("[data-connection-mode]").forEach((button) => {
+    const selected = button.dataset.connectionMode === mode;
+    const configured = button.dataset.connectionMode === "lan" ? state.connection.lanUrl : state.connection.internetUrl;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+    button.disabled = state.media.uploadBusy || !configured;
+  });
+}
+
+function switchConnection(mode) {
+  if (!["lan", "internet"].includes(mode)) return;
+  if (state.media.uploadBusy) {
+    showToast("Esperá a que termine la carga actual antes de cambiar de conexión");
+    return;
+  }
+  if (mode === state.connection.mode) {
+    showToast(mode === "lan" ? "Ya estás usando la LAN" : "Ya estás usando Internet");
+    return;
+  }
+  const configured = mode === "lan" ? state.connection.lanUrl : state.connection.internetUrl;
+  let target;
+  try {
+    target = new URL(configured);
+    if (!["http:", "https:"].includes(target.protocol) || target.username || target.password) throw new Error();
+  } catch (_error) {
+    showToast("La conexión seleccionada no está configurada");
+    return;
+  }
+  const hasUnsavedSelection = state.media.uploadQueue.length > 0 || document.querySelector("#media-upload-context").value.trim();
+  if (hasUnsavedSelection && !window.confirm("Al cambiar de conexión tendrás que volver a elegir los archivos y copiar el contexto. ¿Continuar?")) return;
+  target.pathname = "/";
+  target.search = "";
+  target.searchParams.set("view", "media");
+  target.hash = "";
+  window.location.assign(target.toString());
 }
 
 async function loadContentWorkspace() {
@@ -268,6 +336,9 @@ function queueSelectedMedia(event) {
   const selected = [...(event.target.files || [])];
   const accepted = [];
   const rejected = [];
+  let alreadySaved = 0;
+  const resumeBatch = state.media.resumeBatch;
+  const usedResumeItems = new Set(state.media.uploadQueue.map((item) => item.serverItemId).filter(Boolean));
   selected.forEach((file) => {
     const extensionOk = /\.(jpe?g|mp4)$/i.test(file.name);
     if (!extensionOk) {
@@ -283,9 +354,32 @@ function queueSelectedMedia(event) {
       return;
     }
     const key = `${file.name}|${file.size}|${file.lastModified}`;
-    if (!state.media.uploadQueue.some((item) => item.key === key)) {
-      accepted.push({ key, file, status: "pending", progress: 0, error: null });
+    if (state.media.uploadQueue.some((item) => item.key === key)) return;
+    if (resumeBatch) {
+      const serverItem = resumeBatch.items.find((item) => (
+        !["uploaded", "duplicate"].includes(item.status)
+        && !usedResumeItems.has(item.id)
+        && item.original_name === file.name
+        && Number(item.expected_size) === file.size
+      ));
+      if (serverItem) {
+        usedResumeItems.add(serverItem.id);
+        accepted.push({ key, file, serverItemId: serverItem.id, status: "pending", progress: 0, error: null });
+        return;
+      }
+      const savedItem = resumeBatch.items.find((item) => (
+        ["uploaded", "duplicate"].includes(item.status)
+        && item.original_name === file.name
+        && Number(item.expected_size) === file.size
+      ));
+      if (savedItem) {
+        alreadySaved += 1;
+        return;
+      }
+      rejected.push(`${file.name}: no pertenece a esta tanda pendiente`);
+      return;
     }
+    accepted.push({ key, file, status: "pending", progress: 0, error: null });
   });
   state.media.uploadQueue.push(...accepted);
   if (state.media.uploadQueue.length > 100) {
@@ -294,7 +388,13 @@ function queueSelectedMedia(event) {
   }
   event.target.value = "";
   renderMediaUploadQueue();
-  if (rejected.length) showToast(rejected[0]);
+  if (accepted.length && resumeBatch) {
+    showToast(`${accepted.length} pendiente${accepted.length === 1 ? "" : "s"} preparado${accepted.length === 1 ? "" : "s"}${alreadySaved ? `; ${alreadySaved} ya guardado${alreadySaved === 1 ? "" : "s"}` : ""}`);
+  } else if (rejected.length) {
+    showToast(rejected[0]);
+  } else if (alreadySaved) {
+    showToast("Esos archivos ya están guardados en la tanda");
+  }
 }
 
 function renderMediaUploadQueue() {
@@ -302,12 +402,23 @@ function renderMediaUploadQueue() {
   const submit = document.querySelector("#media-upload-submit");
   const queue = state.media.uploadQueue;
   submit.disabled = !queue.length || state.media.uploadBusy;
+  submit.innerHTML = state.media.resumeBatch
+    ? '<i data-lucide="rotate-ccw"></i> Reanudar archivos pendientes'
+    : '<i data-lucide="upload"></i> Guardar en la biblioteca';
   if (!queue.length) {
-    container.innerHTML = "";
+    container.innerHTML = state.media.resumeBatch ? `<div class="media-resume-banner">
+      <div><strong>Reanudando la tanda interrumpida</strong><small>Elegí nuevamente los videos. Los ya guardados se omitirán.</small></div>
+      <button type="button" data-cancel-resume>Cancelar</button>
+    </div>` : "";
+    container.querySelector("[data-cancel-resume]")?.addEventListener("click", cancelResumeMediaUpload);
+    refreshIcons();
     return;
   }
   const total = queue.reduce((sum, item) => sum + item.file.size, 0);
-  container.innerHTML = `<div class="media-upload-summary">${queue.length} archivo${queue.length === 1 ? "" : "s"} · ${formatFileSize(total)}</div>${queue.map((item, index) => `
+  container.innerHTML = `${state.media.resumeBatch ? `<div class="media-resume-banner">
+    <div><strong>Reanudando ${escapeHtml(state.media.resumeBatch.id)}</strong><small>Solo se enviarán los archivos pendientes que coincidan.</small></div>
+    <button type="button" data-cancel-resume>Cancelar</button>
+  </div>` : ""}<div class="media-upload-summary">${queue.length} archivo${queue.length === 1 ? "" : "s"} · ${formatFileSize(total)}</div>${queue.map((item, index) => `
     <div class="media-upload-row">
       <i data-lucide="${/\.mp4$/i.test(item.file.name) ? "video" : "image"}"></i>
       <div><strong>${escapeHtml(item.file.name)}</strong><small>${formatFileSize(item.file.size)} · ${mediaUploadStatusLabel(item.status)}${item.error ? ` · ${escapeHtml(item.error)}` : ""}</small></div>
@@ -317,13 +428,43 @@ function renderMediaUploadQueue() {
     state.media.uploadQueue.splice(Number(button.dataset.removeUpload), 1);
     renderMediaUploadQueue();
   }));
+  container.querySelector("[data-cancel-resume]")?.addEventListener("click", cancelResumeMediaUpload);
   refreshIcons();
+}
+
+function startResumeMediaUpload(batchId) {
+  if (state.media.uploadBusy) return;
+  const batch = state.media.uploadBatches.find((item) => item.id === batchId);
+  if (!batch) {
+    showToast("No encontramos la tanda para reanudar");
+    return;
+  }
+  if (state.media.uploadQueue.length && !window.confirm("La selección actual se reemplazará por la tanda interrumpida. ¿Continuar?")) return;
+  state.media.resumeBatch = batch;
+  state.media.uploadQueue = [];
+  const context = document.querySelector("#media-upload-context");
+  context.value = batch.context || "";
+  context.disabled = true;
+  renderMediaUploadQueue();
+  document.querySelector("#media-upload-input").click();
+}
+
+function cancelResumeMediaUpload() {
+  if (state.media.uploadBusy) return;
+  state.media.resumeBatch = null;
+  state.media.uploadQueue = [];
+  const context = document.querySelector("#media-upload-context");
+  context.disabled = false;
+  context.value = "";
+  renderMediaUploadQueue();
+  showToast("Reanudación cancelada; la tanda sigue conservada");
 }
 
 async function submitMediaUpload(event) {
   event.preventDefault();
   if (!state.media.uploadQueue.length || state.media.uploadBusy) return;
   state.media.uploadBusy = true;
+  renderConnectionSelector();
   state.media.uploadQueue.forEach((item) => { item.status = "pending"; item.error = null; item.progress = 0; });
   renderMediaUploadQueue();
   updateMediaUploadProgress(0, "Preparando la tanda…", false);
@@ -331,21 +472,28 @@ async function submitMediaUpload(event) {
   let completedBytes = 0;
   let batch;
   try {
-    batch = await api("/api/media/upload-batches", {
-      method: "POST",
-      body: JSON.stringify({
-        context: document.querySelector("#media-upload-context").value.trim() || null,
-        files: state.media.uploadQueue.map((item) => ({
-          name: item.file.name,
-          size: item.file.size,
-          type: item.file.type || "application/octet-stream",
-          last_modified: item.file.lastModified,
-        })),
-      }),
-    });
+    if (state.media.resumeBatch) {
+      batch = await api(`/api/media/upload-batches/${encodeURIComponent(state.media.resumeBatch.id)}`);
+    } else {
+      batch = await api("/api/media/upload-batches", {
+        method: "POST",
+        body: JSON.stringify({
+          context: document.querySelector("#media-upload-context").value.trim() || null,
+          files: state.media.uploadQueue.map((item) => ({
+            name: item.file.name,
+            size: item.file.size,
+            type: item.file.type || "application/octet-stream",
+            last_modified: item.file.lastModified,
+          })),
+        }),
+      });
+    }
     for (let index = 0; index < state.media.uploadQueue.length; index += 1) {
       const queued = state.media.uploadQueue[index];
-      const serverItem = batch.items[index];
+      const serverItem = queued.serverItemId
+        ? batch.items.find((item) => item.id === queued.serverItemId)
+        : batch.items[index];
+      if (!serverItem) throw new Error(`No se encontró ${queued.file.name} dentro de la tanda.`);
       queued.status = "uploading";
       renderMediaUploadQueue();
       try {
@@ -362,6 +510,16 @@ async function submitMediaUpload(event) {
       completedBytes += queued.file.size;
       renderMediaUploadQueue();
     }
+    const refreshed = await api(`/api/media/upload-batches/${encodeURIComponent(batch.id)}`);
+    const unfinished = refreshed.items.filter((item) => !["uploaded", "duplicate", "failed"].includes(item.status));
+    if (unfinished.length) {
+      state.media.resumeBatch = refreshed;
+      state.media.uploadQueue = [];
+      renderMediaUploadReceipt(null, `${unfinished.length} archivo${unfinished.length === 1 ? " queda" : "s quedan"} pendiente${unfinished.length === 1 ? "" : "s"}. Podés reanudar nuevamente esta misma tanda.`);
+      showToast("La tanda sigue disponible para reanudar");
+      await loadRecentUploads();
+      return;
+    }
     updateMediaUploadProgress(100, "Inventariando el material…", false);
     const completed = await api(`/api/media/upload-batches/${encodeURIComponent(batch.id)}/complete`, { method: "POST" });
     renderMediaUploadReceipt(completed);
@@ -369,6 +527,8 @@ async function submitMediaUpload(event) {
     if (!hasErrors) {
       state.media.uploadQueue = [];
       document.querySelector("#media-upload-context").value = "";
+      document.querySelector("#media-upload-context").disabled = false;
+      state.media.resumeBatch = null;
     }
     showToast(hasErrors ? "La tanda terminó con archivos para revisar" : "Material guardado en la biblioteca");
     await Promise.all([loadRecentUploads(), loadMediaClusters()]);
@@ -377,6 +537,7 @@ async function submitMediaUpload(event) {
     showToast(error.message || "No se pudo completar la carga");
   } finally {
     state.media.uploadBusy = false;
+    renderConnectionSelector();
     updateMediaUploadProgress(100, "Carga finalizada", true);
     renderMediaUploadQueue();
   }
@@ -444,13 +605,24 @@ function renderRecentUploads() {
     container.innerHTML = "";
     return;
   }
-  container.innerHTML = `<p class="eyebrow">Subidas recientes</p>${state.media.uploadBatches.map((batch) => `
+  container.innerHTML = `<p class="eyebrow">Subidas recientes</p>${state.media.uploadBatches.map((batch) => {
+    const retriable = batch.items.filter((item) => (
+      ["pending", "uploading"].includes(item.status)
+      || (item.status === "failed" && !String(item.error || "").startsWith("[cancelled_by_user]"))
+    ));
+    const alreadySaved = batch.items.filter((item) => ["uploaded", "duplicate"].includes(item.status)).length;
+    return `
     <article class="recent-upload-card">
       <header><h3>${batch.expected_count} archivo${batch.expected_count === 1 ? "" : "s"} · ${formatFileSize(batch.expected_bytes)}</h3><span class="content-status-pill">${mediaUploadStatusLabel(batch.status)}</span></header>
       ${batch.context ? `<p>${escapeHtml(batch.context)}</p>` : ""}
-      <ul class="recent-upload-files">${batch.items.slice(0, 5).map((item) => `<li>${escapeHtml(item.original_name)} · ${mediaUploadStatusLabel(item.status)}</li>`).join("")}${batch.items.length > 5 ? `<li>y ${batch.items.length - 5} más…</li>` : ""}</ul>
+      <ul class="recent-upload-files">${batch.items.slice(0, 5).map((item) => `<li>${escapeHtml(item.original_name)} · ${mediaUploadItemStatusLabel(item)}</li>`).join("")}${batch.items.length > 5 ? `<li>y ${batch.items.length - 5} más…</li>` : ""}</ul>
+      ${retriable.length && ["pending", "uploading", "completed_with_errors"].includes(batch.status) ? `<div class="recent-upload-actions"><span>${alreadySaved} guardado${alreadySaved === 1 ? "" : "s"} · ${retriable.length} por reanudar</span><button type="button" data-resume-upload="${escapeHtml(batch.id)}">Reanudar</button></div>` : ""}
       <p>${formatDate(batch.created_at, true)} · ${escapeHtml(batch.id)}</p>
-    </article>`).join("")}`;
+    </article>`;
+  }).join("")}`;
+  container.querySelectorAll("[data-resume-upload]").forEach((button) => {
+    button.addEventListener("click", () => startResumeMediaUpload(button.dataset.resumeUpload));
+  });
 }
 
 function updateContentMediaOptions() {
@@ -515,17 +687,23 @@ function renderContentRequests() {
 
 function renderContentRequestCard(item, highlighted = false) {
   const questions = item.questions_to_resolve || [];
+  const superseded = item.status === "superseded";
   return `<article class="content-request-card ${highlighted ? "is-highlighted" : ""}">
-    <header><h3>${escapeHtml(item.instruction)}</h3><span class="content-status-pill">Idea registrada</span></header>
+    <header><h3>${escapeHtml(item.instruction)}</h3><span class="content-status-pill">${superseded ? "Reemplazada" : "Idea registrada"}</span></header>
     <div class="content-request-meta"><span>${escapeHtml(item.content_type)}</span>${(item.channels || []).map((channel) => `<span>${escapeHtml(channel)}</span>`).join("")}<span>${item.media_batch_ids?.length || 0} tanda vinculada</span></div>
-    <p>El agente todavía no generó una pieza: esta solicitud será la referencia trazable para brief, borrador y revisión.</p>
-    ${questions.length ? `<ul class="content-question-list">${questions.slice(0, 5).map((question) => `<li>${escapeHtml(question.question)}</li>`).join("")}</ul>` : ""}
+    <p>${superseded ? `Esta solicitud fue reemplazada por ${escapeHtml(item.superseded_by)} y se conserva como antecedente.` : "El agente todavía no generó una pieza: esta solicitud será la referencia trazable para brief, borrador y revisión."}</p>
+    ${!superseded && questions.length ? `<ul class="content-question-list">${questions.slice(0, 5).map((question) => `<li>${escapeHtml(question.question)}</li>`).join("")}</ul>` : ""}
     <p>${formatDate(item.created_at, true)} · ${escapeHtml(item.id)}</p>
   </article>`;
 }
 
 function mediaUploadStatusLabel(status) {
   return ({ pending: "Pendiente", uploading: "Subiendo", uploaded: "Guardado", duplicate: "Duplicado", failed: "Error", completed: "Completada", completed_with_errors: "Con errores" })[status] || status;
+}
+
+function mediaUploadItemStatusLabel(item) {
+  if (item.status === "failed" && String(item.error || "").startsWith("[cancelled_by_user]")) return "Omitido";
+  return mediaUploadStatusLabel(item.status);
 }
 
 function formatFileSize(bytes) {
@@ -2190,12 +2368,20 @@ async function checkConnection() {
   const status = document.querySelector("#connection-status");
   const label = document.querySelector("#connection-label");
   try {
-    await api("/api/health");
+    const [, options] = await Promise.all([api("/api/health"), api("/api/connection-options")]);
+    state.connection = {
+      mode: options.mode,
+      lanUrl: options.lan_url,
+      internetUrl: options.internet_url,
+    };
     status.className = "connection is-online";
-    label.textContent = "En red";
+    label.textContent = options.mode === "lan" ? "LAN" : options.mode === "internet" ? "Internet" : "En red";
+    status.title = options.mode === "lan" ? "Conexión directa por red local" : options.mode === "internet" ? "Conexión remota mediante Cloudflare" : "Conexión activa";
+    renderConnectionSelector();
   } catch (_error) {
     status.className = "connection is-offline";
     label.textContent = "Sin conexión";
+    renderConnectionSelector();
   }
 }
 

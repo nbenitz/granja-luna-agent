@@ -969,6 +969,92 @@ textarea::placeholder {
   background: rgba(14, 21, 29, 0.9);
 }
 
+.upload-connection-card {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(19, 34, 31, 0.94), rgba(14, 21, 29, 0.94));
+}
+
+.upload-connection-copy {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.upload-connection-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.upload-connection-icon svg {
+  width: 19px;
+}
+
+.upload-connection-copy strong,
+.upload-connection-copy div > span {
+  display: block;
+}
+
+.upload-connection-copy strong {
+  font-size: 0.86rem;
+}
+
+.upload-connection-copy div > span,
+.upload-connection-card > p {
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.upload-connection-copy div > span {
+  margin-top: 3px;
+}
+
+.connection-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(6, 10, 14, 0.55);
+}
+
+.connection-switch button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.connection-switch button.is-selected {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.connection-switch button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.upload-connection-card > p {
+  margin: 0;
+}
+
 .content-tool-panel > summary {
   min-height: 68px;
   display: flex;
@@ -1124,6 +1210,46 @@ textarea::placeholder {
   font-size: 0.72rem;
 }
 
+.media-resume-banner,
+.recent-upload-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid rgba(196, 139, 54, 0.35);
+  border-radius: 10px;
+  background: rgba(196, 139, 54, 0.08);
+}
+
+.media-resume-banner strong,
+.media-resume-banner small {
+  display: block;
+}
+
+.media-resume-banner strong {
+  font-size: 0.72rem;
+}
+
+.media-resume-banner small,
+.recent-upload-actions span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.64rem;
+}
+
+.media-resume-banner button,
+.recent-upload-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--primary);
+  font-weight: 800;
+}
+
 .media-upload-row {
   min-width: 0;
   display: grid;
@@ -1265,6 +1391,10 @@ textarea::placeholder {
   align-items: flex-start;
   justify-content: space-between;
   gap: 9px;
+}
+
+.recent-upload-actions {
+  margin-top: 9px;
 }
 
 .content-status-pill {

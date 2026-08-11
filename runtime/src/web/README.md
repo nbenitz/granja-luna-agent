@@ -19,6 +19,22 @@ Desde la computadora: `http://127.0.0.1:8000`.
 
 Desde el celular: `http://IP_LOCAL_DE_LA_COMPUTADORA:8000`.
 
+La pestaña `Contenido` muestra la ruta activa y permite cambiar entre `LAN rápida` e `Internet`.
+El cambio navega toda la aplicación al otro origen porque un sitio HTTPS no puede subir archivos a
+un endpoint HTTP privado mediante una petición mixta. Una carga activa nunca se interrumpe; si hay
+archivos todavía sin subir, el navegador avisa que deberán seleccionarse de nuevo.
+
+Una tanda interrumpida aparece en `Subidas recientes` con la acción `Reanudar`. El usuario puede
+elegir nuevamente todos los archivos originales: la interfaz compara nombre y tamaño, omite los ya
+guardados y transmite sólo los pendientes dentro de la misma tanda.
+
+Las URLs pueden ajustarse al iniciar el runtime:
+
+```env
+GRANJA_LUNA_LAN_URL=http://192.168.18.15:8011
+GRANJA_LUNA_REMOTE_URL=https://granja.nodaluna.com
+```
+
 ## QA de navegador
 
 ```bash

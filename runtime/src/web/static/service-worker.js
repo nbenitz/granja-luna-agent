@@ -1,4 +1,4 @@
-const CACHE_NAME = "granja-luna-shell-v1";
+const CACHE_NAME = "granja-luna-shell-v2";
 const SHELL_ASSETS = [
   "/static/styles.css",
   "/static/app.js",

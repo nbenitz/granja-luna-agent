@@ -90,7 +90,8 @@ def create_content_request(path: Path, payload: dict[str, Any]) -> dict[str, Any
 def load_content_requests(path: Path, *, limit: int = 20) -> list[dict[str, Any]]:
     if not path.exists():
         return []
-    requests: list[dict[str, Any]] = []
+    requests_by_id: dict[str, dict[str, Any]] = {}
+    request_order: list[str] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
@@ -99,7 +100,11 @@ def load_content_requests(path: Path, *, limit: int = 20) -> list[dict[str, Any]
         except json.JSONDecodeError:
             continue
         if isinstance(item, dict) and item.get("id"):
-            requests.append(item)
+            request_id = str(item["id"])
+            if request_id not in requests_by_id:
+                request_order.append(request_id)
+            requests_by_id[request_id] = item
+    requests = [requests_by_id[request_id] for request_id in request_order]
     return list(reversed(requests[-max(1, min(limit, 100)) :]))
 
 
@@ -108,6 +113,35 @@ def find_content_request(path: Path, request_id: str) -> dict[str, Any]:
         if item.get("id") == request_id:
             return item
     raise KeyError(request_id)
+
+
+def supersede_content_request(
+    path: Path,
+    *,
+    request_id: str,
+    replacement_id: str,
+    reason: str,
+) -> dict[str, Any]:
+    if request_id == replacement_id:
+        raise ContentRequestError("La solicitud no puede reemplazarse a sí misma.")
+    current = find_content_request(path, request_id)
+    replacement = find_content_request(path, replacement_id)
+    if current.get("status") == "superseded":
+        if current.get("superseded_by") == replacement_id:
+            return current
+        raise ContentRequestError("La solicitud ya fue reemplazada por otra.")
+    updated_at = datetime.now().astimezone().isoformat(timespec="seconds")
+    revision = {
+        **current,
+        "updated_at": updated_at,
+        "status": "superseded",
+        "superseded_by": replacement["id"],
+        "supersession_reason": str(reason or "").strip()[:1000],
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as file:
+        file.write(json.dumps(revision, ensure_ascii=False, sort_keys=True) + "\n")
+    return revision
 
 
 def _next_questions(

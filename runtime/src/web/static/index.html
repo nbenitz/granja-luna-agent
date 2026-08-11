@@ -236,6 +236,21 @@
             </button>
           </div>
 
+          <section class="upload-connection-card" id="upload-connection-card" aria-labelledby="upload-connection-title">
+            <div class="upload-connection-copy">
+              <span class="upload-connection-icon" aria-hidden="true"><i data-lucide="route"></i></span>
+              <div>
+                <strong id="upload-connection-title">Conexión para cargas</strong>
+                <span id="upload-connection-description">Detectando la ruta actual…</span>
+              </div>
+            </div>
+            <div class="connection-switch" aria-label="Elegir conexión">
+              <button id="connection-use-lan" type="button" data-connection-mode="lan" aria-pressed="false">LAN rápida</button>
+              <button id="connection-use-internet" type="button" data-connection-mode="internet" aria-pressed="false">Internet</button>
+            </div>
+            <p id="upload-connection-note">Usá LAN para videos cuando el teléfono esté conectado al Wi-Fi de esta PC.</p>
+          </section>
+
           <details class="content-tool-panel media-upload-panel" open>
             <summary>
               <span><i data-lucide="upload-cloud"></i><span><strong>Subir material</strong><small>Fotos y videos desde este dispositivo</small></span></span>

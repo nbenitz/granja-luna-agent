@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from core.content_requests import supersede_content_request  # noqa: E402
 from core.media_library import connect_media_library  # noqa: E402
 from web.app import create_app  # noqa: E402
 
@@ -251,6 +252,31 @@ class ContentUploadTests(unittest.TestCase):
         listed = self.client.get("/api/content/requests").json()
         self.assertEqual(listed[0]["id"], request_item["id"])
         self.assertEqual(len(self.content_requests.read_text(encoding="utf-8").splitlines()), 1)
+
+    def test_content_request_supersession_appends_revision_and_collapses_listing(self) -> None:
+        first = self.client.post(
+            "/api/content/requests",
+            json={"instruction": "Primera versión", "content_type": "reel"},
+        ).json()
+        replacement = self.client.post(
+            "/api/content/requests",
+            json={"instruction": "Versión vinculada", "content_type": "reel"},
+        ).json()
+
+        revised = supersede_content_request(
+            self.content_requests,
+            request_id=first["id"],
+            replacement_id=replacement["id"],
+            reason="El usuario registró una versión con la tanda correcta.",
+        )
+
+        self.assertEqual(revised["status"], "superseded")
+        self.assertEqual(revised["superseded_by"], replacement["id"])
+        listed = self.client.get("/api/content/requests").json()
+        self.assertEqual(len(listed), 2)
+        self.assertEqual(listed[0]["id"], replacement["id"])
+        self.assertEqual(listed[1]["status"], "superseded")
+        self.assertEqual(len(self.content_requests.read_text(encoding="utf-8").splitlines()), 3)
 
 
 if __name__ == "__main__":

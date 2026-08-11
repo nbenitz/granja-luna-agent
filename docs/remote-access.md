@@ -75,8 +75,13 @@ existentes de web, correo, SPF y ACME.
 - La PC, Docker y la conexión a Internet deben permanecer activos.
 - Los archivos grandes se deben cargar desde la red local mientras el límite de carga del proxy
   no esté validado para el plan contratado.
+- La pestaña `Contenido` permite alternar entre `LAN rápida` e `Internet`. El cambio queda bloqueado
+  durante una carga activa y navega toda la app al origen elegido; los archivos seleccionados pero
+  aún no enviados deben elegirse otra vez por una restricción de seguridad del navegador.
 - El acceso local permanece en `http://192.168.18.15:8011`; conviene reservar esa dirección por
   DHCP para que no cambie.
+- Si una carga se interrumpe, `Contenido > Subidas recientes > Reanudar` conserva la tanda y evita
+  volver a transmitir los elementos que el servidor ya guardó.
 - Una caída prolongada de energía requiere que el firmware de la PC tenga habilitado el encendido
   automático al recuperar corriente.
 - Si la cuenta de Cloudflare usa Google, esa autenticación se completa en el navegador del sistema;

@@ -184,6 +184,19 @@ class WebAppTests(unittest.TestCase):
         worker = self.client.get("/service-worker.js")
         self.assertEqual(worker.status_code, 200)
         self.assertEqual(worker.headers["service-worker-allowed"], "/")
+        lan_options = self.client.get(
+            "/api/connection-options", headers={"Host": "192.168.18.15:8011"}
+        )
+        self.assertEqual(lan_options.status_code, 200)
+        self.assertEqual(lan_options.json()["mode"], "lan")
+        self.assertEqual(lan_options.json()["lan_url"], "http://192.168.18.15:8011")
+        internet_options = self.client.get(
+            "/api/connection-options", headers={"Host": "granja.nodaluna.com"}
+        )
+        self.assertEqual(internet_options.json()["mode"], "internet")
+        self.assertEqual(
+            internet_options.json()["internet_url"], "https://granja.nodaluna.com"
+        )
         self.assertEqual(self.client.get("/api/inbox/no-existe").status_code, 404)
 
     def test_mobile_navigation_has_one_column_per_destination(self) -> None:
@@ -197,7 +210,12 @@ class WebAppTests(unittest.TestCase):
         self.assertIn("Analizar con Gemini", script.text)
         self.assertIn('id="media-upload-input"', index.text)
         self.assertIn('id="content-request-form"', index.text)
+        self.assertIn('id="connection-use-lan"', index.text)
+        self.assertIn('id="connection-use-internet"', index.text)
         self.assertIn("uploadMediaFile", script.text)
+        self.assertIn("switchConnection", script.text)
+        self.assertIn("startResumeMediaUpload", script.text)
+        self.assertIn("Reanudar archivos pendientes", script.text)
         self.assertIn("Estudio de contenido", index.text)
 
 
