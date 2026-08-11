@@ -9,6 +9,7 @@ from threading import Lock
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from core.content_requests import (
@@ -16,6 +17,11 @@ from core.content_requests import (
     create_content_request,
     find_content_request,
     load_content_requests,
+)
+from core.content_drafts import (
+    ContentDraftError,
+    list_content_drafts,
+    resolve_content_draft,
 )
 from core.media_library import connect_media_library
 from core.media_uploads import (
@@ -82,6 +88,7 @@ def build_content_router(
     reserve_bytes: int = 512 * 1024 * 1024,
 ) -> APIRouter:
     router = APIRouter()
+    content_drafts_path = content_requests_path.parent / "social-drafts"
 
     @router.post("/api/media/upload-batches", status_code=201)
     def create_media_upload(payload: UploadBatchRequest) -> dict[str, object]:
@@ -279,6 +286,26 @@ def build_content_router(
                 return find_content_request(content_requests_path, request_id)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="Solicitud de contenido no encontrada.") from exc
+
+    @router.get("/api/content/drafts")
+    def content_drafts(
+        limit: int = Query(default=20, ge=1, le=50),
+    ) -> list[dict[str, object]]:
+        return list_content_drafts(content_drafts_path, limit=limit)
+
+    @router.get("/api/content/drafts/{filename}/media")
+    def content_draft_media(filename: str) -> FileResponse:
+        try:
+            path = resolve_content_draft(content_drafts_path, filename)
+        except ContentDraftError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        return FileResponse(
+            path,
+            media_type="video/mp4",
+            filename=path.name,
+            content_disposition_type="inline",
+            headers={"Cache-Control": "private, no-store"},
+        )
 
     return router
 

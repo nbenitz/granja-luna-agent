@@ -28,6 +28,11 @@ Una tanda interrumpida aparece en `Subidas recientes` con la acción `Reanudar`.
 elegir nuevamente todos los archivos originales: la interfaz compara nombre y tamaño, omite los ya
 guardados y transmite sólo los pendientes dentro de la misma tanda.
 
+`Contenido` también muestra los MP4 de revisión guardados junto al estado persistente del Estudio.
+El navegador los reproduce por rangos, sin copiar ni servir los originales de `media/inbox`. La
+ruta remota conserva la protección de Cloudflare Access. La ruta LAN sólo está aislada por la red
+local hasta que exista autenticación propia de la plataforma.
+
 Las URLs pueden ajustarse al iniciar el runtime:
 
 ```env

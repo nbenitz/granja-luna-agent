@@ -112,6 +112,9 @@ La API de curaduría incluye:
 - `PATCH /api/media/clusters/{id}/curation`: intenciones, objetivos de campaña y hasta dos favoritas;
 - `POST /api/media/clusters/{id}/gemini`: comparación externa únicamente con confirmación explícita;
 - `GET /api/media/assets/{id}/thumbnail`: derivado privado, nunca el original.
+- `GET /api/content/drafts`: enumera únicamente MP4 derivados preparados para revisión local.
+- `GET /api/content/drafts/{filename}/media`: reproduce el borrador con soporte de rangos; nunca
+  expone originales de `media/inbox`.
 
 La carga supervisada agrega:
 

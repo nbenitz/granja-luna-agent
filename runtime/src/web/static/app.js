@@ -27,6 +27,7 @@ const state = {
     uploadBatches: [],
     resumeBatch: null,
     contentRequests: [],
+    contentDrafts: [],
   },
 };
 
@@ -329,7 +330,46 @@ function switchConnection(mode) {
 }
 
 async function loadContentWorkspace() {
-  await Promise.all([loadRecentUploads(), loadContentRequests(), loadMediaClusters()]);
+  await Promise.all([loadRecentUploads(), loadContentRequests(), loadContentDrafts(), loadMediaClusters()]);
+}
+
+async function loadContentDrafts() {
+  const container = document.querySelector("#content-draft-list");
+  try {
+    state.media.contentDrafts = await api("/api/content/drafts?limit=12");
+    renderContentDrafts();
+  } catch (error) {
+    container.innerHTML = `<p class="media-help">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function renderContentDrafts() {
+  const container = document.querySelector("#content-draft-list");
+  if (!state.media.contentDrafts.length) {
+    container.innerHTML = emptyMarkup("film", "Todavía no hay borradores locales para revisar.");
+    refreshIcons();
+    return;
+  }
+  container.innerHTML = state.media.contentDrafts.map((draft, index) => {
+    const title = draft.filename.replace(/\.mp4$/i, "").replace(/^\d{4}-\d{2}-\d{2}-/, "").replaceAll("-", " ");
+    return `<article class="content-draft-card">
+      <video controls playsinline preload="${index === 0 ? "metadata" : "none"}" src="${escapeHtml(draft.media_url)}" aria-label="Vista previa de ${escapeHtml(title)}"></video>
+      <div class="content-draft-copy">
+        <header><div><span class="content-status-pill">Borrador local</span><h3>${escapeHtml(title)}</h3></div><i data-lucide="film"></i></header>
+        <p>${formatFileSize(draft.size_bytes)} · ${formatDate(draft.updated_at, true)}</p>
+        <small>No está publicado ni aprobado.</small>
+      </div>
+    </article>`;
+  }).join("");
+  const previews = [...container.querySelectorAll("video")];
+  previews.forEach((preview) => {
+    preview.addEventListener("play", () => {
+      previews.forEach((other) => {
+        if (other !== preview) other.pause();
+      });
+    });
+  });
+  refreshIcons();
 }
 
 function queueSelectedMedia(event) {
