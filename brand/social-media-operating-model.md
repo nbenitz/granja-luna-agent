@@ -85,6 +85,25 @@ superpuesto en el video:
 No basta con que una automatización asigne un valor al control: Meta puede mostrarlo temporalmente
 sin registrarlo. La comprobación posterior a la reapertura es obligatoria.
 
+### Reel compartido en Historia
+
+Cuando la intención sea mostrar un fragmento reproducible del reel dentro de la historia:
+
+1. usar la acción **Compartir > Tu historia** desde la app Android de Facebook;
+2. revisar la vista previa nativa y no agregar música, texto, stickers o efectos salvo aprobación
+   específica;
+3. no usar para este propósito el flujo equivalente de Facebook web: en las pruebas del 6 y 11 de
+   agosto creó una tarjeta estática enlazada al reel;
+4. después de publicar, abrir `Meta Business Suite > Contenido > Historias > Activas` y exigir que
+   Meta clasifique el resultado como **Video**, con duración visible;
+5. una fila **Foto · 6 segundos**, una imagen JPG o el estado **Sin sonido** no confirma una historia
+   de video, aunque la tarjeta abra el reel al tocarla;
+6. si el resultado es foto, detener futuras distribuciones equivalentes y corregir sólo con
+   autorización explícita para eliminar y volver a publicar.
+
+La referencia validada es una vista previa nativa de **Video · 16 segundos**. La comprobación del
+tipo de medio es parte del QA y debe ocurrir antes de declarar completa la distribución.
+
 ## Responsabilidades
 
 ### Néstor

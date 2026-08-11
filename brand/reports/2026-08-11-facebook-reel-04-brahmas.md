@@ -347,6 +347,18 @@ Estado: `approved_and_verified_in_meta`
 - Temporizador activado: `granja-luna-story-20260811.timer`, con disparo confirmado por `systemd`
   para `2026-08-11 06:45:00 -03`.
 
+### Corrección de la historia
+
+La ejecución web produjo a las 06:46 una tarjeta estática que Meta clasificó como **Foto · 6
+segundos**, sin sonido, aunque enlazaba al reel. Néstor confirmó eliminarla y estableció que las
+historias vinculadas a reels deben mostrar siempre un fragmento de video.
+
+Se compararon todas las historias disponibles en `Meta Business Suite > Contenido > Historias >
+Archivadas`: dos eran **Foto · 6 segundos** y la única referencia correcta era **Video · 16
+segundos**, publicada desde Facebook Android el 8 de agosto a las 08:38. La tarjeta del Reel 04 fue
+eliminada y el reel se compartió nuevamente desde Android, sin música, texto, stickers ni efectos.
+Meta confirmó el reemplazo como **Video · 16 segundos**, publicado el 11 de agosto a las 07:22.
+
 Incidente resuelto: la primera programación quedó sin descripción. Asignar el valor al control de
 Meta hizo que se viera en el formulario, pero no persistió. Se corrigió enfocando el campo **Texto**,
 introduciendo el copy como entrada real, esperando que apareciera en la vista previa y reabriendo
