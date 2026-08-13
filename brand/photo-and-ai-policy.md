@@ -23,6 +23,25 @@ Una foto puede pasar a selección cuando:
 
 Las imágenes valiosas pero antiguas pueden utilizarse como historia si se indica su fecha o etapa.
 
+## Fuentes de calor visibles
+
+- Evitar seleccionar para publicación tomas donde una fuente de calor o foco parezca demasiado
+  cerca de los pollitos a la altura de estos.
+- Tratar la aparente proximidad como señal para revisión humana, no como medición: la perspectiva de
+  una foto no confirma la distancia física ni el cumplimiento de una norma.
+- Registrar por separado la distancia mínima del procedimiento o norma aplicable antes de convertir
+  este criterio en una validación automática.
+- Penalizar editorialmente reflejos o zonas quemadas producidas por el foco cuando dificulten ver a
+  los animales, aunque la toma sea útil como registro operativo.
+
+## Comparar tomas con el mismo propósito
+
+- Una toma de detalle prioriza caras, gestos e interacción visible de un sector de aves.
+- Una toma panorámica prioriza distribución, entorno y manejo general del conjunto.
+- No descartar automáticamente una buena toma de detalle porque muestre menos infraestructura, ni
+  declarar ganadora una panorámica cuando el objetivo es acercar al público a los pollitos.
+- Clasificar primero el propósito de la foto y comparar después candidatos del mismo tipo.
+
 ## Cuándo tomar una foto nueva
 
 - Cuando se necesita demostrar disponibilidad o estado actual.

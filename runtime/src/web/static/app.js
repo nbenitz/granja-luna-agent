@@ -5,6 +5,11 @@ const state = {
   reviewEvents: [],
   editingSection: null,
   toastTimer: null,
+  connection: {
+    mode: "unknown",
+    lanUrl: null,
+    internetUrl: null,
+  },
   voice: {
     active: false,
     recognition: null,
@@ -12,6 +17,108 @@ const state = {
     baseText: "",
     statusTimer: null,
   },
+  media: {
+    clusters: [],
+    current: null,
+    draft: null,
+    busy: false,
+    uploadQueue: [],
+    uploadBusy: false,
+    uploadBatches: [],
+    resumeBatch: null,
+    contentRequests: [],
+    contentDrafts: [],
+  },
+};
+
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js").catch(() => {
+      // La aplicación sigue operativa en navegadores sin soporte PWA completo.
+    });
+  });
+}
+
+const mediaIntentLabels = {
+  panoramica: "Panorámica",
+  detalle: "Detalle",
+  portada: "Portada",
+  proceso: "Proceso",
+  archivo: "Archivo",
+  panoramica_paisaje: "Panorámica o paisaje",
+  escena_general: "Escena general",
+  grupo_aves: "Grupo de aves",
+  retrato_detalle: "Retrato o detalle",
+  accion_proceso: "Acción o proceso",
+};
+
+const mediaShotTypeLabels = {
+  panoramica_paisaje: "Panorámica o paisaje",
+  escena_general: "Escena general",
+  grupo_aves: "Grupo de aves",
+  retrato_detalle: "Retrato o detalle",
+  accion_proceso: "Acción o proceso",
+};
+
+const mediaContentPillarLabels = {
+  animales_y_personalidad: "Animales y personalidad",
+  crianza_responsable: "Crianza responsable",
+  vida_libre_y_naturaleza: "Vida libre y naturaleza",
+  trabajo_y_profesionalismo: "Trabajo y profesionalismo",
+  aprendizaje_y_educacion: "Aprendizaje y educación",
+  razas_genetica_y_produccion: "Razas, genética y producción",
+  productos_y_disponibilidad: "Productos y disponibilidad",
+  comunidad_y_humor: "Comunidad y humor",
+  fe_gratitud_y_proposito: "Fe, gratitud y propósito",
+};
+
+const mediaSubjectTagLabels = {
+  pollitos: "Pollitos",
+  gallinas_caseras: "Gallinas caseras",
+  gallos: "Gallos",
+  brahma: "Brahma",
+  rhode_island_red: "Rhode Island Red",
+  plymouth_rock_barred: "Plymouth Rock Barred",
+  black_star: "Black Star",
+  pastoreo: "Pastoreo",
+  comportamiento_natural: "Comportamiento natural",
+  alimentacion: "Alimentación",
+  cuidado: "Cuidado",
+  sanidad_con_contexto: "Sanidad con contexto",
+  limpieza_e_infraestructura: "Limpieza e infraestructura",
+  incubacion_y_cria: "Incubación y cría",
+  naturaleza_y_paisaje: "Naturaleza y paisaje",
+  trabajo_diario: "Trabajo diario",
+};
+
+const mediaDecisionLabels = {
+  keep: "Conservar una favorita",
+  reserve: "Reserva para contenido futuro",
+  needs_context: "Falta contexto",
+  private: "Privado, no publicar",
+  no_usable: "Ninguna sirve",
+};
+
+const mediaSelectionReasonLabels = {
+  mejor_encuadre: "Mejor encuadre",
+  sujeto_mas_claro: "Sujeto más claro",
+  cuenta_mejor_la_historia: "Cuenta mejor la historia",
+  mejor_luz: "Mejor luz",
+  mejor_gesto_o_comportamiento: "Mejor gesto o comportamiento",
+  muestra_mejor_el_entorno: "Muestra mejor el entorno",
+  representa_mejor_el_objetivo: "Representa mejor el objetivo",
+  aporta_otro_angulo: "Aporta otro ángulo",
+  mayor_valor_emocional: "Mayor valor emocional",
+};
+
+const facebookLaunchLabels = {
+  facebook_portada: "Portada horizontal",
+  facebook_bienvenida: "Bienvenida a Granja Luna",
+  facebook_pollitos_caseros: "Pollitos caseros",
+  facebook_brahma: "Brahma",
+  facebook_black_star: "Proyecto Black Star",
+  facebook_vida_natural: "Vida natural y cuidado",
+  facebook_comunidad: "Abrir conversación",
 };
 
 const reviewStatusLabels = {
@@ -108,9 +215,14 @@ document.addEventListener("DOMContentLoaded", () => {
   bindInboxControls();
   bindActivityControls();
   bindOperationsControls();
+  bindMediaControls();
   bindSheetControls();
   checkConnection();
   refreshInboxSummary();
+  const requestedView = new URLSearchParams(window.location.search).get("view");
+  if (["capture", "inbox", "activity", "operations", "media"].includes(requestedView) && requestedView !== "capture") {
+    void switchView(requestedView);
+  }
 });
 
 function refreshIcons() {
@@ -147,8 +259,867 @@ async function switchView(target) {
   if (target === "inbox") await loadInbox();
   if (target === "activity") await loadActivity();
   if (target === "operations") await loadOperations();
+  if (target === "media") await loadContentWorkspace();
   window.scrollTo({ top: 0, behavior: "smooth" });
   refreshIcons();
+}
+
+function bindMediaControls() {
+  document.querySelector("#refresh-media").addEventListener("click", loadContentWorkspace);
+  document.querySelector("#media-upload-input").addEventListener("change", queueSelectedMedia);
+  document.querySelector("#media-upload-form").addEventListener("submit", submitMediaUpload);
+  document.querySelector("#content-request-form").addEventListener("submit", submitContentRequest);
+  document.querySelectorAll("[data-connection-mode]").forEach((button) => {
+    button.addEventListener("click", () => switchConnection(button.dataset.connectionMode));
+  });
+}
+
+function renderConnectionSelector() {
+  const { mode } = state.connection;
+  const description = document.querySelector("#upload-connection-description");
+  const note = document.querySelector("#upload-connection-note");
+  if (!description || !note) return;
+  if (mode === "lan") {
+    description.textContent = "Directo a esta PC por Wi-Fi";
+    note.textContent = "Ruta recomendada para fotos y videos grandes. No consume el túnel de Cloudflare.";
+  } else if (mode === "internet") {
+    description.textContent = "Vía Cloudflare Tunnel";
+    note.textContent = "Funciona fuera de casa, pero las cargas grandes recorren Internet y pueden tardar más.";
+  } else {
+    description.textContent = "Ruta personalizada";
+    note.textContent = "Podés elegir LAN para cargas locales o Internet para acceso remoto.";
+  }
+  if (document.documentElement.dataset.nativeShell === "true") {
+    note.textContent += " En el APK, el cambio permanente también puede hacerse desde el botón de configuración.";
+  }
+  document.querySelectorAll("[data-connection-mode]").forEach((button) => {
+    const selected = button.dataset.connectionMode === mode;
+    const configured = button.dataset.connectionMode === "lan" ? state.connection.lanUrl : state.connection.internetUrl;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+    button.disabled = state.media.uploadBusy || !configured;
+  });
+}
+
+function switchConnection(mode) {
+  if (!["lan", "internet"].includes(mode)) return;
+  if (state.media.uploadBusy) {
+    showToast("Esperá a que termine la carga actual antes de cambiar de conexión");
+    return;
+  }
+  if (mode === state.connection.mode) {
+    showToast(mode === "lan" ? "Ya estás usando la LAN" : "Ya estás usando Internet");
+    return;
+  }
+  const configured = mode === "lan" ? state.connection.lanUrl : state.connection.internetUrl;
+  let target;
+  try {
+    target = new URL(configured);
+    if (!["http:", "https:"].includes(target.protocol) || target.username || target.password) throw new Error();
+  } catch (_error) {
+    showToast("La conexión seleccionada no está configurada");
+    return;
+  }
+  const hasUnsavedSelection = state.media.uploadQueue.length > 0 || document.querySelector("#media-upload-context").value.trim();
+  if (hasUnsavedSelection && !window.confirm("Al cambiar de conexión tendrás que volver a elegir los archivos y copiar el contexto. ¿Continuar?")) return;
+  target.pathname = "/";
+  target.search = "";
+  target.searchParams.set("view", "media");
+  target.hash = "";
+  window.location.assign(target.toString());
+}
+
+async function loadContentWorkspace() {
+  await Promise.all([loadRecentUploads(), loadContentRequests(), loadContentDrafts(), loadMediaClusters()]);
+}
+
+async function loadContentDrafts() {
+  const container = document.querySelector("#content-draft-list");
+  try {
+    state.media.contentDrafts = await api("/api/content/drafts?limit=12");
+    renderContentDrafts();
+  } catch (error) {
+    container.innerHTML = `<p class="media-help">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function renderContentDrafts() {
+  const container = document.querySelector("#content-draft-list");
+  if (!state.media.contentDrafts.length) {
+    container.innerHTML = emptyMarkup("film", "Todavía no hay borradores locales para revisar.");
+    refreshIcons();
+    return;
+  }
+  container.innerHTML = state.media.contentDrafts.map((draft, index) => {
+    const title = draft.filename.replace(/\.mp4$/i, "").replace(/^\d{4}-\d{2}-\d{2}-/, "").replaceAll("-", " ");
+    return `<article class="content-draft-card">
+      <video controls playsinline preload="${index === 0 ? "metadata" : "none"}" src="${escapeHtml(draft.media_url)}" aria-label="Vista previa de ${escapeHtml(title)}"></video>
+      <div class="content-draft-copy">
+        <header><div><span class="content-status-pill">Borrador local</span><h3>${escapeHtml(title)}</h3></div><i data-lucide="film"></i></header>
+        <p>${formatFileSize(draft.size_bytes)} · ${formatDate(draft.updated_at, true)}</p>
+        <small>No está publicado ni aprobado.</small>
+      </div>
+    </article>`;
+  }).join("");
+  const previews = [...container.querySelectorAll("video")];
+  previews.forEach((preview) => {
+    preview.addEventListener("play", () => {
+      previews.forEach((other) => {
+        if (other !== preview) other.pause();
+      });
+    });
+  });
+  refreshIcons();
+}
+
+function queueSelectedMedia(event) {
+  const selected = [...(event.target.files || [])];
+  const accepted = [];
+  const rejected = [];
+  let alreadySaved = 0;
+  const resumeBatch = state.media.resumeBatch;
+  const usedResumeItems = new Set(state.media.uploadQueue.map((item) => item.serverItemId).filter(Boolean));
+  selected.forEach((file) => {
+    const extensionOk = /\.(jpe?g|mp4)$/i.test(file.name);
+    if (!extensionOk) {
+      rejected.push(`${file.name}: tipo no admitido`);
+      return;
+    }
+    if (!file.size) {
+      rejected.push(`${file.name}: archivo vacío`);
+      return;
+    }
+    if (file.size > 1024 * 1024 * 1024) {
+      rejected.push(`${file.name}: supera 1 GB`);
+      return;
+    }
+    const key = `${file.name}|${file.size}|${file.lastModified}`;
+    if (state.media.uploadQueue.some((item) => item.key === key)) return;
+    if (resumeBatch) {
+      const serverItem = resumeBatch.items.find((item) => (
+        !["uploaded", "duplicate"].includes(item.status)
+        && !usedResumeItems.has(item.id)
+        && item.original_name === file.name
+        && Number(item.expected_size) === file.size
+      ));
+      if (serverItem) {
+        usedResumeItems.add(serverItem.id);
+        accepted.push({ key, file, serverItemId: serverItem.id, status: "pending", progress: 0, error: null });
+        return;
+      }
+      const savedItem = resumeBatch.items.find((item) => (
+        ["uploaded", "duplicate"].includes(item.status)
+        && item.original_name === file.name
+        && Number(item.expected_size) === file.size
+      ));
+      if (savedItem) {
+        alreadySaved += 1;
+        return;
+      }
+      rejected.push(`${file.name}: no pertenece a esta tanda pendiente`);
+      return;
+    }
+    accepted.push({ key, file, status: "pending", progress: 0, error: null });
+  });
+  state.media.uploadQueue.push(...accepted);
+  if (state.media.uploadQueue.length > 100) {
+    state.media.uploadQueue = state.media.uploadQueue.slice(0, 100);
+    rejected.push("La tanda admite hasta 100 archivos.");
+  }
+  event.target.value = "";
+  renderMediaUploadQueue();
+  if (accepted.length && resumeBatch) {
+    showToast(`${accepted.length} pendiente${accepted.length === 1 ? "" : "s"} preparado${accepted.length === 1 ? "" : "s"}${alreadySaved ? `; ${alreadySaved} ya guardado${alreadySaved === 1 ? "" : "s"}` : ""}`);
+  } else if (rejected.length) {
+    showToast(rejected[0]);
+  } else if (alreadySaved) {
+    showToast("Esos archivos ya están guardados en la tanda");
+  }
+}
+
+function renderMediaUploadQueue() {
+  const container = document.querySelector("#media-upload-queue");
+  const submit = document.querySelector("#media-upload-submit");
+  const queue = state.media.uploadQueue;
+  submit.disabled = !queue.length || state.media.uploadBusy;
+  submit.innerHTML = state.media.resumeBatch
+    ? '<i data-lucide="rotate-ccw"></i> Reanudar archivos pendientes'
+    : '<i data-lucide="upload"></i> Guardar en la biblioteca';
+  if (!queue.length) {
+    container.innerHTML = state.media.resumeBatch ? `<div class="media-resume-banner">
+      <div><strong>Reanudando la tanda interrumpida</strong><small>Elegí nuevamente los videos. Los ya guardados se omitirán.</small></div>
+      <button type="button" data-cancel-resume>Cancelar</button>
+    </div>` : "";
+    container.querySelector("[data-cancel-resume]")?.addEventListener("click", cancelResumeMediaUpload);
+    refreshIcons();
+    return;
+  }
+  const total = queue.reduce((sum, item) => sum + item.file.size, 0);
+  container.innerHTML = `${state.media.resumeBatch ? `<div class="media-resume-banner">
+    <div><strong>Reanudando ${escapeHtml(state.media.resumeBatch.id)}</strong><small>Solo se enviarán los archivos pendientes que coincidan.</small></div>
+    <button type="button" data-cancel-resume>Cancelar</button>
+  </div>` : ""}<div class="media-upload-summary">${queue.length} archivo${queue.length === 1 ? "" : "s"} · ${formatFileSize(total)}</div>${queue.map((item, index) => `
+    <div class="media-upload-row">
+      <i data-lucide="${/\.mp4$/i.test(item.file.name) ? "video" : "image"}"></i>
+      <div><strong>${escapeHtml(item.file.name)}</strong><small>${formatFileSize(item.file.size)} · ${mediaUploadStatusLabel(item.status)}${item.error ? ` · ${escapeHtml(item.error)}` : ""}</small></div>
+      <button class="media-upload-remove" type="button" data-remove-upload="${index}" ${state.media.uploadBusy ? "disabled" : ""} aria-label="Quitar ${escapeHtml(item.file.name)}"><i data-lucide="x"></i></button>
+    </div>`).join("")}`;
+  container.querySelectorAll("[data-remove-upload]").forEach((button) => button.addEventListener("click", () => {
+    state.media.uploadQueue.splice(Number(button.dataset.removeUpload), 1);
+    renderMediaUploadQueue();
+  }));
+  container.querySelector("[data-cancel-resume]")?.addEventListener("click", cancelResumeMediaUpload);
+  refreshIcons();
+}
+
+function startResumeMediaUpload(batchId) {
+  if (state.media.uploadBusy) return;
+  const batch = state.media.uploadBatches.find((item) => item.id === batchId);
+  if (!batch) {
+    showToast("No encontramos la tanda para reanudar");
+    return;
+  }
+  if (state.media.uploadQueue.length && !window.confirm("La selección actual se reemplazará por la tanda interrumpida. ¿Continuar?")) return;
+  state.media.resumeBatch = batch;
+  state.media.uploadQueue = [];
+  const context = document.querySelector("#media-upload-context");
+  context.value = batch.context || "";
+  context.disabled = true;
+  renderMediaUploadQueue();
+  document.querySelector("#media-upload-input").click();
+}
+
+function cancelResumeMediaUpload() {
+  if (state.media.uploadBusy) return;
+  state.media.resumeBatch = null;
+  state.media.uploadQueue = [];
+  const context = document.querySelector("#media-upload-context");
+  context.disabled = false;
+  context.value = "";
+  renderMediaUploadQueue();
+  showToast("Reanudación cancelada; la tanda sigue conservada");
+}
+
+async function submitMediaUpload(event) {
+  event.preventDefault();
+  if (!state.media.uploadQueue.length || state.media.uploadBusy) return;
+  state.media.uploadBusy = true;
+  renderConnectionSelector();
+  state.media.uploadQueue.forEach((item) => { item.status = "pending"; item.error = null; item.progress = 0; });
+  renderMediaUploadQueue();
+  updateMediaUploadProgress(0, "Preparando la tanda…", false);
+  const totalBytes = state.media.uploadQueue.reduce((sum, item) => sum + item.file.size, 0);
+  let completedBytes = 0;
+  let batch;
+  try {
+    if (state.media.resumeBatch) {
+      batch = await api(`/api/media/upload-batches/${encodeURIComponent(state.media.resumeBatch.id)}`);
+    } else {
+      batch = await api("/api/media/upload-batches", {
+        method: "POST",
+        body: JSON.stringify({
+          context: document.querySelector("#media-upload-context").value.trim() || null,
+          files: state.media.uploadQueue.map((item) => ({
+            name: item.file.name,
+            size: item.file.size,
+            type: item.file.type || "application/octet-stream",
+            last_modified: item.file.lastModified,
+          })),
+        }),
+      });
+    }
+    for (let index = 0; index < state.media.uploadQueue.length; index += 1) {
+      const queued = state.media.uploadQueue[index];
+      const serverItem = queued.serverItemId
+        ? batch.items.find((item) => item.id === queued.serverItemId)
+        : batch.items[index];
+      if (!serverItem) throw new Error(`No se encontró ${queued.file.name} dentro de la tanda.`);
+      queued.status = "uploading";
+      renderMediaUploadQueue();
+      try {
+        const saved = await uploadMediaFile(batch.id, serverItem.id, queued.file, (loaded) => {
+          queued.progress = loaded;
+          const percent = totalBytes ? ((completedBytes + loaded) / totalBytes) * 100 : 0;
+          updateMediaUploadProgress(percent, `Subiendo ${index + 1} de ${state.media.uploadQueue.length}…`, false);
+        });
+        queued.status = saved.status;
+      } catch (error) {
+        queued.status = "failed";
+        queued.error = error.message;
+      }
+      completedBytes += queued.file.size;
+      renderMediaUploadQueue();
+    }
+    const refreshed = await api(`/api/media/upload-batches/${encodeURIComponent(batch.id)}`);
+    const unfinished = refreshed.items.filter((item) => !["uploaded", "duplicate", "failed"].includes(item.status));
+    if (unfinished.length) {
+      state.media.resumeBatch = refreshed;
+      state.media.uploadQueue = [];
+      renderMediaUploadReceipt(null, `${unfinished.length} archivo${unfinished.length === 1 ? " queda" : "s quedan"} pendiente${unfinished.length === 1 ? "" : "s"}. Podés reanudar nuevamente esta misma tanda.`);
+      showToast("La tanda sigue disponible para reanudar");
+      await loadRecentUploads();
+      return;
+    }
+    updateMediaUploadProgress(100, "Inventariando el material…", false);
+    const completed = await api(`/api/media/upload-batches/${encodeURIComponent(batch.id)}/complete`, { method: "POST" });
+    renderMediaUploadReceipt(completed);
+    const hasErrors = completed.error_count > 0;
+    if (!hasErrors) {
+      state.media.uploadQueue = [];
+      document.querySelector("#media-upload-context").value = "";
+      document.querySelector("#media-upload-context").disabled = false;
+      state.media.resumeBatch = null;
+    }
+    showToast(hasErrors ? "La tanda terminó con archivos para revisar" : "Material guardado en la biblioteca");
+    await Promise.all([loadRecentUploads(), loadMediaClusters()]);
+  } catch (error) {
+    renderMediaUploadReceipt(null, error.message);
+    showToast(error.message || "No se pudo completar la carga");
+  } finally {
+    state.media.uploadBusy = false;
+    renderConnectionSelector();
+    updateMediaUploadProgress(100, "Carga finalizada", true);
+    renderMediaUploadQueue();
+  }
+}
+
+function uploadMediaFile(batchId, itemId, file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("PUT", `/api/media/upload-batches/${encodeURIComponent(batchId)}/items/${encodeURIComponent(itemId)}`);
+    request.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    request.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) onProgress(Math.min(event.loaded, file.size));
+    });
+    request.addEventListener("load", () => {
+      let payload = null;
+      try { payload = JSON.parse(request.responseText); } catch (_error) { payload = null; }
+      if (request.status >= 200 && request.status < 300) {
+        resolve(payload);
+        return;
+      }
+      const detail = payload?.detail;
+      reject(new Error(typeof detail === "string" ? detail : detail?.message || `Error ${request.status}`));
+    });
+    request.addEventListener("error", () => reject(new Error("Se perdió la conexión durante la carga.")));
+    request.addEventListener("abort", () => reject(new Error("Carga cancelada.")));
+    request.send(file);
+  });
+}
+
+function updateMediaUploadProgress(value, label, hide) {
+  const panel = document.querySelector("#media-upload-progress");
+  panel.hidden = hide;
+  document.querySelector("#media-upload-progress-label").textContent = label;
+  document.querySelector("#media-upload-progress-value").textContent = `${Math.round(value)}%`;
+  document.querySelector("#media-upload-progress-bar").value = Math.max(0, Math.min(100, value));
+}
+
+function renderMediaUploadReceipt(batch, error = null) {
+  const container = document.querySelector("#media-upload-receipt");
+  if (error) {
+    container.innerHTML = `<article class="media-upload-receipt"><h3>No se completó la tanda</h3><p>${escapeHtml(error)}</p></article>`;
+    return;
+  }
+  if (!batch) {
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = `<article class="media-upload-receipt is-success"><h3>Material recibido</h3><p>${batch.uploaded_count} guardado${batch.uploaded_count === 1 ? "" : "s"}, ${batch.duplicate_count} duplicado${batch.duplicate_count === 1 ? "" : "s"} y ${batch.error_count} con error. El lote quedó identificado como ${escapeHtml(batch.id)}.</p></article>`;
+}
+
+async function loadRecentUploads() {
+  const container = document.querySelector("#media-recent-uploads");
+  try {
+    state.media.uploadBatches = await api("/api/media/upload-batches?limit=6");
+    renderRecentUploads();
+    updateContentMediaOptions();
+  } catch (error) {
+    container.innerHTML = `<p class="media-help">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function renderRecentUploads() {
+  const container = document.querySelector("#media-recent-uploads");
+  if (!state.media.uploadBatches.length) {
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = `<p class="eyebrow">Subidas recientes</p>${state.media.uploadBatches.map((batch) => {
+    const retriable = batch.items.filter((item) => (
+      ["pending", "uploading"].includes(item.status)
+      || (item.status === "failed" && !String(item.error || "").startsWith("[cancelled_by_user]"))
+    ));
+    const alreadySaved = batch.items.filter((item) => ["uploaded", "duplicate"].includes(item.status)).length;
+    return `
+    <article class="recent-upload-card">
+      <header><h3>${batch.expected_count} archivo${batch.expected_count === 1 ? "" : "s"} · ${formatFileSize(batch.expected_bytes)}</h3><span class="content-status-pill">${mediaUploadStatusLabel(batch.status)}</span></header>
+      ${batch.context ? `<p>${escapeHtml(batch.context)}</p>` : ""}
+      <ul class="recent-upload-files">${batch.items.slice(0, 5).map((item) => `<li>${escapeHtml(item.original_name)} · ${mediaUploadItemStatusLabel(item)}</li>`).join("")}${batch.items.length > 5 ? `<li>y ${batch.items.length - 5} más…</li>` : ""}</ul>
+      ${retriable.length && ["pending", "uploading", "completed_with_errors"].includes(batch.status) ? `<div class="recent-upload-actions"><span>${alreadySaved} guardado${alreadySaved === 1 ? "" : "s"} · ${retriable.length} por reanudar</span><button type="button" data-resume-upload="${escapeHtml(batch.id)}">Reanudar</button></div>` : ""}
+      <p>${formatDate(batch.created_at, true)} · ${escapeHtml(batch.id)}</p>
+    </article>`;
+  }).join("")}`;
+  container.querySelectorAll("[data-resume-upload]").forEach((button) => {
+    button.addEventListener("click", () => startResumeMediaUpload(button.dataset.resumeUpload));
+  });
+}
+
+function updateContentMediaOptions() {
+  const select = document.querySelector("#content-request-media");
+  const current = select.value;
+  const completed = state.media.uploadBatches.filter((batch) => ["completed", "completed_with_errors"].includes(batch.status));
+  select.innerHTML = '<option value="">Sin tanda vinculada</option>' + completed.map((batch) => `<option value="${escapeHtml(batch.id)}">${formatDate(batch.created_at, true)} · ${batch.expected_count} archivo${batch.expected_count === 1 ? "" : "s"}</option>`).join("");
+  if (completed.some((batch) => batch.id === current)) select.value = current;
+}
+
+async function submitContentRequest(event) {
+  event.preventDefault();
+  const submit = document.querySelector("#content-request-submit");
+  const instruction = document.querySelector("#content-request-instruction").value.trim();
+  if (!instruction) return;
+  submit.disabled = true;
+  const mediaBatchId = document.querySelector("#content-request-media").value;
+  try {
+    const request = await api("/api/content/requests", {
+      method: "POST",
+      body: JSON.stringify({
+        instruction,
+        content_type: document.querySelector("#content-request-type").value,
+        channels: [document.querySelector("#content-request-channel").value].filter(Boolean),
+        media_batch_ids: [mediaBatchId].filter(Boolean),
+        objective: document.querySelector("#content-request-objective").value.trim() || null,
+        audience: document.querySelector("#content-request-audience").value.trim() || null,
+        source_stage: document.querySelector("#content-request-stage").value,
+        call_to_action: document.querySelector("#content-request-cta").value.trim() || null,
+      }),
+    });
+    document.querySelector("#content-request-result").innerHTML = renderContentRequestCard(request, true);
+    document.querySelector("#content-request-instruction").value = "";
+    state.media.contentRequests.unshift(request);
+    renderContentRequests();
+    showToast("Solicitud guardada en el Estudio");
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    submit.disabled = false;
+    refreshIcons();
+  }
+}
+
+async function loadContentRequests() {
+  try {
+    state.media.contentRequests = await api("/api/content/requests?limit=8");
+    renderContentRequests();
+  } catch (error) {
+    document.querySelector("#content-request-list").innerHTML = `<p class="media-help">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function renderContentRequests() {
+  const container = document.querySelector("#content-request-list");
+  if (!state.media.contentRequests.length) {
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = `<p class="eyebrow">Solicitudes recientes</p>${state.media.contentRequests.map((item) => renderContentRequestCard(item)).join("")}`;
+}
+
+function renderContentRequestCard(item, highlighted = false) {
+  const questions = item.questions_to_resolve || [];
+  const superseded = item.status === "superseded";
+  return `<article class="content-request-card ${highlighted ? "is-highlighted" : ""}">
+    <header><h3>${escapeHtml(item.instruction)}</h3><span class="content-status-pill">${superseded ? "Reemplazada" : "Idea registrada"}</span></header>
+    <div class="content-request-meta"><span>${escapeHtml(item.content_type)}</span>${(item.channels || []).map((channel) => `<span>${escapeHtml(channel)}</span>`).join("")}<span>${item.media_batch_ids?.length || 0} tanda vinculada</span></div>
+    <p>${superseded ? `Esta solicitud fue reemplazada por ${escapeHtml(item.superseded_by)} y se conserva como antecedente.` : "El agente todavía no generó una pieza: esta solicitud será la referencia trazable para brief, borrador y revisión."}</p>
+    ${!superseded && questions.length ? `<ul class="content-question-list">${questions.slice(0, 5).map((question) => `<li>${escapeHtml(question.question)}</li>`).join("")}</ul>` : ""}
+    <p>${formatDate(item.created_at, true)} · ${escapeHtml(item.id)}</p>
+  </article>`;
+}
+
+function mediaUploadStatusLabel(status) {
+  return ({ pending: "Pendiente", uploading: "Subiendo", uploaded: "Guardado", duplicate: "Duplicado", failed: "Error", completed: "Completada", completed_with_errors: "Con errores" })[status] || status;
+}
+
+function mediaUploadItemStatusLabel(item) {
+  if (item.status === "failed" && String(item.error || "").startsWith("[cancelled_by_user]")) return "Omitido";
+  return mediaUploadStatusLabel(item.status);
+}
+
+function formatFileSize(bytes) {
+  const value = Number(bytes || 0);
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 ** 2) return `${(value / 1024).toFixed(1)} KB`;
+  if (value < 1024 ** 3) return `${(value / 1024 ** 2).toFixed(1)} MB`;
+  return `${(value / 1024 ** 3).toFixed(2)} GB`;
+}
+
+async function loadMediaClusters() {
+  const list = document.querySelector("#media-cluster-list");
+  const workspace = document.querySelector("#media-curation-workspace");
+  list.innerHTML = loadingMarkup("Cargando grupos");
+  workspace.innerHTML = "";
+  refreshIcons();
+  try {
+    state.media.clusters = await api("/api/media/clusters?limit=100");
+    if (!state.media.clusters.length) {
+      list.innerHTML = "";
+      workspace.innerHTML = emptyMarkup("images", "Todavía no hay ráfagas para curar. Las cargas nuevas aparecen en el recibo de Subir material.");
+      refreshIcons();
+      return;
+    }
+    renderMediaClusterStrip();
+    const preferred = state.media.current?.id && state.media.clusters.some((item) => item.id === state.media.current.id)
+      ? state.media.current.id
+      : state.media.clusters[0].id;
+    await openMediaCluster(preferred);
+  } catch (error) {
+    list.innerHTML = "";
+    workspace.innerHTML = errorMarkup(error.message);
+  }
+  refreshIcons();
+}
+
+function renderMediaClusterStrip() {
+  const list = document.querySelector("#media-cluster-list");
+  list.innerHTML = state.media.clusters.map((cluster, index) => {
+    const selected = cluster.id === state.media.current?.id;
+    const curated = Boolean(cluster.curation);
+    return `<button class="media-cluster-chip ${selected ? "is-selected" : ""}" type="button" data-media-cluster="${escapeHtml(cluster.id)}">
+      <span>${index + 1}</span><strong>${cluster.item_count} fotos</strong>${curated ? '<i data-lucide="check"></i>' : ""}
+    </button>`;
+  }).join("");
+  list.querySelectorAll("[data-media-cluster]").forEach((button) => {
+    button.addEventListener("click", () => openMediaCluster(button.dataset.mediaCluster));
+  });
+  refreshIcons();
+}
+
+async function openMediaCluster(clusterId) {
+  const workspace = document.querySelector("#media-curation-workspace");
+  workspace.innerHTML = loadingMarkup("Creando miniaturas y análisis técnico local");
+  refreshIcons();
+  try {
+    let cluster = await api(`/api/media/clusters/${encodeURIComponent(clusterId)}`);
+    if (cluster.members.some((item) => !item.thumbnail_url || item.brightness_mean == null)) {
+      cluster = await api(`/api/media/clusters/${encodeURIComponent(clusterId)}/technical-analysis`, { method: "POST" });
+    }
+    state.media.current = cluster;
+    state.media.clusters = state.media.clusters.map((item) => item.id === cluster.id ? cluster : item);
+    state.media.draft = mediaDraftFromCluster(cluster);
+    renderMediaClusterStrip();
+    renderMediaWorkspace();
+  } catch (error) {
+    workspace.innerHTML = errorMarkup(error.message);
+  }
+  refreshIcons();
+}
+
+function mediaDraftFromCluster(cluster) {
+  const saved = cluster.curation || {};
+  return {
+    shotTypes: [...(saved.shot_types || [])],
+    contentPillars: [...(saved.content_pillars || [])],
+    subjectTags: [...(saved.subject_tags || [])],
+    groupDecision: saved.group_decision || "keep",
+    primaryAssetId: saved.primary_asset_id || null,
+    primaryShotType: saved.primary_shot_type || null,
+    primaryReasons: [...(saved.primary_reasons || [])],
+    primaryCampaignSlots: [...(saved.primary_campaign_slots || [])],
+    secondaryAssetId: saved.secondary_asset_id || null,
+    secondaryShotType: saved.secondary_shot_type || null,
+    secondaryReasons: [...(saved.secondary_reasons || [])],
+    secondaryCampaignSlots: [...(saved.secondary_campaign_slots || [])],
+    note: saved.note || "",
+  };
+}
+
+function renderMediaWorkspace() {
+  const cluster = state.media.current;
+  const draft = state.media.draft;
+  if (!cluster || !draft) return;
+  const coverage = new Set(state.media.clusters.flatMap((item) => item.curation?.campaign_slots || []));
+  const curatedCount = state.media.clusters.filter((item) => item.curation).length;
+  const coverageItems = Object.entries(facebookLaunchLabels).map(([value, label]) => `
+    <li class="${coverage.has(value) ? "is-covered" : ""}"><i data-lucide="${coverage.has(value) ? "circle-check" : "circle-dashed"}"></i><span>${escapeHtml(label)}</span></li>`).join("");
+  const cards = cluster.members.map((member, index) => renderMediaAssetCard(member, index, draft)).join("");
+  document.querySelector("#media-curation-workspace").innerHTML = `
+    <section class="facebook-mission-card">
+      <div><p class="eyebrow">Biblioteca editorial</p><h2>Conocer todo el material real</h2><p>Curamos cada grupo por su valor presente o futuro. La selección final de Facebook se hará después de conocer la biblioteca completa.</p></div>
+      <strong>${curatedCount}/${state.media.clusters.length} revisados</strong>
+      <details><summary>Campaña inicial de Facebook · ${coverage.size}/7 usos cubiertos</summary><ul class="launch-coverage">${coverageItems}</ul></details>
+    </section>
+    <section class="media-review-panel">
+      <div class="section-heading-row"><div><p class="eyebrow">Ráfaga ${escapeHtml(cluster.label.replace("Rafaga ", ""))}</p><h2>1. Mirá las tomas</h2></div><span class="information-badge">${cluster.members.length} candidatas</span></div>
+      <p class="media-help">Tocá una imagen para verla ampliada. La miniatura no alcanza para juzgar nitidez o encuadre fino; Gemini puede aportar esa revisión visual.</p>
+      <div class="media-grid">${cards}</div>
+    </section>
+    <section class="media-review-panel media-curation-form">
+      <h2>2. Contanos qué sabés</h2>
+      <p class="media-help">Tu mayor aporte es el contexto real. Marcá sólo lo que conozcas; Gemini puede sugerir la lectura visual.</p>
+      <fieldset><legend>Qué aparece o qué estaba ocurriendo</legend><div class="media-check-grid">${renderMediaChecks(mediaSubjectTagLabels, "media-subject", draft.subjectTags)}</div></fieldset>
+      <fieldset><legend>Qué historia podría ayudar a contar</legend><div class="media-check-grid">${renderMediaChecks(mediaContentPillarLabels, "media-pillar", draft.contentPillars)}</div></fieldset>
+      <fieldset><legend>Tipo de toma, si resulta claro</legend><div class="media-check-grid">${renderMediaChecks(mediaShotTypeLabels, "media-shot-type", draft.shotTypes)}</div></fieldset>
+      <label>Contexto humano<textarea id="media-curation-note" rows="4" placeholder="Ej.: eran pollitos caseros de primeras semanas; la intención era mostrar el manejo general; evitar el foco visible por percepción de cercanía.">${escapeHtml(draft.note)}</textarea></label>
+      <div class="media-actions media-context-actions"><button class="gemini-button" id="analyze-media-gemini" type="button"><i data-lucide="sparkles"></i> Analizar con Gemini</button></div>
+      <p class="external-processing-hint">Gemini recibirá copias reducidas sin EXIF, nunca los originales. No publica ni confirma tu selección.</p>
+    </section>
+    <section id="media-gemini-result">${renderGeminiMediaResult(cluster.gemini_analysis)}</section>
+    <section class="media-review-panel media-curation-form">
+      <h2>3. Registrá tu decisión</h2>
+      <p class="media-help">Tu elección puede ser intuitiva. Los motivos son rápidos y opcionales; una foto no elegida no queda descartada.</p>
+      <label>Decisión del grupo<select id="media-group-decision">${Object.entries(mediaDecisionLabels).map(([value, label]) => `<option value="${value}" ${draft.groupDecision === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>
+      ${renderFavoriteEditor("primary", draft)}
+      ${renderFavoriteEditor("secondary", draft)}
+      <div class="media-actions"><button class="primary-button" id="save-media-curation" type="button"><i data-lucide="save"></i> Guardar curaduría</button></div>
+    </section>
+    <dialog class="media-preview-dialog" id="media-preview-dialog"><button type="button" id="close-media-preview" aria-label="Cerrar vista ampliada"><i data-lucide="x"></i></button><img id="media-preview-image" alt="Vista ampliada de la candidata"><p id="media-preview-caption"></p></dialog>`;
+  bindMediaWorkspaceControls();
+  refreshIcons();
+}
+
+function renderMediaChecks(labels, name, selected) {
+  return Object.entries(labels).map(([value, label]) => `
+    <label class="media-check"><input type="checkbox" name="${name}" value="${value}" ${selected.includes(value) ? "checked" : ""}><span>${escapeHtml(label)}</span></label>`).join("");
+}
+
+function renderMediaAssetCard(member, index, draft) {
+  const primary = member.id === draft.primaryAssetId;
+  const secondary = member.id === draft.secondaryAssetId;
+  return `<article class="media-asset-card ${primary ? "is-primary" : ""} ${secondary ? "is-secondary" : ""}">
+    <button class="media-image-wrap" type="button" data-media-preview="${escapeHtml(member.preview_url || member.thumbnail_url)}" data-media-caption="Foto ${index + 1} · ${escapeHtml(member.original_name)}"><img src="${escapeHtml(member.thumbnail_url)}" alt="Candidata ${index + 1}" loading="lazy"><span>${index + 1}</span><small><i data-lucide="maximize-2"></i> Ver grande</small></button>
+    <div class="media-asset-body"><strong>${escapeHtml(member.original_name)}</strong>
+      <div class="media-local-signals">${renderMediaLocalSignals(member, index, state.media.current.members)}</div>
+      <div class="favorite-buttons"><button type="button" data-media-favorite="primary" data-asset-id="${escapeHtml(member.id)}" class="${primary ? "is-selected" : ""}">Principal</button><button type="button" data-media-favorite="secondary" data-asset-id="${escapeHtml(member.id)}" class="${secondary ? "is-selected" : ""}">Secundaria</button></div>
+    </div>
+  </article>`;
+}
+
+function renderMediaLocalSignals(member, index, members) {
+  const orientation = member.width > member.height ? "Horizontal" : member.width < member.height ? "Vertical" : "Cuadrada";
+  const similarIndex = members.findIndex((candidate, candidateIndex) => candidateIndex !== index && perceptualHashDistance(member.perceptual_hash, candidate.perceptual_hash) <= 2);
+  const warnings = (member.warnings || []).map((warning) => `<span class="is-warning">${escapeHtml(formatPlainToken(warning))}</span>`);
+  return [`<span>${orientation}</span>`, similarIndex >= 0 ? `<span>Muy similar a foto ${similarIndex + 1}</span>` : "", ...warnings].filter(Boolean).join("");
+}
+
+function perceptualHashDistance(first, second) {
+  if (!first || !second) return Number.POSITIVE_INFINITY;
+  try {
+    let value = BigInt(`0x${first}`) ^ BigInt(`0x${second}`);
+    let distance = 0;
+    while (value) {
+      distance += Number(value & 1n);
+      value >>= 1n;
+    }
+    return distance;
+  } catch (_error) {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+function renderFavoriteEditor(role, draft) {
+  const isPrimary = role === "primary";
+  const assetId = isPrimary ? draft.primaryAssetId : draft.secondaryAssetId;
+  if (!assetId) return `<div class="media-favorite-empty">${isPrimary ? "Elegí una principal en las fotos, o indicá que ninguna sirve." : "La secundaria es opcional y sólo se usa cuando aporta otro ángulo o historia."}</div>`;
+  const memberIndex = state.media.current.members.findIndex((item) => item.id === assetId);
+  const shotType = isPrimary ? draft.primaryShotType : draft.secondaryShotType;
+  const reasons = isPrimary ? draft.primaryReasons : draft.secondaryReasons;
+  const campaignSlots = isPrimary ? draft.primaryCampaignSlots : draft.secondaryCampaignSlots;
+  const title = isPrimary ? "Principal" : "Secundaria";
+  return `<section class="media-favorite-editor">
+    <h3>${title} · Foto ${memberIndex + 1}</h3>
+    <label>Tipo de toma<select id="media-${role}-shot-type"><option value="">Dejar que Gemini sugiera</option>${Object.entries(mediaShotTypeLabels).map(([value, label]) => `<option value="${value}" ${shotType === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>
+    <fieldset><legend>¿Por qué la preferís? · opcional</legend><div class="media-check-grid">${renderMediaChecks(mediaSelectionReasonLabels, `media-${role}-reason`, reasons)}</div></fieldset>
+    <details><summary>¿Podría servir para el lanzamiento de Facebook?</summary><div class="media-check-grid media-campaign-checks">${renderMediaChecks(facebookLaunchLabels, `media-${role}-campaign`, campaignSlots)}</div></details>
+  </section>`;
+}
+
+function bindMediaWorkspaceControls() {
+  document.querySelectorAll("[data-media-favorite]").forEach((button) => button.addEventListener("click", () => {
+    captureMediaDraft();
+    const role = button.dataset.mediaFavorite;
+    const assetId = button.dataset.assetId;
+    if (role === "primary") {
+      state.media.draft.primaryAssetId = state.media.draft.primaryAssetId === assetId ? null : assetId;
+      if (!state.media.draft.primaryAssetId) {
+        state.media.draft.primaryShotType = null;
+        state.media.draft.primaryReasons = [];
+        state.media.draft.primaryCampaignSlots = [];
+        state.media.draft.secondaryAssetId = null;
+      } else {
+        state.media.draft.groupDecision = "keep";
+      }
+      if (state.media.draft.secondaryAssetId === assetId) {
+        state.media.draft.secondaryAssetId = null;
+        state.media.draft.secondaryShotType = null;
+        state.media.draft.secondaryReasons = [];
+        state.media.draft.secondaryCampaignSlots = [];
+      }
+    } else {
+      if (!state.media.draft.primaryAssetId) {
+        showToast("Elegí primero una foto principal.");
+        return;
+      }
+      if (state.media.draft.primaryAssetId === assetId) {
+        showToast("Esa foto ya es la principal.");
+        return;
+      }
+      state.media.draft.secondaryAssetId = state.media.draft.secondaryAssetId === assetId ? null : assetId;
+      if (!state.media.draft.secondaryAssetId) {
+        state.media.draft.secondaryShotType = null;
+        state.media.draft.secondaryReasons = [];
+        state.media.draft.secondaryCampaignSlots = [];
+      }
+    }
+    renderMediaWorkspace();
+  }));
+  document.querySelectorAll("[data-media-preview]").forEach((button) => button.addEventListener("click", () => {
+    const dialog = document.querySelector("#media-preview-dialog");
+    document.querySelector("#media-preview-image").src = button.dataset.mediaPreview;
+    document.querySelector("#media-preview-caption").textContent = button.dataset.mediaCaption;
+    dialog.showModal();
+  }));
+  document.querySelector("#close-media-preview").addEventListener("click", () => document.querySelector("#media-preview-dialog").close());
+  document.querySelector("#media-group-decision").addEventListener("change", (event) => {
+    captureMediaDraft();
+    state.media.draft.groupDecision = event.target.value;
+    if (event.target.value === "no_usable") {
+      state.media.draft.primaryAssetId = null;
+      state.media.draft.secondaryAssetId = null;
+      state.media.draft.primaryShotType = null;
+      state.media.draft.secondaryShotType = null;
+      state.media.draft.primaryReasons = [];
+      state.media.draft.secondaryReasons = [];
+      state.media.draft.primaryCampaignSlots = [];
+      state.media.draft.secondaryCampaignSlots = [];
+    }
+    renderMediaWorkspace();
+  });
+  document.querySelector("#save-media-curation").addEventListener("click", saveMediaCuration);
+  document.querySelector("#analyze-media-gemini").addEventListener("click", analyzeCurrentMediaWithGemini);
+  document.querySelector("#apply-gemini-media-tags")?.addEventListener("click", applyGeminiMediaTags);
+}
+
+function captureMediaDraft() {
+  const draft = state.media.draft;
+  draft.shotTypes = [...document.querySelectorAll('input[name="media-shot-type"]:checked')].map((item) => item.value);
+  draft.contentPillars = [...document.querySelectorAll('input[name="media-pillar"]:checked')].map((item) => item.value);
+  draft.subjectTags = [...document.querySelectorAll('input[name="media-subject"]:checked')].map((item) => item.value);
+  draft.groupDecision = document.querySelector("#media-group-decision")?.value || draft.groupDecision || "keep";
+  draft.primaryShotType = document.querySelector("#media-primary-shot-type")?.value || null;
+  draft.secondaryShotType = document.querySelector("#media-secondary-shot-type")?.value || null;
+  draft.primaryReasons = [...document.querySelectorAll('input[name="media-primary-reason"]:checked')].map((item) => item.value);
+  draft.secondaryReasons = [...document.querySelectorAll('input[name="media-secondary-reason"]:checked')].map((item) => item.value);
+  draft.primaryCampaignSlots = [...document.querySelectorAll('input[name="media-primary-campaign"]:checked')].map((item) => item.value);
+  draft.secondaryCampaignSlots = [...document.querySelectorAll('input[name="media-secondary-campaign"]:checked')].map((item) => item.value);
+  [draft.primaryShotType, draft.secondaryShotType].filter(Boolean).forEach((value) => {
+    if (!draft.shotTypes.includes(value)) draft.shotTypes.push(value);
+  });
+  draft.note = document.querySelector("#media-curation-note")?.value || "";
+}
+
+async function saveMediaCuration() {
+  captureMediaDraft();
+  const draft = state.media.draft;
+  if (draft.groupDecision === "keep" && !draft.primaryAssetId) {
+    showToast("Elegí una principal o indicá otra decisión para el grupo.");
+    return;
+  }
+  try {
+    const curation = await api(`/api/media/clusters/${encodeURIComponent(state.media.current.id)}/curation`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        shot_types: draft.shotTypes,
+        content_pillars: draft.contentPillars,
+        subject_tags: draft.subjectTags,
+        group_decision: draft.groupDecision,
+        primary_asset_id: draft.primaryAssetId,
+        primary_shot_type: draft.primaryShotType,
+        primary_reasons: draft.primaryReasons,
+        primary_campaign_slots: draft.primaryCampaignSlots,
+        secondary_asset_id: draft.secondaryAssetId,
+        secondary_shot_type: draft.secondaryAssetId ? draft.secondaryShotType : null,
+        secondary_reasons: draft.secondaryAssetId ? draft.secondaryReasons : [],
+        secondary_campaign_slots: draft.secondaryAssetId ? draft.secondaryCampaignSlots : [],
+        note: draft.note || null,
+      }),
+    });
+    state.media.current.curation = curation;
+    state.media.clusters = state.media.clusters.map((item) => item.id === state.media.current.id ? state.media.current : item);
+    state.media.draft = mediaDraftFromCluster(state.media.current);
+    showToast("Curaduría guardada en la biblioteca");
+    renderMediaClusterStrip();
+    renderMediaWorkspace();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function analyzeCurrentMediaWithGemini() {
+  captureMediaDraft();
+  const draft = state.media.draft;
+  if (!window.confirm("Confirmá que revisaste el grupo y no contiene personas sin autorización ni datos sensibles. Se enviarán a Gemini sólo copias reducidas sin EXIF; los originales permanecerán locales. ¿Continuar?")) return;
+  const button = document.querySelector("#analyze-media-gemini");
+  const result = document.querySelector("#media-gemini-result");
+  button.disabled = true;
+  result.innerHTML = loadingMarkup("Gemini está comparando las fotos según tu objetivo");
+  refreshIcons();
+  try {
+    const stored = await api(`/api/media/clusters/${encodeURIComponent(state.media.current.id)}/gemini`, {
+      method: "POST",
+      body: JSON.stringify({
+        shot_types: draft.shotTypes,
+        content_pillars: draft.contentPillars,
+        subject_tags: draft.subjectTags,
+        campaign_slots: [...new Set([...draft.primaryCampaignSlots, ...draft.secondaryCampaignSlots])],
+        context: draft.note || null,
+        confirm_external_processing: true,
+        confirm_privacy_review: true,
+      }),
+    });
+    state.media.current.gemini_analysis = stored;
+    state.media.clusters = state.media.clusters.map((item) => item.id === state.media.current.id ? state.media.current : item);
+    showToast("Análisis de Gemini recibido");
+    renderMediaWorkspace();
+  } catch (error) {
+    result.innerHTML = errorMarkup(error.message);
+  } finally {
+    button.disabled = false;
+    refreshIcons();
+  }
+}
+
+function renderGeminiMediaResult(stored) {
+  const output = stored?.result;
+  const analysis = output?.analysis;
+  if (!analysis) return '<div class="gemini-empty"><i data-lucide="sparkles"></i><p>Gemini todavía no analizó este grupo.</p></div>';
+  const validation = output.semantic_validation;
+  const validationErrors = (validation?.errors || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  const favorites = (analysis.favoritos_por_intencion || []).map((item) => `<li><strong>${escapeHtml(formatPlainToken(item.prioridad))}: ${escapeHtml(item.archivo)}</strong><span>${escapeHtml(mediaIntentLabels[item.intencion] || item.intencion)} · ${escapeHtml(item.motivo)}</span></li>`).join("");
+  const risks = (analysis.riesgos || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  const claims = (analysis.afirmaciones_que_requieren_verificacion || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  const suggestions = analysis.etiquetas_sugeridas || {};
+  const suggestedLabels = [...(suggestions.tipos_de_toma || []), ...(suggestions.temas || []), ...(suggestions.pilares || [])];
+  const tagMarkup = suggestedLabels.map((value) => `<span>${escapeHtml(mediaShotTypeLabels[value] || mediaSubjectTagLabels[value] || mediaContentPillarLabels[value] || formatPlainToken(value))}</span>`).join("");
+  const ranking = (analysis.ranking || []).map((item) => `<li><strong>${escapeHtml(item.archivo)} · ${escapeHtml(String(item.puntaje_1_a_5))}/5</strong><span>${escapeHtml(item.motivo)}</span>${item.problemas_visibles?.length ? `<small>${escapeHtml(item.problemas_visibles.join(" · "))}</small>` : ""}</li>`).join("");
+  const differences = (analysis.diferencias_decisivas || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  const validationWarning = validation && !validation.valid ? `<div class="media-gemini-warning"><strong>Resultado no aplicable automáticamente</strong><ul>${validationErrors}</ul></div>` : "";
+  const canApplySuggestions = validation?.valid === true;
+  return `<article class="gemini-result-card"><div class="section-heading-row"><div><p class="eyebrow">Sugerencia externa</p><h2>Análisis de Gemini</h2></div><span class="information-badge">Requiere revisión</span></div>${validationWarning}<p>${escapeHtml(analysis.resumen_de_la_escena || "Comparación completada")}</p>${analysis.sin_candidata_adecuada ? '<p class="media-gemini-warning">Gemini no encontró una candidata suficientemente adecuada.</p>' : ""}${favorites ? `<ol>${favorites}</ol>` : ""}${tagMarkup ? `<div class="gemini-suggested-tags">${tagMarkup}</div>${canApplySuggestions ? '<button class="secondary-button" id="apply-gemini-media-tags" type="button">Agregar etiquetas sugeridas</button>' : ""}` : ""}${ranking ? `<details><summary>Ver comparación técnica y editorial</summary><ol>${ranking}</ol></details>` : ""}${differences ? `<details><summary>Diferencias decisivas</summary><ul>${differences}</ul></details>` : ""}${risks ? `<details><summary>Riesgos sugeridos</summary><ul>${risks}</ul></details>` : ""}${claims ? `<details><summary>Afirmaciones que necesitan verificación</summary><ul>${claims}</ul></details>` : ""}<p class="media-help">Gemini aporta lectura visual. Vos confirmás el contexto, la selección y cualquier afirmación pública.</p></article>`;
+}
+
+function applyGeminiMediaTags() {
+  captureMediaDraft();
+  if (state.media.current.gemini_analysis?.result?.semantic_validation?.valid !== true) {
+    showToast("Este resultado no superó la validación y no puede aplicar etiquetas.");
+    return;
+  }
+  const suggestions = state.media.current.gemini_analysis?.result?.analysis?.etiquetas_sugeridas || {};
+  state.media.draft.shotTypes = [...new Set([...state.media.draft.shotTypes, ...(suggestions.tipos_de_toma || [])])];
+  state.media.draft.subjectTags = [...new Set([...state.media.draft.subjectTags, ...(suggestions.temas || [])])];
+  state.media.draft.contentPillars = [...new Set([...state.media.draft.contentPillars, ...(suggestions.pilares || [])])];
+  showToast("Etiquetas de Gemini agregadas como borrador");
+  renderMediaWorkspace();
 }
 
 function bindOperationsControls() {
@@ -1437,12 +2408,20 @@ async function checkConnection() {
   const status = document.querySelector("#connection-status");
   const label = document.querySelector("#connection-label");
   try {
-    await api("/api/health");
+    const [, options] = await Promise.all([api("/api/health"), api("/api/connection-options")]);
+    state.connection = {
+      mode: options.mode,
+      lanUrl: options.lan_url,
+      internetUrl: options.internet_url,
+    };
     status.className = "connection is-online";
-    label.textContent = "En red";
+    label.textContent = options.mode === "lan" ? "LAN" : options.mode === "internet" ? "Internet" : "En red";
+    status.title = options.mode === "lan" ? "Conexión directa por red local" : options.mode === "internet" ? "Conexión remota mediante Cloudflare" : "Conexión activa";
+    renderConnectionSelector();
   } catch (_error) {
     status.className = "connection is-offline";
     label.textContent = "Sin conexión";
+    renderConnectionSelector();
   }
 }
 

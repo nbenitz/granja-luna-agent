@@ -42,8 +42,14 @@ y mejorar las líneas puras.
 
 - Pollitos caseros de distintas edades, entre ellas una semana, diez días y un mes.
 - Pollitos Brahma de distintas edades.
+- Gallos caseros jóvenes o adultos, según disponibilidad.
 
 La edad, cantidad, precio y disponibilidad deben verificarse antes de cada comunicación comercial.
+
+La comunicación inicial puede apoyarse en la cercanía con familias y amantes de los animales, pero
+debe construir desde el comienzo una imagen compatible con una futura empresa productora de huevos,
+pollitos, aves de doble propósito, parrilleros en evaluación y razas ornamentales. Cercanía y
+profesionalismo no son etapas excluyentes.
 
 ## Programa de selección y crecimiento
 

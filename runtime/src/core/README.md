@@ -23,6 +23,7 @@ El CLI, una futura API, una app web o una integracion con el Asistente Personal 
 | `review_log.py` | Eventos append-only de correcciones, decisiones y diffs humanos. |
 | `summary.py` | Formato humano resumido para CLI u otras superficies simples. |
 | `case_review.py` | Carga, resumen y persistencia JSONL de feedback humano sobre casos importados. |
+| `media_library.py` | Inventario SQLite privado, metadatos, huellas y grupos preliminares de medios. |
 
 ## Evaluacion
 

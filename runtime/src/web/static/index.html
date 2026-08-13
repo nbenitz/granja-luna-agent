@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#070b10" />
     <title>Granja Luna</title>
+    <link rel="manifest" href="/static/manifest.webmanifest" crossorigin="use-credentials" />
+    <link rel="icon" href="/static/pwa-icon-192.png" />
+    <link rel="apple-touch-icon" href="/static/pwa-icon-192.png" />
     <link rel="stylesheet" href="/static/styles.css" />
     <script src="/static/vendor/lucide.min.js" defer></script>
     <script src="/static/app.js" defer></script>
@@ -220,6 +223,146 @@
             <div id="farm-pending-list" class="operation-list"></div>
           </section>
         </section>
+
+        <section class="view" id="view-media" data-view="media" hidden>
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">Marca y comunidad</p>
+              <h1>Contenido</h1>
+            </div>
+            <button class="icon-button" id="refresh-media" type="button" title="Actualizar biblioteca">
+              <i data-lucide="refresh-cw"></i>
+              <span class="sr-only">Actualizar biblioteca</span>
+            </button>
+          </div>
+
+          <section class="upload-connection-card" id="upload-connection-card" aria-labelledby="upload-connection-title">
+            <div class="upload-connection-copy">
+              <span class="upload-connection-icon" aria-hidden="true"><i data-lucide="route"></i></span>
+              <div>
+                <strong id="upload-connection-title">Conexión para cargas</strong>
+                <span id="upload-connection-description">Detectando la ruta actual…</span>
+              </div>
+            </div>
+            <div class="connection-switch" aria-label="Elegir conexión">
+              <button id="connection-use-lan" type="button" data-connection-mode="lan" aria-pressed="false">LAN rápida</button>
+              <button id="connection-use-internet" type="button" data-connection-mode="internet" aria-pressed="false">Internet</button>
+            </div>
+            <p id="upload-connection-note">Usá LAN para videos cuando el teléfono esté conectado al Wi-Fi de esta PC.</p>
+          </section>
+
+          <details class="content-tool-panel media-upload-panel" open>
+            <summary>
+              <span><i data-lucide="upload-cloud"></i><span><strong>Subir material</strong><small>Fotos y videos desde este dispositivo</small></span></span>
+              <i class="summary-chevron" data-lucide="chevron-down"></i>
+            </summary>
+            <form id="media-upload-form" class="content-tool-body">
+              <input id="media-upload-input" class="sr-only" type="file" accept=".jpg,.jpeg,.mp4,image/jpeg,video/mp4" multiple />
+              <label class="media-file-picker" for="media-upload-input">
+                <i data-lucide="images"></i>
+                <span><strong>Elegir fotos o videos</strong><small>Selección múltiple · JPG o MP4</small></span>
+              </label>
+              <label class="content-field" for="media-upload-context">Contexto compartido · opcional
+                <textarea id="media-upload-context" rows="3" maxlength="4000" placeholder="Ej.: pollitos en el criadero durante una mañana fría; revisar para un próximo reel."></textarea>
+              </label>
+              <div id="media-upload-queue" class="media-upload-queue" aria-live="polite"></div>
+              <div id="media-upload-progress" class="media-upload-progress" hidden>
+                <div><span id="media-upload-progress-label">Preparando carga…</span><strong id="media-upload-progress-value">0%</strong></div>
+                <progress id="media-upload-progress-bar" max="100" value="0"></progress>
+              </div>
+              <button class="primary-button content-wide-button" id="media-upload-submit" type="submit" disabled>
+                <i data-lucide="upload"></i> Guardar en la biblioteca
+              </button>
+              <p class="content-local-note"><i data-lucide="hard-drive"></i> Se guarda localmente. No se envía a Gemini ni se publica automáticamente.</p>
+            </form>
+            <div id="media-upload-receipt" aria-live="polite"></div>
+            <div id="media-recent-uploads" class="media-recent-uploads"></div>
+          </details>
+
+          <details class="content-tool-panel content-drafts-panel" open>
+            <summary>
+              <span><i data-lucide="film"></i><span><strong>Borradores para revisar</strong><small>Reproducción privada desde esta instalación</small></span></span>
+              <i class="summary-chevron" data-lucide="chevron-down"></i>
+            </summary>
+            <div class="content-tool-body">
+              <div id="content-draft-list" class="content-draft-list" aria-live="polite"></div>
+              <p class="content-local-note"><i data-lucide="shield-check"></i> Sólo se muestran derivados del Estudio. Por Internet se aplica Cloudflare Access; por LAN, el acceso depende de tu red Wi‑Fi mientras no exista un inicio de sesión propio.</p>
+            </div>
+          </details>
+
+          <details class="content-tool-panel content-studio-panel">
+            <summary>
+              <span><i data-lucide="sparkles"></i><span><strong>Estudio de contenido</strong><small>Solicitudes trazables para trabajar con el agente</small></span></span>
+              <i class="summary-chevron" data-lucide="chevron-down"></i>
+            </summary>
+            <div class="content-tool-body">
+              <div class="content-studio-intro">
+                <span class="information-badge">Piloto supervisado</span>
+                <p>Describí la pieza que querés crear y vinculá el material. Hoy la app organiza la solicitud y sus faltantes; la producción compleja sigue supervisada en Codex.</p>
+              </div>
+              <form id="content-request-form" class="content-request-form">
+                <label class="content-field" for="content-request-instruction">¿Qué querés preparar?
+                  <textarea id="content-request-instruction" rows="4" maxlength="12000" required placeholder="Ej.: Prepará un reel que muestre cómo cuidamos a los pollitos en los días fríos."></textarea>
+                </label>
+                <div class="content-request-grid">
+                  <label class="content-field">Tipo
+                    <select id="content-request-type">
+                      <option value="por_definir">Por definir</option>
+                      <option value="reel">Reel</option>
+                      <option value="historia">Historia</option>
+                      <option value="publicacion">Publicación</option>
+                      <option value="carrusel">Carrusel</option>
+                      <option value="respuesta">Respuesta</option>
+                      <option value="campana">Campaña</option>
+                    </select>
+                  </label>
+                  <label class="content-field">Canal
+                    <select id="content-request-channel">
+                      <option value="">Por definir</option>
+                      <option value="facebook">Facebook</option>
+                      <option value="instagram">Instagram</option>
+                      <option value="whatsapp">WhatsApp</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </label>
+                </div>
+                <label class="content-field">Material vinculado
+                  <select id="content-request-media"><option value="">Sin tanda vinculada</option></select>
+                </label>
+                <details class="content-request-context">
+                  <summary>Agregar objetivo, audiencia y contexto</summary>
+                  <div class="content-request-context-grid">
+                    <label class="content-field">Objetivo<input id="content-request-objective" maxlength="1000" placeholder="Ej.: generar interés y confianza" /></label>
+                    <label class="content-field">Audiencia<input id="content-request-audience" maxlength="1000" placeholder="Ej.: familias amantes de los animales" /></label>
+                    <label class="content-field">Estado de lo contado
+                      <select id="content-request-stage">
+                        <option value="desconocido">Por definir</option>
+                        <option value="actual">Actual</option>
+                        <option value="prueba">Prueba</option>
+                        <option value="aspiracion">Aspiración</option>
+                        <option value="futuro">Futuro</option>
+                      </select>
+                    </label>
+                    <label class="content-field">Llamada a la acción<input id="content-request-cta" maxlength="1000" placeholder="Opcional" /></label>
+                  </div>
+                </details>
+                <button class="primary-button content-wide-button" id="content-request-submit" type="submit">
+                  <i data-lucide="wand-sparkles"></i> Crear solicitud
+                </button>
+              </form>
+              <div id="content-request-result" aria-live="polite"></div>
+              <div id="content-request-list" class="content-request-list"></div>
+            </div>
+          </details>
+
+          <div class="media-privacy-note">
+            <i data-lucide="shield-check"></i>
+            <p><strong>Tu contexto primero.</strong> Las vistas y señales locales no salen del equipo. Gemini sólo revisa calidad, encuadre y usos cuando presionás el botón y confirmás el envío.</p>
+          </div>
+          <div class="content-section-heading"><div><p class="eyebrow">Biblioteca</p><h2>Curaduría existente</h2></div></div>
+          <div class="media-cluster-strip" id="media-cluster-list" aria-label="Grupos de fotos"></div>
+          <div id="media-curation-workspace" aria-live="polite"></div>
+        </section>
       </main>
 
       <nav class="app-nav" aria-label="Navegación principal">
@@ -241,6 +384,10 @@
         <button class="nav-button" type="button" data-target="operations">
           <i data-lucide="egg"></i>
           <span>Cría</span>
+        </button>
+        <button class="nav-button" type="button" data-target="media">
+          <i data-lucide="images"></i>
+          <span>Contenido</span>
         </button>
       </nav>
     </div>

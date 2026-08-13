@@ -25,6 +25,15 @@ Esto significa:
 
 Un framework como Microsoft Agent Framework, LangGraph, OpenAI Agents SDK u otro puede incorporarse despues como adaptador o runtime si resuelve un problema real mejor que el core propio.
 
+Esta decisión aplica al core de dominio de Granja Luna. La plataforma superior
+`personal-agent-platform` ya usa un `CrewAI Flow` acotado para intake y política, sin entregar a
+CrewAI las reglas ni los datos internos de Granja Luna. El patrón deseado no es una migración total,
+sino utilizar frameworks como capa reemplazable de coordinación alrededor de contratos propios.
+
+Marca y Comunidad podrá convertirse en otro Flow cuando existan artefactos, transiciones y
+evaluaciones repetidas. Sus roles de Estratega, Creador, Guardián y Analista no deben convertirse en
+procesos autónomos antes de demostrar que esa separación mejora calidad, costo o trazabilidad.
+
 ## Criterios para adoptar un framework
 
 Adoptar un framework solo si cumple al menos una de estas condiciones:

@@ -43,6 +43,11 @@ venv/
 # Runtime local state
 runtime/state/*.jsonl
 runtime/state/*.json
+runtime/state/*.sqlite
+runtime/state/*.sqlite3
+runtime/state/*.sqlite3-shm
+runtime/state/*.sqlite3-wal
+runtime/state/*/
 !runtime/state/README.md
 !runtime/state/.gitkeep
 

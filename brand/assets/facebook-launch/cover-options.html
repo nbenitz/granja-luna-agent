@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Opciones de portada — Granja Luna</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f5f0e6; color: #17233b; font-family: "Noto Sans", Arial, sans-serif; }
+      main { width: 1200px; min-height: 1180px; padding: 42px 52px; }
+      h1 { margin: 0; font-size: 42px; }
+      .intro { margin: 8px 0 26px; color: #68734a; font-size: 18px; }
+      .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+      article { overflow: hidden; background: #fff; border: 1px solid #ded8cc; border-radius: 20px; box-shadow: 0 8px 22px rgba(23,35,59,.07); }
+      .photo { position: relative; }
+      .photo > img.cover { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+      .avatar { position: absolute; left: 18px; bottom: -30px; width: 78px; height: 78px; border: 4px solid #fff; border-radius: 50%; }
+      .copy { padding: 44px 22px 22px; }
+      .tag { display: inline-block; margin-bottom: 8px; color: #a66a3f; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      h2 { margin: 0 0 8px; font-size: 24px; }
+      p { margin: 0; color: #667085; font-size: 17px; line-height: 1.4; }
+      .recommended { color: #376957; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>¿Qué debe contar la portada?</h1>
+      <p class="intro">Comparación con el recorte y la superposición aproximada de la foto de perfil.</p>
+      <section class="grid">
+        <article>
+          <div class="photo">
+            <img class="cover" src="../../../media/selected/facebook-launch/01-facebook-cover-grupo-18.jpg" alt="Portada original">
+            <img class="avatar" src="profile-logo-v1.png" alt="Logo Granja Luna">
+          </div>
+          <div class="copy"><span class="tag">Opción A</span><h2>Original del grupo 18</h2><p>La composición más fuerte, con elementos temporales visibles en el fondo y el suelo.</p></div>
+        </article>
+        <article>
+          <div class="photo">
+            <img class="cover" src="../../../media/selected/facebook-launch/01a-facebook-cover-grupo-18-limpieza-ia.jpg" alt="Portada con limpieza mínima">
+            <img class="avatar" src="profile-logo-v1.png" alt="Logo Granja Luna">
+          </div>
+          <div class="copy"><span class="tag">Opción B · Documental</span><h2>Limpieza mínima</h2><p>Más clara y todavía auténtica; queda registrada como retoque con IA.</p></div>
+        </article>
+        <article>
+          <div class="photo">
+            <img class="cover" src="../../../media/selected/facebook-launch/01b-facebook-cover-caseras-grupo-11.jpg" alt="Gallinas caseras en la chacra">
+            <img class="avatar" src="profile-logo-v1.png" alt="Logo Granja Luna">
+          </div>
+          <div class="copy"><span class="tag">Opción C · Producto actual</span><h2>Caseras en la chacra</h2><p>Mejor alineada con la oferta, pero las aves se ven pequeñas y las ramas dominan.</p></div>
+        </article>
+        <article>
+          <div class="photo">
+            <img class="cover" src="../../../media/selected/facebook-launch/01d-facebook-cover-grupo-18-pastura-composicion-ia.jpg" alt="Plantel del grupo 18 en pastura">
+            <img class="avatar" src="profile-logo-v1.png" alt="Logo Granja Luna">
+          </div>
+          <div class="copy"><span class="tag recommended">Opción D · Recomendada editorial</span><h2>Plantel en pastura</h2><p>La lectura más clara de aves y naturaleza; es una composición generativa registrada.</p></div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

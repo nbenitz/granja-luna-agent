@@ -11,14 +11,17 @@ La prioridad inmediata no es construir una plataforma universal, sino lograr un 
 ## Repositorios
 
 ```text
-personal-agent-orchestrator/
+personal-agent-platform/
   Coordina dominios, decide a qué subagente llamar y mantiene contratos globales.
 
 granja-luna-agent/
   Este repo. Caso piloto, memoria, reglas, workflows y runtime de Granja Luna.
 
-career-agent/
-  Subagente profesional/carrera, basado en el actual repo de carrera.
+nestor-career-repo/
+  Dominio profesional/carrera y conocimiento especializado.
+
+revelo/
+  Dominios, proyectos y tareas de Revelo.
 
 agentic-erp-core/
   Futuro posible. Core generico extraido solo despues de validar patrones reales en Granja Luna.
@@ -128,6 +131,10 @@ El LLM decide, interpreta y propone. El código valida, persiste y audita.
 El core inicial debe ser framework-agnostic.
 
 Frameworks como Microsoft Agent Framework, LangGraph, OpenAI Agents SDK u otros pueden evaluarse mas adelante, pero no deben definir la arquitectura hasta demostrar valor real frente a necesidades de Granja Luna.
+
+El orquestador global ya utiliza un `CrewAI Flow` acotado para intake y política. Esto no cambia la
+regla: el core de Granja Luna conserva contratos, validaciones y datos propios; CrewAI es una capa
+reemplazable de coordinación.
 
 La estrategia detallada vive en `docs/framework-strategy.md`.
 

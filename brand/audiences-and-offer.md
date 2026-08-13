@@ -33,6 +33,14 @@ Estas audiencias son hipótesis de marketing y deben validarse con consultas, ve
 
 - Pollitos caseros, sujetos a edad y disponibilidad.
 - Pollitos Brahma, sujetos a edad y disponibilidad.
+- Gallos caseros jóvenes o adultos, sujetos a disponibilidad y características verificadas.
+
+## Evolución de audiencias
+
+La primera comunicación prioriza familias, amantes de animales y criadores pequeños. A medida que
+exista evidencia productiva, la marca debe poder incorporar compradores de huevos, pollonas,
+reproductores, aves de doble propósito y clientes de una operación avícola de mayor escala, sin
+abandonar el relato de cuidado, aprendizaje y vida real que origina la confianza.
 
 ## Oferta futura, no disponible todavía
 

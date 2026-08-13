@@ -10,6 +10,7 @@ Este registro define qué puede afirmar el agente y qué requiere evidencia o ap
 - La finca tiene seis hectáreas.
 - La granja cría Rhode Island Red, Plymouth Rock Barred, Brahma y distintas líneas caseras.
 - Actualmente se venden pollitos caseros y Brahma de diferentes edades.
+- Se ofrecen gallos caseros jóvenes o adultos cuando existe disponibilidad confirmada.
 - Granja Luna trabaja en la producción de híbridos Black Star para futuras ponedoras propias.
 - El proyecto busca crecer primero a 500–600 ponedoras y evaluar luego nuevas escalas.
 - El FVH es un proyecto en planificación a mediano plazo.

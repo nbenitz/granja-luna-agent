@@ -1,6 +1,6 @@
 # Kit de lanzamiento — Facebook
 
-Estado: `draft`
+Estado: `pending_review`
 
 ## Objetivo de la primera etapa
 
@@ -37,18 +37,21 @@ principal cuando exista un número comercial, horario y protocolo de atención d
 
 ## Imagen de perfil
 
-Usar un símbolo simple y legible en tamaño pequeño. Hasta aprobar el logo definitivo, se puede usar
-una versión provisional tipográfica de “Granja Luna” sobre fondo noche lunar, claramente registrada
-como temporal.
+Se preparó un símbolo provisional de luna y pollito, simple y legible en tamaño pequeño. El maestro
+vectorial y la exportación para Facebook viven en `brand/assets/facebook-launch/`. Debe aprobarse
+antes de subirlo y no se considera todavía la identidad definitiva.
 
 ## Portada
 
-La portada debe usar una fotografía horizontal real de Granja Luna con espacio libre para texto. El
-mensaje inicial propuesto es:
+Se comparan la fotografía original del plantel de Plymouth Rock Barred, una limpieza generativa
+mínima, una alternativa real con gallinas caseras y una composición editorial del plantel sobre
+un sector real de pastura. `brand/facebook-cover-options.md` conserva los criterios y la
+procedencia. La ausencia de texto evita problemas de recorte, no duplica el nombre visible de la
+página y permite conservar la imagen al cambiar campañas. No colocar precios ni productos
+temporales en la portada.
 
-> Pollitos, gallinas y una granja que aprende cada día.
-
-No colocar precios ni productos temporales en la portada para evitar que quede desactualizada.
+La selección, los primeros textos y el orden de publicación están en
+`brand/facebook-launch-ready.md`.
 
 ## Seguridad de la cuenta
 
@@ -63,6 +66,6 @@ No colocar precios ni productos temporales en la portada para evitar que quede d
 - Confirmar nombre de usuario disponible.
 - Definir medio oficial de contacto.
 - Definir horario de respuesta.
-- Aprobar foto de perfil provisional o logo.
-- Seleccionar portada real.
+- Aprobar el logo provisional preparado.
+- Elegir y aprobar una de las portadas comparadas.
 - Aprobar las primeras seis publicaciones.

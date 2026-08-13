@@ -173,17 +173,50 @@ class WebAppTests(unittest.TestCase):
         self.assertEqual(index.status_code, 200)
         self.assertIn("Granja Luna", index.text)
         self.assertIn("viewport-fit=cover", index.text)
+        self.assertIn('rel="manifest"', index.text)
+        self.assertIn('crossorigin="use-credentials"', index.text)
         self.assertIn("default-src 'self'", index.headers["content-security-policy"])
         self.assertEqual(index.headers["permissions-policy"], "microphone=(self)")
         self.assertEqual(index.headers["cache-control"], "no-store")
+        manifest = self.client.get("/static/manifest.webmanifest")
+        self.assertEqual(manifest.status_code, 200)
+        self.assertEqual(manifest.json()["display"], "standalone")
+        worker = self.client.get("/service-worker.js")
+        self.assertEqual(worker.status_code, 200)
+        self.assertEqual(worker.headers["service-worker-allowed"], "/")
+        lan_options = self.client.get(
+            "/api/connection-options", headers={"Host": "192.168.18.15:8011"}
+        )
+        self.assertEqual(lan_options.status_code, 200)
+        self.assertEqual(lan_options.json()["mode"], "lan")
+        self.assertEqual(lan_options.json()["lan_url"], "http://192.168.18.15:8011")
+        internet_options = self.client.get(
+            "/api/connection-options", headers={"Host": "granja.nodaluna.com"}
+        )
+        self.assertEqual(internet_options.json()["mode"], "internet")
+        self.assertEqual(
+            internet_options.json()["internet_url"], "https://granja.nodaluna.com"
+        )
         self.assertEqual(self.client.get("/api/inbox/no-existe").status_code, 404)
 
     def test_mobile_navigation_has_one_column_per_destination(self) -> None:
         index = self.client.get("/")
         styles = self.client.get("/static/styles.css")
+        script = self.client.get("/static/app.js")
 
-        self.assertEqual(index.text.count('class="nav-button'), 4)
-        self.assertIn("grid-template-columns: repeat(4, minmax(0, 1fr));", styles.text)
+        self.assertEqual(index.text.count('class="nav-button'), 5)
+        self.assertIn("grid-template-columns: repeat(5, minmax(0, 1fr));", styles.text)
+        self.assertIn('data-target="media"', index.text)
+        self.assertIn("Analizar con Gemini", script.text)
+        self.assertIn('id="media-upload-input"', index.text)
+        self.assertIn('id="content-request-form"', index.text)
+        self.assertIn('id="connection-use-lan"', index.text)
+        self.assertIn('id="connection-use-internet"', index.text)
+        self.assertIn("uploadMediaFile", script.text)
+        self.assertIn("switchConnection", script.text)
+        self.assertIn("startResumeMediaUpload", script.text)
+        self.assertIn("Reanudar archivos pendientes", script.text)
+        self.assertIn("Estudio de contenido", index.text)
 
 
 if __name__ == "__main__":

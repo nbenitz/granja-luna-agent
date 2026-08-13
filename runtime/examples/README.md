@@ -8,6 +8,10 @@ Estado: `draft`
 
 `case-review-feedback.jsonl` es el archivo append-only donde el CLI de revision guarda el feedback humano. Puede no existir hasta la primera revision.
 
+`media-curation-cases.json` conserva las elecciones humanas confirmadas para calibrar selección de
+fotos y video. Una etiqueta representa una preferencia editorial dentro de un objetivo concreto; no
+confirma salud, bienestar, distancia física ni cumplimiento de una norma a partir de una imagen.
+
 Cada caso define:
 
 - mensaje de entrada;

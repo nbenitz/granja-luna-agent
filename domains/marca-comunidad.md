@@ -8,6 +8,10 @@ Construir una presencia pública auténtica para Granja Luna que ayude a consegu
 documentar el proyecto y formar una comunidad educativa, sin inventar resultados ni exponer datos
 privados.
 
+La función se denomina **Agente de Marca y Comunidad** y se presenta dentro de
+`Contenido` → `Estudio de contenido`. Continúa como dominio interno de Granja Luna, no como otro
+repositorio. Su modelo operativo y de crecimiento vive en `brand/social-media-operating-model.md`.
+
 ## Responsabilidades
 
 - Consultar los documentos curados de `brand/`.
@@ -73,5 +77,17 @@ del workflow; no necesitan ejecutarse como tres procesos o agentes separados en 
 
 ## Salida inicial
 
-El MVP sólo produce propuestas revisables. La publicación real permanece deshabilitada hasta contar
-con cuentas oficiales, herramientas, auditoría y aprobación humana verificable.
+El MVP produce propuestas revisables. La página oficial de Facebook ya está activa y permite
+publicar o programar únicamente después de una aprobación humana verificable. El agente no obtiene
+autonomía de publicación por la existencia de la cuenta ni por aprobaciones anteriores.
+
+Después de publicar, cada pieza debe conservar una instantánea de métricas, un diagnóstico y una
+hipótesis comprobable para la siguiente pieza. Los informes viven en `brand/reports/` y no deben
+confundir visualizaciones, alcance, interacción y resultados comerciales.
+
+## Biblioteca de medios
+
+El plan confirmado para incorporar carga, curaduría y selección de fotos y videos dentro de la
+aplicación existente se documenta en `docs/content-media-library-plan.md`. Los binarios no se
+versionan ni se guardan en ChromaDB; el análisis asistido conserva supervisión humana y debe cumplir
+`brand/photo-and-ai-policy.md` y `brand/privacy-boundaries.md`.

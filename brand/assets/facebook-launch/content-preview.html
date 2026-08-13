@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Primeros contenidos — Granja Luna</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #f5f0e6;
+        color: #17233b;
+        font-family: "Noto Sans", Arial, sans-serif;
+      }
+      main { width: 1200px; min-height: 900px; padding: 44px 52px; }
+      h1 { margin: 0; font-size: 42px; }
+      .intro { margin: 8px 0 28px; color: #68734a; font-size: 18px; }
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+      article {
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid #ded8cc;
+        border-radius: 20px;
+        box-shadow: 0 8px 22px rgba(23, 35, 59, 0.07);
+      }
+      article img { width: 100%; height: 250px; display: block; object-fit: cover; }
+      article div { padding: 18px 20px 20px; }
+      h2 { margin: 0 0 8px; font-size: 22px; }
+      p { margin: 0; color: #667085; line-height: 1.4; }
+      .wide { grid-column: span 2; }
+      .wide img { height: 275px; }
+      .tag {
+        display: inline-block;
+        margin-bottom: 10px;
+        color: #a66a3f;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Primera semana de Granja Luna</h1>
+      <p class="intro">Selección editorial real · textos completos en facebook-launch-ready.md</p>
+      <section class="grid">
+        <article class="wide">
+          <img src="../../../media/selected/facebook-launch/05-post-pastoreo-chacra.jpg" alt="Aves pastoreando en la chacra">
+          <div><span class="tag">Publicación 1</span><h2>Bienvenida</h2><p>La vida real de la granja y una invitación a acompañar el proyecto.</p></div>
+        </article>
+        <article>
+          <img src="../../../media/selected/facebook-launch/02-post-brahma-favorita.jpg" alt="Gallina Brahma favorita">
+          <div><span class="tag">Publicación 2</span><h2>La favorita</h2><p>Cercanía, personalidad y conversación con la comunidad.</p></div>
+        </article>
+        <article>
+          <img src="../../../media/selected/facebook-launch/03-post-primer-huevo.jpg" alt="Primer huevo del plantel de barradas">
+          <div><span class="tag">Publicación 3</span><h2>Primer huevo</h2><p>Un hito pequeño que cuenta el proceso completo.</p></div>
+        </article>
+        <article>
+          <img src="../../../media/selected/facebook-launch/04-post-nidal.jpg" alt="Gallinas conociendo el nidal">
+          <div><span class="tag">Publicación 4</span><h2>Conociendo el nidal</h2><p>Trabajo cotidiano, observación y mejora progresiva.</p></div>
+        </article>
+        <article>
+          <img src="video-pollitos-preview.jpg" alt="Pollitos explorando el pasto">
+          <div><span class="tag">Video 1</span><h2>Pollitos en el pasto</h2><p>19,5 segundos, H.264, sin audio y sin ubicación.</p></div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

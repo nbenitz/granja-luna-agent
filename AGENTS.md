@@ -22,6 +22,10 @@ Leer, como mínimo:
 5. `config/risk-levels.md`
 6. El archivo de dominio relacionado con la tarea.
 
+Si la tarea toca la arquitectura global o el trabajo actual de redes sociales, leer además
+`docs/session-handoff-2026-08-10.md`, que enlaza las fuentes canónicas y el siguiente punto de
+reanudación.
+
 ## Acciones permitidas sin confirmación especial
 
 - Crear borradores Markdown.
@@ -44,8 +48,11 @@ Leer, como mínimo:
 
 ## Seguridad y privacidad
 
-- No leer ni exponer secretos.
-- No crear `.env` con credenciales reales.
+- No imprimir, registrar, versionar ni exponer secretos.
+- Néstor puede mantener credenciales reales en un `.env` local ignorado por Git.
+- Los agentes pueden cargar una credencial local únicamente para una integración solicitada
+  explícitamente, sin mostrar su valor ni copiarlo a documentación, resultados o logs.
+- `.env.example` solo contiene nombres de variables y valores vacíos o ficticios.
 - No guardar datos sensibles innecesarios.
 - No publicar información de ventas, proveedores o sanidad sin aprobación.
 - Las fichas sanitarias son apoyo operativo, no sustituyen asesoramiento veterinario.

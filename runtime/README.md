@@ -64,6 +64,10 @@ runtime/
 
 ## Comandos
 
+Las integraciones externas pueden cargar credenciales desde un `.env` local en la raíz del repo.
+El archivo está ignorado por Git y debe tener permisos `600`. `.env.example` documenta solamente
+los nombres esperados; ninguna clave debe aparecer en código, documentación, logs o resultados.
+
 ```bash
 python3 runtime/src/cli/granja_dry_run.py "Compre 2 bolsas de maiz a 95000 cada una"
 python3 runtime/src/cli/granja_dry_run.py "Compre 2 bolsas de maiz a 95000 cada una" --format summary
@@ -78,9 +82,67 @@ uvicorn runtime.src.web.app:app --host 0.0.0.0 --port 8000
 python3 runtime/src/cli/review_imported_cases.py --list
 python3 runtime/src/cli/review_imported_cases.py --limit 3
 python3 runtime/src/cli/review_imported_cases.py --summary
+python3 runtime/src/cli/media_library.py scan
+python3 runtime/src/cli/media_library.py summary
+python3 runtime/src/cli/media_library.py clusters --type temporal_burst --limit 10
+python3 -m runtime.src.cli.media_vision_benchmark --prompt-type photo --image ruta/a/copia.jpg --output runtime/state/media-vision-experiment/results/prueba.json
+python3 -m runtime.src.cli.media_gemini_benchmark --image ruta/a/copia-sin-exif.jpg --prompt-type photo --output runtime/state/gemini-media-experiment/results/prueba.json
+python3 -m runtime.src.cli.media_gemini_benchmark --video ruta/a/video-sin-metadatos.mp4 --output runtime/state/gemini-media-experiment/results/video.json
 python3 -m unittest runtime/tests/test_granja_dry_run.py
 npm run test:e2e
 ```
+
+## Biblioteca local de medios
+
+`media_library.py scan` inventaria JPEG y MP4 dentro de `media/inbox` sin modificar originales.
+Guarda metadatos, SHA-256 y grupos temporales en `runtime/state/media-library/library.sqlite3`, que esta
+ignorado por Git. Un segundo escaneo reutiliza los resultados de archivos cuyo tamaño y fecha de
+modificacion no cambiaron. Los archivos ausentes quedan marcados como faltantes; no se borran de la
+base.
+
+La agrupacion `temporal_burst` enlaza fotos consecutivas del mismo dia cuando la separacion entre
+tomas no supera 15 segundos. Es una preseleccion y no prueba similitud visual. El analisis perceptual,
+las miniaturas y la curaduria humana se exponen ahora en la sección `Contenido` de la app.
+
+La API de curaduría incluye:
+
+- `GET /api/media/clusters`: ráfagas y estado de selección;
+- `POST /api/media/clusters/{id}/technical-analysis`: miniaturas sin EXIF, brillo, contraste,
+  nitidez heurística y hash perceptual;
+- `PATCH /api/media/clusters/{id}/curation`: intenciones, objetivos de campaña y hasta dos favoritas;
+- `POST /api/media/clusters/{id}/gemini`: comparación externa únicamente con confirmación explícita;
+- `GET /api/media/assets/{id}/thumbnail`: derivado privado, nunca el original.
+- `GET /api/content/drafts`: enumera únicamente MP4 derivados preparados para revisión local.
+- `GET /api/content/drafts/{filename}/media`: reproduce el borrador con soporte de rangos; nunca
+  expone originales de `media/inbox`.
+
+La carga supervisada agrega:
+
+- `POST /api/media/upload-batches`: crea una tanda y valida nombres, cantidades, tamaños y espacio;
+- `PUT /api/media/upload-batches/{batch}/items/{item}`: sube un archivo crudo con progreso desde la
+  UI, valida firma e integridad y lo mueve atómicamente;
+- `POST /api/media/upload-batches/{batch}/complete`: inventaría únicamente los nuevos recursos;
+- `GET /api/media/upload-batches`: conserva recibos y contexto sin exponer los originales;
+- `POST /api/content/requests`: registra el intake trazable del Estudio de contenido.
+
+El corte incremental no reconstruye ráfagas: el algoritmo global actual todavía debe estabilizar
+la identidad de grupos para garantizar que una nueva foto no invalide curaduría humana existente.
+
+La pantalla mantiene visible la misión `Lanzamiento de Facebook` y la cobertura mínima definida en
+`campaigns/facebook-launch/media-selection.md`. El flujo técnico y sus límites se documentan en
+`docs/media-curation-mvp.md`.
+
+`media_vision_benchmark.py` ejecuta pruebas locales y explícitas contra Ollama. Acepta una o varias
+imágenes derivadas, exige una salida JSON y registra latencia, métricas de Ollama y pico observado de
+VRAM. No debe apuntarse directamente al inventario completo ni tratar su salida como decisión de
+publicación. El protocolo validado y sus límites se documentan en
+`docs/media-vision-experiment-2026-08-01.md`.
+
+`media_gemini_benchmark.py` carga `GEMINI_API_KEY` desde el entorno o el `.env` local sin imprimirla.
+Admite fotos sanitizadas y un video completo por ejecución, solicita JSON Schema, registra tokens y
+elimina el video remoto al terminar. No debe recibir originales con EXIF, menores, datos privados o
+material que no haya superado el filtro local. La comparación está en
+`docs/gemini-media-experiment-2026-08-02.md`.
 
 La prueba Playwright inicia un servidor aislado, recorre el flujo en telefono y escritorio, y verifica captura, deteccion multiple, inbox, validacion y revision de una compra sin tocar el estado local del usuario.
 

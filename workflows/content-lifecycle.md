@@ -22,6 +22,27 @@ lista para aprobación humana.
 11. Registrar URL, fecha, versión aprobada y responsable.
 12. Recopilar métricas y aprendizajes sin modificar automáticamente la memoria confirmada.
 
+## Preflight de publicación en Meta
+
+Antes de pulsar `Publicar` o `Programar`:
+
+1. Confirmar el archivo final mediante nombre, duración, resolución y hash cuando exista.
+2. Escuchar el audio local y comprobar que el archivo contiene una pista de audio válida.
+3. Esperar que Meta termine de cargar y analizar el video; comprobar que el control de copyright no
+   muestre problemas.
+4. Pegar la descripción como texto plano mediante portapapeles y `Ctrl+V`; no usar autocompletado
+   directo sobre el `contenteditable` de Meta.
+5. Confirmar visualmente que desapareció el texto de ayuda, que la primera línea no está encimada y
+   que la descripción aparece una sola vez.
+6. Revisar miniatura, visibilidad, subtítulos, mezcla de audio y alcance de la opción de Historia
+   (`sólo esta vez` o `siempre`).
+7. Comprobar una vista previa móvil y las zonas seguras de Reel e Historia.
+
+Después de publicar, abrir la URL pública y verificar: visibilidad, audio, descripción, miniatura e
+historia asociada. La publicación no debe editarse si el único problema es que el compositor previo
+no reproduce audio; primero se distingue entre un fallo de previsualización, el reproductor silenciado
+por el usuario y un reclamo real de copyright.
+
 ## Estados propuestos
 
 `idea` → `brief` → `draft` → `needs_information` → `ready_for_review` → `approved` →

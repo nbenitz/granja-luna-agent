@@ -1,8 +1,10 @@
 # Web local
 
-Estado: `mvp_local`
+Estado: `mvp_remote_pwa`
 
-Aplicacion responsive para usar Granja Luna desde un celular conectado a la misma red que la computadora.
+Aplicación responsive disponible por LAN y, detrás de Cloudflare Access, en
+`https://granja.nodaluna.com`. Incluye manifiesto y service worker para instalarla como PWA desde
+Chrome y conservar el flujo de identidad del navegador.
 
 ## Desarrollo
 
@@ -16,6 +18,27 @@ uvicorn runtime.src.web.app:app --host 0.0.0.0 --port 8000 --reload
 Desde la computadora: `http://127.0.0.1:8000`.
 
 Desde el celular: `http://IP_LOCAL_DE_LA_COMPUTADORA:8000`.
+
+La pestaña `Contenido` muestra la ruta activa y permite cambiar entre `LAN rápida` e `Internet`.
+El cambio navega toda la aplicación al otro origen porque un sitio HTTPS no puede subir archivos a
+un endpoint HTTP privado mediante una petición mixta. Una carga activa nunca se interrumpe; si hay
+archivos todavía sin subir, el navegador avisa que deberán seleccionarse de nuevo.
+
+Una tanda interrumpida aparece en `Subidas recientes` con la acción `Reanudar`. El usuario puede
+elegir nuevamente todos los archivos originales: la interfaz compara nombre y tamaño, omite los ya
+guardados y transmite sólo los pendientes dentro de la misma tanda.
+
+`Contenido` también muestra los MP4 de revisión guardados junto al estado persistente del Estudio.
+El navegador los reproduce por rangos, sin copiar ni servir los originales de `media/inbox`. La
+ruta remota conserva la protección de Cloudflare Access. La ruta LAN sólo está aislada por la red
+local hasta que exista autenticación propia de la plataforma.
+
+Las URLs pueden ajustarse al iniciar el runtime:
+
+```env
+GRANJA_LUNA_LAN_URL=http://192.168.18.15:8011
+GRANJA_LUNA_REMOTE_URL=https://granja.nodaluna.com
+```
 
 ## QA de navegador
 
