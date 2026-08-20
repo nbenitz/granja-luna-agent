@@ -2,7 +2,7 @@
   "expo": {
     "name": "Granja Luna",
     "slug": "granja-luna",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "icon": "./assets/icon.png",
@@ -31,7 +31,7 @@
     },
     "android": {
       "package": "com.nestorbenitez.granjaluna",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#070b10"

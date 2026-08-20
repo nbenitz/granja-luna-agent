@@ -27,8 +27,12 @@ import {
 
 const DEFAULT_SERVER_URL =
   process.env.EXPO_PUBLIC_GRANJA_LUNA_URL ?? "https://granja.nodaluna.com";
-const LEGACY_DEFAULT_SERVER_URL = "http://192.168.18.15:8011";
+const LAN_SERVER_URL =
+  process.env.EXPO_PUBLIC_GRANJA_LUNA_LAN_URL ?? "http://192.168.18.15:8011";
 const SERVER_URL_KEY = "granja-luna.server-url";
+const CONNECTION_SETTINGS_KEY = "granja-luna.connection-settings.v1";
+const HEALTH_PATH = "/api/health";
+const LAN_PROBE_TIMEOUT_MS = 1_800;
 const VOICE_PROTOCOL = "agent.voice.v1";
 const LINK_PROTOCOL = "agent.link.v1";
 const DEFAULT_SPEECH_LANGUAGE = "es-PY";
@@ -82,6 +86,13 @@ type LinkFailure = {
   fallbackUrl: string | null;
 };
 
+type ConnectionMode = "automatic" | "manual";
+
+type ConnectionSettings = {
+  mode: ConnectionMode;
+  manualUrl: string | null;
+};
+
 function normalizeServerUrl(value: string): string {
   const candidate = value.trim().replace(/\/+$/, "");
   const withProtocol = /^https?:\/\//i.test(candidate)
@@ -112,6 +123,49 @@ function originOf(value: string): string | null {
       : null;
   } catch {
     return null;
+  }
+}
+
+function isConnectionMode(value: unknown): value is ConnectionMode {
+  return value === "automatic" || value === "manual";
+}
+
+function connectionSettingsFrom(value: string | null): ConnectionSettings | null {
+  if (!value) return null;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object") return null;
+    const record = parsed as Record<string, unknown>;
+    if (!isConnectionMode(record.mode)) return null;
+    return {
+      mode: record.mode,
+      manualUrl:
+        typeof record.manualUrl === "string"
+          ? normalizeServerUrl(record.manualUrl)
+          : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function isDefaultConnectionUrl(value: string): boolean {
+  return value === DEFAULT_SERVER_URL || value === LAN_SERVER_URL;
+}
+
+async function canReachServer(url: string, timeoutMs = LAN_PROBE_TIMEOUT_MS): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${url}${HEALTH_PATH}`, {
+      method: "GET",
+      signal: controller.signal,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -240,6 +294,9 @@ export default function App() {
   const mountedRef = useRef(true);
   const [serverUrl, setServerUrl] = useState(DEFAULT_SERVER_URL);
   const [draftUrl, setDraftUrl] = useState(DEFAULT_SERVER_URL);
+  const [connectionMode, setConnectionMode] = useState<ConnectionMode>("automatic");
+  const [draftConnectionMode, setDraftConnectionMode] =
+    useState<ConnectionMode>("automatic");
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -247,6 +304,15 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [webViewKey, setWebViewKey] = useState(0);
   const [linkFailure, setLinkFailure] = useState<LinkFailure | null>(null);
+
+  const selectAutomaticServer = useCallback(async (): Promise<string> => {
+    const lanIsAvailable = await canReachServer(LAN_SERVER_URL);
+    return lanIsAvailable ? LAN_SERVER_URL : DEFAULT_SERVER_URL;
+  }, []);
+
+  const persistConnectionSettings = useCallback(async (settings: ConnectionSettings) => {
+    await AsyncStorage.setItem(CONNECTION_SETTINGS_KEY, JSON.stringify(settings));
+  }, []);
 
   const sendVoiceEvent = useCallback(
     (event: Partial<VoiceBridgeDetail> & Pick<VoiceBridgeDetail, "type" | "state">) => {
@@ -318,23 +384,40 @@ export default function App() {
   });
 
   useEffect(() => {
-    AsyncStorage.getItem(SERVER_URL_KEY)
-      .then(async (savedUrl) => {
-        if (savedUrl) {
-          const normalized = normalizeServerUrl(savedUrl);
+    Promise.all([
+      AsyncStorage.getItem(CONNECTION_SETTINGS_KEY),
+      AsyncStorage.getItem(SERVER_URL_KEY),
+    ])
+      .then(async ([savedSettings, savedUrl]) => {
+        const settings = connectionSettingsFrom(savedSettings);
+        if (settings) {
           const selectedUrl =
-            normalized === LEGACY_DEFAULT_SERVER_URL
-              ? DEFAULT_SERVER_URL
-              : normalized;
-          if (selectedUrl !== normalized) {
-            await AsyncStorage.setItem(SERVER_URL_KEY, selectedUrl);
-          }
+            settings.mode === "automatic"
+              ? await selectAutomaticServer()
+              : settings.manualUrl ?? DEFAULT_SERVER_URL;
+          setConnectionMode(settings.mode);
+          setDraftConnectionMode(settings.mode);
           setServerUrl(selectedUrl);
-          setDraftUrl(selectedUrl);
+          setDraftUrl(settings.manualUrl ?? selectedUrl);
+          return;
         }
+
+        const normalizedLegacyUrl = savedUrl ? normalizeServerUrl(savedUrl) : DEFAULT_SERVER_URL;
+        const migratedSettings: ConnectionSettings = isDefaultConnectionUrl(normalizedLegacyUrl)
+          ? { mode: "automatic", manualUrl: null }
+          : { mode: "manual", manualUrl: normalizedLegacyUrl };
+        const selectedUrl =
+          migratedSettings.mode === "automatic"
+            ? await selectAutomaticServer()
+            : normalizedLegacyUrl;
+        await persistConnectionSettings(migratedSettings);
+        setConnectionMode(migratedSettings.mode);
+        setDraftConnectionMode(migratedSettings.mode);
+        setServerUrl(selectedUrl);
+        setDraftUrl(migratedSettings.manualUrl ?? selectedUrl);
       })
       .finally(() => setReady(true));
-  }, []);
+  }, [persistConnectionSettings, selectAutomaticServer]);
 
   const cancelSpeech = useCallback(
     (notifyPage = false) => {
@@ -571,14 +654,29 @@ export default function App() {
   useEffect(() => {
     mountedRef.current = true;
     const appStateSubscription = AppState.addEventListener("change", (nextState) => {
-      if (nextState === "background") cancelSpeech(true);
+      if (nextState === "background") {
+        cancelSpeech(true);
+        return;
+      }
+      if (nextState === "active" && connectionMode === "automatic") {
+        void selectAutomaticServer().then((selectedUrl) => {
+          if (!mountedRef.current) return;
+          setServerUrl((currentUrl: string) => {
+            if (currentUrl === selectedUrl) return currentUrl;
+            setLoadFailed(false);
+            setLoading(true);
+            setWebViewKey((current) => current + 1);
+            return selectedUrl;
+          });
+        });
+      }
     });
     return () => {
       mountedRef.current = false;
       appStateSubscription.remove();
       cancelSpeech(false);
     };
-  }, [cancelSpeech]);
+  }, [cancelSpeech, connectionMode, selectAutomaticServer]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -604,20 +702,44 @@ export default function App() {
     cancelSpeech(false);
     setLoadFailed(false);
     setLoading(true);
+    if (connectionMode === "automatic") {
+      void selectAutomaticServer().then((selectedUrl) => {
+        if (!mountedRef.current) return;
+        setServerUrl(selectedUrl);
+        setWebViewKey((current) => current + 1);
+      });
+      return;
+    }
     setWebViewKey((current) => current + 1);
-  }, [cancelSpeech]);
+  }, [cancelSpeech, connectionMode, selectAutomaticServer]);
 
   const saveServerUrl = useCallback(async () => {
-    const normalized = normalizeServerUrl(draftUrl);
-    await AsyncStorage.setItem(SERVER_URL_KEY, normalized);
-    setServerUrl(normalized);
-    setDraftUrl(normalized);
+    const settings: ConnectionSettings =
+      draftConnectionMode === "automatic"
+        ? { mode: "automatic", manualUrl: null }
+        : { mode: "manual", manualUrl: normalizeServerUrl(draftUrl) };
+    const selectedUrl =
+      settings.mode === "automatic"
+        ? await selectAutomaticServer()
+        : settings.manualUrl ?? DEFAULT_SERVER_URL;
+    await persistConnectionSettings(settings);
+    await AsyncStorage.setItem(SERVER_URL_KEY, selectedUrl);
+    setConnectionMode(settings.mode);
+    setDraftConnectionMode(settings.mode);
+    setServerUrl(selectedUrl);
+    setDraftUrl(settings.manualUrl ?? selectedUrl);
     setSettingsVisible(false);
     cancelSpeech(false);
     setLoadFailed(false);
     setLoading(true);
     setWebViewKey((current) => current + 1);
-  }, [cancelSpeech, draftUrl]);
+  }, [
+    cancelSpeech,
+    draftConnectionMode,
+    draftUrl,
+    persistConnectionSettings,
+    selectAutomaticServer,
+  ]);
 
   const shouldStartLoad = useCallback(
     (request: { url: string }) => {
@@ -720,6 +842,7 @@ export default function App() {
             onPress={() => {
               cancelSpeech(true);
               setDraftUrl(serverUrl);
+              setDraftConnectionMode(connectionMode);
               setSettingsVisible(true);
             }}
             style={styles.iconButton}
@@ -797,6 +920,7 @@ export default function App() {
               onPress={() => {
                 cancelSpeech(true);
                 setDraftUrl(serverUrl);
+                setDraftConnectionMode(connectionMode);
                 setSettingsVisible(true);
               }}
               style={styles.secondaryButton}
@@ -876,8 +1000,55 @@ export default function App() {
             <Text style={styles.modalEyebrow}>CONEXIÓN</Text>
             <Text style={styles.modalTitle}>Servidor de Granja Luna</Text>
             <Text style={styles.modalCopy}>
-              Usa una dirección HTTP o HTTPS del equipo que ejecuta el runtime.
+              Automática usa la red local en casa y el acceso seguro por Internet fuera de ella.
             </Text>
+            <View style={styles.connectionModeOptions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: draftConnectionMode === "automatic" }}
+                onPress={() => setDraftConnectionMode("automatic")}
+                style={[
+                  styles.connectionModeOption,
+                  draftConnectionMode === "automatic"
+                    ? styles.connectionModeOptionSelected
+                    : undefined,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.connectionModeOptionText,
+                    draftConnectionMode === "automatic"
+                      ? styles.connectionModeOptionTextSelected
+                      : undefined,
+                  ]}
+                >
+                  Automática
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: draftConnectionMode === "manual" }}
+                onPress={() => setDraftConnectionMode("manual")}
+                style={[
+                  styles.connectionModeOption,
+                  draftConnectionMode === "manual"
+                    ? styles.connectionModeOptionSelected
+                    : undefined,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.connectionModeOptionText,
+                    draftConnectionMode === "manual"
+                      ? styles.connectionModeOptionTextSelected
+                      : undefined,
+                  ]}
+                >
+                  Manual
+                </Text>
+              </Pressable>
+            </View>
+            {draftConnectionMode === "manual" ? (
             <TextInput
               accessibilityLabel="Dirección del servidor"
               autoCapitalize="none"
@@ -890,6 +1061,11 @@ export default function App() {
               style={styles.input}
               value={draftUrl}
             />
+            ) : (
+              <Text style={styles.connectionModeHint}>
+                En casa: {LAN_SERVER_URL}\nFuera: {DEFAULT_SERVER_URL}
+              </Text>
+            )}
             <View style={styles.modalActions}>
               <Pressable
                 onPress={() => setSettingsVisible(false)}
@@ -992,5 +1168,11 @@ const styles = StyleSheet.create({
   modalTitle: { marginTop: 5, color: "#f4f5ee", fontSize: 21, fontWeight: "800" },
   modalCopy: { marginTop: 8, color: "#89958d", fontSize: 14, lineHeight: 20 },
   input: { marginTop: 18, paddingHorizontal: 14, paddingVertical: 13, color: "#f0f3ed", fontSize: 15, borderRadius: 14, borderWidth: 1, borderColor: "#39473d", backgroundColor: "#090e0b" },
+  connectionModeOptions: { marginTop: 18, flexDirection: "row", gap: 10 },
+  connectionModeOption: { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: 13, borderWidth: 1, borderColor: "#39473d", backgroundColor: "#090e0b" },
+  connectionModeOptionSelected: { borderColor: "#e5c86b", backgroundColor: "#282419" },
+  connectionModeOptionText: { color: "#aeb8b0", fontSize: 14, fontWeight: "700" },
+  connectionModeOptionTextSelected: { color: "#f1d985" },
+  connectionModeHint: { marginTop: 18, color: "#aeb8b0", fontSize: 12, lineHeight: 19 },
   modalActions: { marginTop: 20, flexDirection: "row", justifyContent: "flex-end", gap: 10 },
 });

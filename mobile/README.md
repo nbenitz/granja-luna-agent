@@ -1,4 +1,4 @@
-# Granja Luna Mobile 0.3.1
+# Granja Luna Mobile 0.3.2
 
 Cliente Android de Granja Luna construido con Expo/React Native. Es un shell nativo deliberadamente
 pequeño: carga la PWA del runtime en un `WebView`, permite cambiar la URL del servidor y registra el
@@ -26,18 +26,24 @@ cd android
 ./gradlew app:assembleRelease
 ```
 
-La URL predeterminada es `https://granja.nodaluna.com`, protegida por Cloudflare Access. El WebView
-permite solamente el origen configurado y los dominios HTTPS oficiales que participan en ese flujo
-de autenticación. Una instalación anterior que todavía conserve la dirección local predeterminada
-se migra automáticamente; las URLs personalizadas se respetan.
+El modo de conexión predeterminado es **Automática**: prueba primero la LAN
+`http://192.168.18.15:8011` y, si no está disponible, usa
+`https://granja.nodaluna.com`, protegida por Cloudflare Access. Al volver a primer plano la app vuelve
+a comprobar la LAN, por lo que puede regresar a la conexión local al volver a casa. Las instalaciones
+anteriores configuradas con una de esas dos direcciones se migran a este modo; una URL personalizada
+se conserva como modo manual.
+
+El WebView permite solamente el origen activo y los dominios HTTPS oficiales que participan en el
+flujo de autenticación de Cloudflare Access.
 
 Con el perímetro actual, Google completa el login en Chrome y la cookie no vuelve automáticamente al
 WebView. Por eso la PWA instalada desde Chrome es el cliente remoto recomendado por ahora; este APK
 continúa siendo útil para desarrollo, enlaces profundos y futuras capacidades nativas. El diseño
 objetivo para una publicación formal es OAuth/OIDC con Authorization Code y PKCE.
 
-Puede cambiarse desde el botón de configuración o al compilar con
-`EXPO_PUBLIC_GRANJA_LUNA_URL=http://IP_DEL_SERVIDOR:8011` para una prueba LAN.
+Puede cambiarse desde el botón de configuración: **Automática** conserva LAN + Internet; **Manual**
+permite indicar otra dirección. Al compilar, se pueden sobrescribir `EXPO_PUBLIC_GRANJA_LUNA_URL`
+para Internet y `EXPO_PUBLIC_GRANJA_LUNA_LAN_URL` para LAN.
 
-El artefacto local para pruebas queda en `mobile/artifacts/Granja-Luna-0.3.1.apk`. El build actual
+El artefacto local para pruebas queda en `mobile/artifacts/Granja-Luna-0.3.2.apk`. El build actual
 usa el certificado Android Debug; para publicar se debe configurar una clave de release privada.

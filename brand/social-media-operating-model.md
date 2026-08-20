@@ -68,6 +68,12 @@ desde el navegador sigue este procedimiento:
 La copia temporal es un transporte local, no una nueva versión editorial. La aprobación continúa
 atada al hash, versión, canal, copy, miniatura y horario exactos.
 
+Si el conector no negocia ninguna raíz de archivos y rechaza incluso la copia temporal, no se debe
+publicar un texto sin medio ni exponer el original por HTTP. Se puede usar, sólo para una acción ya
+aprobada y con la sesión de Chrome autenticada, una conexión local directa para adjuntar el archivo.
+El editor y el resultado público deben mostrar el adjunto exacto antes de declarar la acción completa.
+No convierte ese recurso de recuperación en una automatización recurrente de publicaciones.
+
 ### Descripción en el editor de Meta
 
 Para que la descripción de un reel quede guardada como copy de la publicación y no como texto
