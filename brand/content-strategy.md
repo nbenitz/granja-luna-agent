@@ -2,7 +2,7 @@
 
 Estado: `draft_based_on_confirmed_direction`
 
-Fecha: 2026-08-02
+Fecha: 2026-08-24
 
 ## Posicionamiento que debe poder evolucionar
 
@@ -22,6 +22,21 @@ La transición buscada es:
 
 Las tres capas pueden coexistir desde el inicio. Lo que cambia con el tiempo es su peso y la
 evidencia disponible.
+
+## Protagonismo de la marca y presencia humana
+
+Granja Luna debe sentirse como una identidad propia. El centro visual y narrativo son la granja,
+los animales, el paisaje, los planteles, los procesos y su evolución. No se construirá por ahora la
+marca alrededor de Néstor, Limpia, Liz ni de una figura pública propietaria.
+
+Las personas pueden aparecer como colaboradores o guías de forma secundaria: manos realizando una
+tarea, una voz fuera de cámara, una observación breve o una presentación funcional. No hace falta
+ocultar que existe un equipo familiar, pero el parentesco, la propiedad y la vida personal no deben
+ser el gancho habitual ni el argumento principal de confianza o venta.
+
+La voz preferida es institucional y cercana: `en Granja Luna`, `nuestro plantel`, `seguimos
+aprendiendo`. Una cuenta personal puede ayudar a distribuir una publicación, pero no reemplaza a la
+página como origen, archivo e identidad canónica del proyecto.
 
 ## Pilares editoriales
 
@@ -115,3 +130,9 @@ describir conductas observables como activos, curiosos, explorando o pastoreando
 Cada publicación puede fortalecer indirectamente la oferta mediante confianza, afinidad o prueba de
 trabajo. No todas necesitan una venta directa. Cuando exista una llamada comercial, debe vincularse
 con un producto actualmente ofrecido y verificar disponibilidad antes de publicar.
+
+La cuenta personal de Limpia puede ensayarse como canal secundario de alcance local sin adaptarla
+como catálogo ni presentarla como rostro de la marca. La prueba recomendada es comparar una
+publicación pública y nativa en su biografía, luego compartida en un grupo, con otra versión nativa
+subida directamente a un grupo comparable. Cada variante debe registrar origen de consultas y
+compartidos propios; esta recomendación no autoriza todavía una publicación concreta.

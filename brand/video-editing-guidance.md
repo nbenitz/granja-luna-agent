@@ -171,6 +171,21 @@ todo lo aprobado y produjo la versión final.
 no sólo cuánto dura un texto, sino sobre quién aparece, qué conducta acompaña y qué imagen queda
 inmediatamente después.
 
+### Plymouth Rock V1 — La orientación efectiva se resuelve antes de encuadrar
+
+**Feedback observado:** la primera toma estaba dominada por una gallina incompleta en primer plano y
+varios videos se veían estirados o aplastados.
+
+**Hipótesis técnica:** algunos originales estaban codificados como 1920 × 1080 con una matriz de
+rotación de -90 grados. El montaje los trató por sus dimensiones almacenadas, no por su orientación
+efectiva, y además aplicó recortes verticales agresivos a tomas realmente horizontales.
+
+**Aplicación habitual:** inspeccionar dimensiones, relación de aspecto, SAR y metadatos de rotación;
+normalizar primero la orientación y sólo después adaptar el lienzo. Preservar siempre la proporción,
+evitar recortes que oculten cabeza o cuerpo y revisar el primer fotograma antes de presentar el
+borrador. Si una toma no admite el formato vertical sin perder al sujeto, se reemplaza o se presenta
+completa con una adaptación deliberada.
+
 ## Jerarquía para resolver decisiones difíciles
 
 Cuando dos criterios entren en conflicto, usar como punto de partida esta prioridad:

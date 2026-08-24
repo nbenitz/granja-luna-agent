@@ -28,6 +28,11 @@ página en un catálogo. Los objetivos conviven, pero no tienen el mismo peso:
 4. generar consultas y ventas verificables sin forzar una llamada comercial en cada pieza;
 5. aprender qué formatos, temas y públicos justifican automatización.
 
+La protagonista es Granja Luna como identidad propia. Animales, paisaje, procesos, planteles y
+evolución del emprendimiento ocupan el centro; propietarios y colaboradores actúan como guías
+discretos. Una cuenta personal puede ampliar distribución o atender una consulta, pero no debe
+reemplazar a la página como fuente institucional ni convertir a su titular en rostro de la marca.
+
 ## Flujo canónico
 
 ```text
@@ -55,6 +60,11 @@ Chrome DevTools no puede seleccionar archivos desde todas las carpetas internas 
 aunque Codex sí pueda leerlas. Para evitar repetir intentos fallidos, toda carga supervisada a Meta
 desde el navegador sigue este procedimiento:
 
+Antes de intervenir en Facebook o Meta Business Suite, verificar que Chrome use `Profile 1`, con
+nombre visible `Nestor`, asociado a `yonestor87@gmail.com`. No continuar desde otro perfil aunque
+la página de Facebook parezca accesible: cerrar esa sesión controlada y volver a abrir el perfil
+correcto antes de cargar, editar o programar contenido.
+
 1. conservar el MP4 aprobado como fuente maestra en `runtime/state/content-studio/social-drafts/`
    y su copia local en `media/selected/social-drafts/`;
 2. calcular el SHA-256 de la fuente maestra;
@@ -79,13 +89,16 @@ No convierte ese recurso de recuperación en una automatización recurrente de p
 Para que la descripción de un reel quede guardada como copy de la publicación y no como texto
 superpuesto en el video:
 
-1. abrir el reel programado desde `Contenido > Programadas > Acciones > Editar publicación`;
-2. enfocar el campo **Texto** y pegar o escribir allí el copy como entrada real de usuario;
-3. no usar **Editar video** para introducir la descripción: esa ruta modifica el contenido visual,
+1. crear o programar primero el reel con el campo de descripción inicial vacío;
+2. abrir el reel programado desde `Contenido > Programadas > Acciones > Editar publicación`;
+3. enfocar el campo **Texto** y pegar o escribir allí el copy una sola vez, como entrada real de
+   usuario;
+4. no usar **Editar video** para introducir la descripción: esa ruta modifica el contenido visual,
    puede superponer texto y vuelve a involucrar el procesamiento del video;
-4. esperar hasta que la descripción aparezca también en la vista previa del feed;
-5. programar/guardar sin cambiar el archivo ni el horario aprobados;
-6. volver a `Contenido > Programadas` y confirmar que la fila muestra el copy completo; si dice
+5. esperar hasta que la descripción aparezca también en la vista previa del feed;
+6. programar/guardar sin cambiar el archivo ni el horario aprobados;
+7. volver a `Contenido > Programadas`, recargar la vista y confirmar que la fila muestra el copy
+   completo; si dice
    `Tu reel`, la descripción no persistió y el preflight no está completo.
 
 No basta con que una automatización asigne un valor al control: Meta puede mostrarlo temporalmente
@@ -119,6 +132,14 @@ tipo de medio es parte del QA y debe ocurrir antes de declarar completa la distr
 - decide qué representa el espíritu de Granja Luna;
 - aprueba publicación, edición posterior, respuesta oficial y cualquier uso de personas;
 - corrige preferencias editoriales sin tener que justificar cada descarte técnico.
+
+### Colaboradores humanos
+
+- Limpia y Néstor trabajan directamente en el emprendimiento; Liz Michel participa con menor
+  actividad mientras está de viaje;
+- pueden aportar contexto, distribuir una pieza o atender consultas según el flujo acordado;
+- no se los presenta automáticamente como propietarios ni como imagen principal de venta;
+- su presencia pública se evalúa por pieza y queda subordinada al protagonismo de Granja Luna.
 
 ### Agente de Marca y Comunidad
 
@@ -198,7 +219,9 @@ proyección es un plan de aprendizaje con umbrales de decisión:
 - sostener descubrimiento mayoritariamente orgánico y medir cuánto público es local;
 - elevar el promedio de reproducción desde la línea base de 6 segundos;
 - mejorar la retención final de piezas de 15–22 segundos hacia 25 % cuando el material lo permita;
-- conservar compartidos como señal principal de afinidad;
+- conservar los compartidos externos verificables como señal principal de afinidad;
+- separar compartidos propios o impulsados por Néstor, Limpia u otras cuentas vinculadas antes de
+  interpretar el contador agregado como respuesta orgánica;
 - introducir una primera llamada comercial suave con disponibilidad real;
 - atribuir consultas manualmente a una publicación concreta.
 
@@ -232,6 +255,26 @@ una proyección comercial.
 Conservar valores crudos y fecha de captura para: visualizaciones, espectadores, alcance cuando
 Meta lo muestre, 3 segundos, 15 segundos, promedio, curva de retención, reacciones, comentarios,
 compartidos, guardados, visitas, seguidores, países/regiones, mensajes e incidentes.
+
+Para cada distribución realizada por la propia granja registrar además: cuenta que compartió,
+fecha, destino —perfil, historia o grupo— y enlace cuando exista. El contador de Meta debe separarse
+en `compartidos_totales_observados`, `compartidos_propios_confirmados` y
+`compartidos_externos_estimados`. Si Meta no revela las identidades o faltan registros propios, el
+origen queda `pending_attribution` y el total no se usa por sí solo como señal de afinidad orgánica.
+
+### Prueba recomendada desde una cuenta personal
+
+Para evaluar el antecedente favorable observado con Liz sin confundir alcance personal con
+distribución de grupos:
+
+1. preparar una pieza comercial nativa y pública para la biografía de Limpia, con Granja Luna como
+   sujeto y sin convertir el perfil en catálogo ni destacar la propiedad;
+2. compartir esa publicación en un grupo prioritario;
+3. subir una variante equivalente de forma nativa en otro grupo comparable;
+4. medir durante 48–72 horas reacciones, comentarios, consultas, procedencia y ventas confirmadas;
+5. registrar cada compartido propio antes de interpretar el contador agregado.
+
+Es un experimento recomendado, no una autorización permanente ni una publicación ya aprobada.
 
 ## Próxima hipótesis editorial
 

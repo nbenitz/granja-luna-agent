@@ -20,7 +20,8 @@ Estado: `pending_review`
 
 ## Contenido
 
-- Autorizar el nivel de exposición de cada integrante de la familia.
+- Definir caso por caso las excepciones en que una persona pueda aparecer, manteniendo confirmada la
+  regla general de protagonismo de Granja Luna y exposición discreta de propietarios y colaboradores.
 - Acordar por separado cualquier participación de menores.
 - Definir una frecuencia sostenible para Facebook antes de abrir Instagram.
 - Decidir qué instalaciones pueden aparecer sin afectar seguridad o privacidad.
@@ -32,4 +33,6 @@ Estado: `pending_review`
 - Mantener y medir la página oficial de Facebook `@GranjaLunaPy`, creada y activa.
 - Reservar nombre de usuario coherente en Instagram.
 - Definir WhatsApp Business, información pública y horario de atención.
-- Evaluar YouTube, TikTok y sitio web después de validar el flujo inicial.
+- Definir alcance, dominio y primera versión de un sitio público separado de la app operativa; su
+  objetivo futuro sería atraer consultas, presentar productos y alojar la identidad de Granja Luna.
+- Evaluar YouTube y TikTok después de validar el flujo inicial.

@@ -18,6 +18,18 @@ Estado: `draft`
 - Datos sanitarios sensibles sin contexto y revisión.
 - Imágenes o datos identificables de familiares sin autorización específica.
 
+## Exposición de propietarios y colaboradores
+
+La condición familiar del emprendimiento puede mencionarse cuando aporte contexto, pero la marca no
+se apoyará por ahora en identificar públicamente a sus propietarios ni en convertir a una persona en
+su rostro principal. Néstor y Limpia prefieren un perfil discreto. Las personas funcionan como
+colaboradores o guías y Granja Luna conserva el protagonismo.
+
+Una aparición incidental —manos, voz, trabajo a distancia o una intervención funcional— sigue
+requiriendo revisión del material. Que una persona distribuya contenido desde su perfil personal no
+autoriza a reutilizar su imagen, parentesco, historia personal o condición de propietaria como
+recurso comercial.
+
 ## Participación de niños
 
 Existe la posibilidad creativa de incluir al sobrino del fundador, actualmente de tres años, porque

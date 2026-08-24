@@ -2,12 +2,21 @@
 
 Estado: `confirmed_by_user`
 
-Última curaduría: 2026-07-16
+Última curaduría: 2026-08-24
 
 ## Identidad esencial
 
 Granja Luna es un proyecto familiar avícola, tecnológico y productivo en evolución. La finca tiene
 seis hectáreas y puede comunicarse públicamente ese tamaño.
+
+Aunque el proyecto sea familiar, **Granja Luna es la protagonista de la comunicación**. La marca
+debe desarrollar una identidad reconocible por sus animales, su paisaje, su forma de observar y
+cuidar y la evolución del emprendimiento. Sus propietarios y colaboradores acompañan ese relato de
+manera discreta; no se construirán por ahora una marca personal ni un rostro propietario central.
+
+Como contexto interno, Limpia y Néstor son copropietarios y trabajan directamente en el proyecto;
+Liz Michel también forma parte, aunque actualmente está de viaje y participa menos. Estos datos
+permiten asignar responsabilidades, pero no constituyen por sí solos un mensaje para publicar.
 
 El nombre comercial es **Granja Luna**. En el corazón del proyecto también existe la visión
 **Granja Paraíso**: una aspiración de largo plazo con cabañas, laguna y espacios de retiro. Esa
@@ -20,6 +29,10 @@ La comunicación combinará tres objetivos:
 1. Conseguir clientes para los productos disponibles.
 2. Documentar de forma auténtica la evolución de la granja.
 3. Construir una comunidad educativa de amantes de los animales y criadores de gallinas.
+
+La identidad puede crecer hacia vida natural, alimentación producida con trazabilidad y experiencias
+en la finca. Las afirmaciones sobre alimentación sana deben referirse a productos y procesos
+comprobables, sin transformarse en beneficios de salud no demostrados.
 
 El primer hito digital es crear la página de Facebook. Instagram será el siguiente canal.
 
@@ -75,6 +88,10 @@ terreno.
   pollitos y gallinas.
 - Evaluar una división de insumos, alimentos, gallineros y accesorios para gallinas.
 - Desarrollar la visión de Granja Paraíso sin presentarla aún como oferta disponible.
+- Evaluar una web pública de Granja Luna como casa digital de la marca, con historia, planteles,
+  productos o disponibilidad y contacto, separada de la aplicación operativa privada.
+- Evaluar visitas a la granja y alquiler de cabañas cuando existan condiciones operativas, de
+  seguridad y atención; no comunicarlos todavía como servicios disponibles.
 
 ## Regla fundamental
 

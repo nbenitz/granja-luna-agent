@@ -18,6 +18,11 @@ real antes de considerarse definitivo.
 Granja Luna debe sonar como alguien que vive, observa y cuida la granja; no como una agencia de
 publicidad ni como una empresa industrial consolidada.
 
+La voz pertenece a **Granja Luna como identidad**, no a una personalidad propietaria. Se prefiere la
+primera persona plural institucional y se evita depender de relatos como `yo, la dueña`, `mi hijo`
+o `nuestra familia` para sostener cada publicación. Las personas pueden aportar una voz puntual sin
+convertirse en protagonistas permanentes.
+
 ## Principios de escritura
 
 1. Contar procesos reales antes que fabricar historias.
